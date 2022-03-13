@@ -27,8 +27,6 @@ src/javalette/*
 build/*
 !build/.gitkeep
 *.class
-lib
 out
 *.iml
-
 .idea
