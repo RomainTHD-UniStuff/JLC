@@ -107,42 +107,42 @@ build/%.class : src/%.java build/javalette/Test.class
 # Rules for shipping the solution
 ###########################################################################
 
-sdist : createTmp Main.tar.gz
+sdist : createTmp submission.tar.gz
 
 tmpdir := $(shell mktemp -d)
 createTmp :
-	mkdir $(tmpdir)/Main
-	cp -r $(LABSRCDIR) $(tmpdir)/Main/
-	rm -r $(tmpdir)/Main/$(LABSRCOUT)
+	mkdir $(tmpdir)/submission
+	cp -r $(LABSRCDIR) $(tmpdir)/submission
+	rm -r $(tmpdir)/submission/$(LABSRCOUT)
+	cp jlc* $(tmpdir)/submission
+	cp -r doc $(tmpdir)/submission
+	cp -r lib $(tmpdir)/submission
+	cp javalette.cf $(tmpdir)/submission
 
-Main.tar.gz : javalette.cf Makefile Main.hs Main.sh Main.bat
-	cp $^ $(tmpdir)/Main/
-	cp lib/jasmin.jar $(tmpdir)/Main/
-	tar -C $(tmpdir) -czhf $@ Main
+submission.tar.gz : javalette.cf Makefile
+	cp $^ $(tmpdir)/submission/
+	cd $(tmpdir)/submission && tar -czhf $@ *
+	mv $(tmpdir)/submission/$@ .
 
 # Rules for cleaning generated files
 ###########################################################################
 
 clean :
-	-rm -r build
-	-mkdir build
-	-touch build/.gitkeep
-	-rm -f javalette.dvi javalette.aux javalette.log javalette.ps
-	-rm -f $(LABOBJ)
-	-rm -f Main.hi Main.o Main.exe Main
+	-rm -f build/*.class
+	-rm -f build/**/.class
 # Uncomment to also remove all .class files in current directory
 #	-rm -f *.class
 
 vclean : clean
-	-rm -f $(PARSERSRC)
-	-rm -f src/javalette/Absyn/*.bak src/javalette/*.bak
-	-rmdir src/javalette/Absyn/
-	-rm -f src/javalette.tex
-	-rm -f src/javalette/Yylex $(CUPFILE)
-	touch src/javalette/.gitkeep
+	-rm -rf $(LABSRCOUT)
+	-mkdir $(LABSRCOUT)
+	touch $(LABSRCOUT)/.gitkeep
+	-rm -rf build
+	-mkdir build
+	touch build/.gitkeep
 
 distclean : vclean
-	-rm -f Main.tar.gz
+	-rm -f submission.tar.gz
 
 # Debugging the Makefile
 ###########################################################################
