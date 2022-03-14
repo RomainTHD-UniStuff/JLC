@@ -106,6 +106,8 @@ import tempfile
 import traceback
 from shutil import which
 
+useSh = False
+
 ##
 ## Configuration record.
 ##
@@ -224,11 +226,18 @@ def link_riscv(path, source_str):
 def run_compiler(exe, src_file, is_good):
     try:
         infile = open(src_file)
-        child = subprocess.run(
-                [exe],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=infile)
+        if useSh:
+            child = subprocess.run(
+                    ["sh", exe, src_file],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=infile)
+        else:
+            child = subprocess.run(
+                    [exe],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=infile)
         stdout = child.stdout.decode("utf-8")
         stderr = child.stderr.decode("utf-8").strip()
     except OSError as exc:
@@ -376,6 +385,10 @@ def init_argparser():
             "--list",
             action="store_true",
             help="list extensions")
+    parser.add_argument(
+            "--sh",
+            action="store_true",
+            help="use a shell to execute the jlc executables")
     return parser
 
 ##
@@ -605,8 +618,14 @@ def run_tests(path, backends, prefix, exts):
 ## run the tester.
 ##
 def main():
+    global useSh
+
     args = init_argparser()
     ns = args.parse_args()
+
+    if ns.sh:
+        print("DEBUG: Using shell execution")
+        useSh = True
 
     # List available extensions if --list was passed.
     avail_exts = os.listdir("testsuite/extensions")
