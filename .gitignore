@@ -30,3 +30,4 @@ build/*
 out
 *.iml
 .idea
+!lib/*
