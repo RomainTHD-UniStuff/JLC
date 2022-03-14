@@ -37,27 +37,29 @@ public class jlc {
             // Generate code
             // TODO: Generate code for the backend
 
-            System.out.println("OK");
+            System.err.println("OK");
         } catch (TypeException e) {
-            System.out.println("Type error: " + e.getMessage());
-            System.err.println(e.getMessage());
+            System.err.println("ERROR");
+            System.err.println("Type error: " + e.getMessage());
             System.exit(1);
         } catch (RuntimeException e) {
             e.printStackTrace();
             System.exit(-1);
         } catch (IOException e) {
-            System.out.println("File not found: " + srcFile);
+            System.err.println("ERROR");
+            System.err.println("File not found: " + srcFile);
             System.exit(1);
         } catch (Throwable e) {
             assert lex != null;
-            System.out.println(
+            System.err.println("ERROR");
+            System.err.println(
                 "Syntax error at line " +
                 lex.line_num() +
                 ", near \"" +
                 lex.buff() +
                 "\" :"
             );
-            System.out.println("     " + e.getMessage());
+            System.err.println("     " + e.getMessage());
             System.exit(1);
         }
     }
