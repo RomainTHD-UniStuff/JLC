@@ -101,7 +101,7 @@ public class Env<Value, Func> {
         if (env.get(id) == null) {
             env.put(id, value);
         } else {
-            throw TypeException.symbolAlreadyDefined(id);
+            throw new SymbolAlreadyDefinedException(id);
         }
     }
 
@@ -119,7 +119,7 @@ public class Env<Value, Func> {
         if (lookupFun(id) == null) {
             _signature.put(id, func);
         } else {
-            throw TypeException.symbolAlreadyDefined(id);
+            throw new SymbolAlreadyDefinedException(id);
         }
     }
 
