@@ -1,329 +1,388 @@
-import javalette.Absyn.AddOp;
-import javalette.Absyn.Arg;
-import javalette.Absyn.Blk;
-import javalette.Absyn.Expr;
-import javalette.Absyn.Item;
-import javalette.Absyn.MulOp;
-import javalette.Absyn.Prog;
-import javalette.Absyn.RelOp;
-import javalette.Absyn.Stmt;
-import javalette.Absyn.TopDef;
-import javalette.Absyn.Type;
+import java.util.LinkedList;
+
+class EnvTypecheck extends Env<TypeCode, FunType> {
+    public TypeCode currentFunctionType = null;
+}
 
 public class TypeChecker {
-    public Prog typecheck(Prog p) {
-        return p;
+    public static boolean canCoerce(TypeCode from, TypeCode to) {
+        return from != null && from == to
+               || from == TypeCode.CInt && to == TypeCode.CDouble;
     }
 
-    public static class ProgVisitor<R, A> implements Prog.Visitor<R, A> {
-        public R visit(javalette.Absyn.Program p, A arg) {
+    public static TypeCode minType(TypeCode left, TypeCode right) {
+        if (left == right) {
+            return left;
+        } else if (left == TypeCode.CDouble && right == TypeCode.CInt
+                   || left == TypeCode.CInt && right == TypeCode.CDouble) {
+            return TypeCode.CDouble;
+        } else {
+            return null;
+        }
+    }
+
+    public javalette.Absyn.Prog typecheck(javalette.Absyn.Prog p) {
+        EnvTypecheck env = new EnvTypecheck();
+        p.accept(new ProgVisitorSignature(), env);
+        return p.accept(new ProgVisitor(), env);
+    }
+
+    public static class ProgVisitorSignature implements javalette.Absyn.Prog.Visitor<Void, EnvTypecheck> {
+        public Void visit(javalette.Absyn.Program p, EnvTypecheck env) {
+            for (javalette.Absyn.TopDef def : p.listtopdef_) {
+                def.accept(new TopDefVisitorSignature(), env);
+            }
+
+            env.insertFun("printInt", new FunType(
+                TypeCode.CVoid,
+                new FunArg(TypeCode.CInt, "i")
+            ));
+            env.insertFun("printDouble", new FunType(
+                TypeCode.CVoid,
+                new FunArg(TypeCode.CDouble, "d")
+            ));
+            env.insertFun("readInt", new FunType(TypeCode.CInt));
+            env.insertFun("readDouble", new FunType(TypeCode.CDouble));
+
+            FunType mainFunc = env.lookupFun("main");
+            if (mainFunc == null) {
+                throw new NoSuchFunctionException("main");
+            }
+
+            if (mainFunc.retType != TypeCode.CInt) {
+                throw new InvalidReturnedTypeException(
+                    TypeCode.CInt.toString(),
+                    mainFunc.retType.toString()
+                );
+            }
+
+            if (!mainFunc.args.isEmpty()) {
+                throw new InvalidArgumentCountException(
+                    "main",
+                    0,
+                    mainFunc.args.size()
+                );
+            }
+
+            return null;
+        }
+    }
+
+    public static class ProgVisitor implements javalette.Absyn.Prog.Visitor<javalette.Absyn.Prog, EnvTypecheck> {
+        public javalette.Absyn.Prog visit(javalette.Absyn.Program p, EnvTypecheck env) {
             /* Code For Program Goes Here */
-            for (TopDef x : p.listtopdef_) { /* ... */ }
+            for (javalette.Absyn.TopDef x : p.listtopdef_) { /* ... */ }
             return null;
         }
     }
 
-    public static class TopDefVisitor<R, A> implements TopDef.Visitor<R, A> {
-        public R visit(javalette.Absyn.FnDef p, A arg) {
+    public static class TopDefVisitor implements javalette.Absyn.TopDef.Visitor<javalette.Absyn.TopDef, EnvTypecheck> {
+        public javalette.Absyn.TopDef visit(javalette.Absyn.FnDef p, EnvTypecheck env) {
             /* Code For FnDef Goes Here */
-            p.type_.accept(new TypeVisitor<R, A>(), arg);
+            p.type_.accept(new TypeVisitor(), null);
             //p.ident_;
-            for (Arg x : p.listarg_) { /* ... */ }
-            p.blk_.accept(new BlkVisitor<R, A>(), arg);
+            for (javalette.Absyn.Arg x : p.listarg_) { /* ... */ }
+            p.blk_.accept(new BlkVisitor(), env);
             return null;
         }
     }
 
-    public static class ArgVisitor<R, A> implements Arg.Visitor<R, A> {
-        public R visit(javalette.Absyn.Argument p, A arg) {
+    public static class TopDefVisitorSignature implements javalette.Absyn.TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(javalette.Absyn.FnDef p, EnvTypecheck env) {
+            LinkedList<FunArg> argsType = new LinkedList<>();
+            for (javalette.Absyn.Arg arg : p.listarg_) {
+                argsType.add(arg.accept(new ArgVisitor(), null));
+            }
+
+            TypeCode retType = p.type_.accept(new TypeVisitor(), null);
+            env.insertFun(p.ident_, new FunType(retType, argsType));
+
+            return null;
+        }
+    }
+
+    public static class ArgVisitor implements javalette.Absyn.Arg.Visitor<FunArg, Void> {
+        public FunArg visit(javalette.Absyn.Argument p, Void ignored) {
             /* Code For Argument Goes Here */
-            p.type_.accept(new TypeVisitor<R, A>(), arg);
+            p.type_.accept(new TypeVisitor(), null);
             //p.ident_;
             return null;
         }
     }
 
-    public static class BlkVisitor<R, A> implements Blk.Visitor<R, A> {
-        public R visit(javalette.Absyn.Block p, A arg) {
+    public static class BlkVisitor implements javalette.Absyn.Blk.Visitor<javalette.Absyn.Blk, EnvTypecheck> {
+        public javalette.Absyn.Blk visit(javalette.Absyn.Block p, EnvTypecheck env) {
             /* Code For Block Goes Here */
-            for (Stmt x : p.liststmt_) { /* ... */ }
+            for (javalette.Absyn.Stmt x : p.liststmt_) { /* ... */ }
             return null;
         }
     }
 
-    public static class StmtVisitor<R, A> implements Stmt.Visitor<R, A> {
-        public R visit(javalette.Absyn.Empty p, A arg) {
+    public static class StmtVisitor implements javalette.Absyn.Stmt.Visitor<javalette.Absyn.Stmt, EnvTypecheck> {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Empty p, EnvTypecheck env) {
             /* Code For Empty Goes Here */
             return null;
         }
 
-        public R visit(javalette.Absyn.BStmt p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.BStmt p, EnvTypecheck env) {
             /* Code For BStmt Goes Here */
-            p.blk_.accept(new BlkVisitor<R, A>(), arg);
+            p.blk_.accept(new BlkVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.Decl p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Decl p, EnvTypecheck env) {
             /* Code For Decl Goes Here */
-            p.type_.accept(new TypeVisitor<R, A>(), arg);
-            for (Item x : p.listitem_) { /* ... */ }
+            p.type_.accept(new TypeVisitor(), null);
+            for (javalette.Absyn.Item x : p.listitem_) { /* ... */ }
             return null;
         }
 
-        public R visit(javalette.Absyn.Ass p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Ass p, EnvTypecheck env) {
             /* Code For Ass Goes Here */
             //p.ident_;
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.Incr p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Incr p, EnvTypecheck env) {
             /* Code For Incr Goes Here */
             //p.ident_;
             return null;
         }
 
-        public R visit(javalette.Absyn.Decr p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Decr p, EnvTypecheck env) {
             /* Code For Decr Goes Here */
             //p.ident_;
             return null;
         }
 
-        public R visit(javalette.Absyn.Ret p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Ret p, EnvTypecheck env) {
             /* Code For Ret Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.VRet p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.VRet p, EnvTypecheck env) {
             /* Code For VRet Goes Here */
             return null;
         }
 
-        public R visit(javalette.Absyn.Cond p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.Cond p, EnvTypecheck env) {
             /* Code For Cond Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
-            p.stmt_.accept(new StmtVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
+            p.stmt_.accept(new StmtVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.CondElse p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.CondElse p, EnvTypecheck env) {
             /* Code For CondElse Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
-            p.stmt_1.accept(new StmtVisitor<R, A>(), arg);
-            p.stmt_2.accept(new StmtVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
+            p.stmt_1.accept(new StmtVisitor(), env);
+            p.stmt_2.accept(new StmtVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.While p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.While p, EnvTypecheck env) {
             /* Code For While Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
-            p.stmt_.accept(new StmtVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
+            p.stmt_.accept(new StmtVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.SExp p, A arg) {
+        public javalette.Absyn.Stmt visit(javalette.Absyn.SExp p, EnvTypecheck env) {
             /* Code For SExp Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
             return null;
         }
     }
 
-    public static class ItemVisitor<R, A> implements Item.Visitor<R, A> {
-        public R visit(javalette.Absyn.NoInit p, A arg) {
+    public static class ItemVisitor implements javalette.Absyn.Item.Visitor<javalette.Absyn.Item, EnvTypecheck> {
+        public javalette.Absyn.Item visit(javalette.Absyn.NoInit p, EnvTypecheck env) {
             /* Code For NoInit Goes Here */
             //p.ident_;
             return null;
         }
 
-        public R visit(javalette.Absyn.Init p, A arg) {
+        public javalette.Absyn.Item visit(javalette.Absyn.Init p, EnvTypecheck env) {
             /* Code For Init Goes Here */
             //p.ident_;
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
             return null;
         }
     }
 
-    public static class TypeVisitor<R, A> implements Type.Visitor<R, A> {
-        public R visit(javalette.Absyn.Int p, A arg) {
-            /* Code For Int Goes Here */
-            return null;
+    public static class TypeVisitor implements javalette.Absyn.Type.Visitor<TypeCode, Void> {
+        public TypeCode visit(javalette.Absyn.Bool t, Void ignored) {
+            return TypeCode.CBool;
         }
 
-        public R visit(javalette.Absyn.Doub p, A arg) {
-            /* Code For Doub Goes Here */
-            return null;
+        public TypeCode visit(javalette.Absyn.Int t, Void ignored) {
+            return TypeCode.CInt;
         }
 
-        public R visit(javalette.Absyn.Bool p, A arg) {
-            /* Code For Bool Goes Here */
-            return null;
+        public TypeCode visit(javalette.Absyn.Doub t, Void ignored) {
+            return TypeCode.CDouble;
         }
 
-        public R visit(javalette.Absyn.Void p, A arg) {
-            /* Code For Void Goes Here */
-            return null;
+        public TypeCode visit(javalette.Absyn.Void t, Void ignored) {
+            return TypeCode.CVoid;
         }
 
-        public R visit(javalette.Absyn.Fun p, A arg) {
+        public TypeCode visit(javalette.Absyn.Fun p, Void ignored) {
             /* Code For Fun Goes Here */
-            p.type_.accept(new TypeVisitor<R, A>(), arg);
-            for (Type x : p.listtype_) { /* ... */ }
-            return null;
+            // p.type_.accept(new TypeVisitor<R, A>(), arg);
+            // for (Type x : p.listtype_) { /* ... */ }
+            // return null;
+            throw new UnsupportedOperationException("visit(javalette.Absyn.Fun)");
         }
     }
 
-    public static class ExprVisitor<R, A> implements Expr.Visitor<R, A> {
-        public R visit(javalette.Absyn.EVar p, A arg) {
+    public static class ExprVisitor implements javalette.Absyn.Expr.Visitor<ExpCustom, EnvTypecheck> {
+        public ExpCustom visit(javalette.Absyn.EVar p, EnvTypecheck env) {
             /* Code For EVar Goes Here */
             //p.ident_;
             return null;
         }
 
-        public R visit(javalette.Absyn.ELitInt p, A arg) {
+        public ExpCustom visit(javalette.Absyn.ELitInt p, EnvTypecheck env) {
             /* Code For ELitInt Goes Here */
             //p.integer_;
             return null;
         }
 
-        public R visit(javalette.Absyn.ELitDoub p, A arg) {
+        public ExpCustom visit(javalette.Absyn.ELitDoub p, EnvTypecheck env) {
             /* Code For ELitDoub Goes Here */
             //p.double_;
             return null;
         }
 
-        public R visit(javalette.Absyn.ELitTrue p, A arg) {
+        public ExpCustom visit(javalette.Absyn.ELitTrue p, EnvTypecheck env) {
             /* Code For ELitTrue Goes Here */
             return null;
         }
 
-        public R visit(javalette.Absyn.ELitFalse p, A arg) {
+        public ExpCustom visit(javalette.Absyn.ELitFalse p, EnvTypecheck env) {
             /* Code For ELitFalse Goes Here */
             return null;
         }
 
-        public R visit(javalette.Absyn.EApp p, A arg) {
+        public ExpCustom visit(javalette.Absyn.EApp p, EnvTypecheck env) {
             /* Code For EApp Goes Here */
             //p.ident_;
-            for (Expr x : p.listexpr_) { /* ... */ }
+            for (javalette.Absyn.Expr x : p.listexpr_) { /* ... */ }
             return null;
         }
 
-        public R visit(javalette.Absyn.EString p, A arg) {
+        public ExpCustom visit(javalette.Absyn.EString p, EnvTypecheck env) {
             /* Code For EString Goes Here */
             //p.string_;
             return null;
         }
 
-        public R visit(javalette.Absyn.Neg p, A arg) {
+        public ExpCustom visit(javalette.Absyn.Neg p, EnvTypecheck env) {
             /* Code For Neg Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.Not p, A arg) {
+        public ExpCustom visit(javalette.Absyn.Not p, EnvTypecheck env) {
             /* Code For Not Goes Here */
-            p.expr_.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.EMul p, A arg) {
+        public ExpCustom visit(javalette.Absyn.EMul p, EnvTypecheck env) {
             /* Code For EMul Goes Here */
-            p.expr_1.accept(new ExprVisitor<R, A>(), arg);
-            p.mulop_.accept(new MulOpVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_1.accept(new ExprVisitor(), env);
+            // p.mulop_.accept(new MulOpVisitor<R, A>(), arg);
+            p.expr_2.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.EAdd p, A arg) {
+        public ExpCustom visit(javalette.Absyn.EAdd p, EnvTypecheck env) {
             /* Code For EAdd Goes Here */
-            p.expr_1.accept(new ExprVisitor<R, A>(), arg);
-            p.addop_.accept(new AddOpVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_1.accept(new ExprVisitor(), env);
+            // p.addop_.accept(new AddOpVisitor<R, A>(), arg);
+            p.expr_2.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.ERel p, A arg) {
+        public ExpCustom visit(javalette.Absyn.ERel p, EnvTypecheck env) {
             /* Code For ERel Goes Here */
-            p.expr_1.accept(new ExprVisitor<R, A>(), arg);
-            p.relop_.accept(new RelOpVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_1.accept(new ExprVisitor(), env);
+            // p.relop_.accept(new RelOpVisitor<R, A>(), arg);
+            p.expr_2.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.EAnd p, A arg) {
+        public ExpCustom visit(javalette.Absyn.EAnd p, EnvTypecheck env) {
             /* Code For EAnd Goes Here */
-            p.expr_1.accept(new ExprVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_1.accept(new ExprVisitor(), env);
+            p.expr_2.accept(new ExprVisitor(), env);
             return null;
         }
 
-        public R visit(javalette.Absyn.EOr p, A arg) {
+        public ExpCustom visit(javalette.Absyn.EOr p, EnvTypecheck env) {
             /* Code For EOr Goes Here */
-            p.expr_1.accept(new ExprVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor<R, A>(), arg);
+            p.expr_1.accept(new ExprVisitor(), env);
+            p.expr_2.accept(new ExprVisitor(), env);
             return null;
         }
     }
 
-    public static class AddOpVisitor<R, A> implements AddOp.Visitor<R, A> {
-        public R visit(javalette.Absyn.Plus p, A arg) {
-            /* Code For Plus Goes Here */
-            return null;
+    public static class AddOpVisitor implements javalette.Absyn.AddOp.Visitor<String, Void> {
+        public String visit(javalette.Absyn.Plus p, Void ignored) {
+            return "addition";
         }
 
-        public R visit(javalette.Absyn.Minus p, A arg) {
-            /* Code For Minus Goes Here */
-            return null;
+        public String visit(javalette.Absyn.Minus p, Void ignored) {
+            return "subtraction";
         }
     }
 
-    public static class MulOpVisitor<R, A> implements MulOp.Visitor<R, A> {
-        public R visit(javalette.Absyn.Times p, A arg) {
-            /* Code For Times Goes Here */
-            return null;
+    public static class MulOpVisitor implements javalette.Absyn.MulOp.Visitor<String, Void> {
+        public String visit(javalette.Absyn.Times p, Void ignored) {
+            return "multiplication";
         }
 
-        public R visit(javalette.Absyn.Div p, A arg) {
-            /* Code For Div Goes Here */
-            return null;
+        public String visit(javalette.Absyn.Div p, Void ignored) {
+            return "division";
         }
 
-        public R visit(javalette.Absyn.Mod p, A arg) {
-            /* Code For Mod Goes Here */
-            return null;
+        public String visit(javalette.Absyn.Mod p, Void ignored) {
+            return "modulo";
         }
     }
 
-    public static class RelOpVisitor<R, A> implements RelOp.Visitor<R, A> {
-        public R visit(javalette.Absyn.LTH p, A arg) {
-            /* Code For LTH Goes Here */
-            return null;
+    public static class RelOpVisitor implements javalette.Absyn.RelOp.Visitor<String, TypeCode[]> {
+        private boolean sameTypes(TypeCode[] types) {
+            TypeCode left = types[0];
+            TypeCode right = types[1];
+            return canCoerce(minType(left, right), TypeCode.CDouble);
         }
 
-        public R visit(javalette.Absyn.LE p, A arg) {
-            /* Code For LE Goes Here */
-            return null;
+        public String visit(javalette.Absyn.LTH p, TypeCode[] types) {
+            return sameTypes(types) ? null : "lower than";
         }
 
-        public R visit(javalette.Absyn.GTH p, A arg) {
-            /* Code For GTH Goes Here */
-            return null;
+        public String visit(javalette.Absyn.LE p, TypeCode[] types) {
+            return sameTypes(types) ? null : "lower or equal";
         }
 
-        public R visit(javalette.Absyn.GE p, A arg) {
-            /* Code For GE Goes Here */
-            return null;
+        public String visit(javalette.Absyn.GTH p, TypeCode[] types) {
+            return sameTypes(types) ? null : "greater than";
         }
 
-        public R visit(javalette.Absyn.EQU p, A arg) {
-            /* Code For EQU Goes Here */
-            return null;
+        public String visit(javalette.Absyn.GE p, TypeCode[] types) {
+            return sameTypes(types) ? null : "greater or equal";
         }
 
-        public R visit(javalette.Absyn.NE p, A arg) {
-            /* Code For NE Goes Here */
-            return null;
+        public String visit(javalette.Absyn.EQU p, TypeCode[] types) {
+            return sameTypes(types) ? null : "equality";
+        }
+
+        public String visit(javalette.Absyn.NE p, TypeCode[] types) {
+            return sameTypes(types) ? null : "difference";
         }
     }
 }
