@@ -27,11 +27,6 @@ public class ExpCustom extends Expr {
         return parentExp.accept(v, arg);
     }
 
-    @Override
-    public String toString() {
-        return type.toString();
-    }
-
     public void markAsCoerced() {
         if (this.needsCoercion()) {
             this.type = this.coertTo;

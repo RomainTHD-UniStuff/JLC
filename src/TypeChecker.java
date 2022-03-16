@@ -1,3 +1,66 @@
+import javalette.Absyn.AddOp;
+import javalette.Absyn.Arg;
+import javalette.Absyn.Argument;
+import javalette.Absyn.Ass;
+import javalette.Absyn.BStmt;
+import javalette.Absyn.Blk;
+import javalette.Absyn.Block;
+import javalette.Absyn.Bool;
+import javalette.Absyn.Cond;
+import javalette.Absyn.CondElse;
+import javalette.Absyn.Decl;
+import javalette.Absyn.Decr;
+import javalette.Absyn.Div;
+import javalette.Absyn.Doub;
+import javalette.Absyn.EAdd;
+import javalette.Absyn.EAnd;
+import javalette.Absyn.EApp;
+import javalette.Absyn.ELitDoub;
+import javalette.Absyn.ELitFalse;
+import javalette.Absyn.ELitInt;
+import javalette.Absyn.ELitTrue;
+import javalette.Absyn.EMul;
+import javalette.Absyn.EOr;
+import javalette.Absyn.EQU;
+import javalette.Absyn.ERel;
+import javalette.Absyn.EString;
+import javalette.Absyn.EVar;
+import javalette.Absyn.Empty;
+import javalette.Absyn.Expr;
+import javalette.Absyn.FnDef;
+import javalette.Absyn.Fun;
+import javalette.Absyn.GE;
+import javalette.Absyn.GTH;
+import javalette.Absyn.Incr;
+import javalette.Absyn.Init;
+import javalette.Absyn.Int;
+import javalette.Absyn.Item;
+import javalette.Absyn.LE;
+import javalette.Absyn.LTH;
+import javalette.Absyn.ListExpr;
+import javalette.Absyn.ListItem;
+import javalette.Absyn.ListStmt;
+import javalette.Absyn.ListTopDef;
+import javalette.Absyn.Minus;
+import javalette.Absyn.Mod;
+import javalette.Absyn.MulOp;
+import javalette.Absyn.NE;
+import javalette.Absyn.Neg;
+import javalette.Absyn.NoInit;
+import javalette.Absyn.Not;
+import javalette.Absyn.Plus;
+import javalette.Absyn.Prog;
+import javalette.Absyn.Program;
+import javalette.Absyn.RelOp;
+import javalette.Absyn.Ret;
+import javalette.Absyn.SExp;
+import javalette.Absyn.Stmt;
+import javalette.Absyn.Times;
+import javalette.Absyn.TopDef;
+import javalette.Absyn.Type;
+import javalette.Absyn.VRet;
+import javalette.Absyn.While;
+
 import java.util.LinkedList;
 
 class EnvTypecheck extends Env<TypeCode, FunType> {
@@ -21,15 +84,15 @@ public class TypeChecker {
         }
     }
 
-    public javalette.Absyn.Prog typecheck(javalette.Absyn.Prog p) {
+    public Prog typecheck(Prog p) {
         EnvTypecheck env = new EnvTypecheck();
         p.accept(new ProgVisitorSignature(), env);
         return p.accept(new ProgVisitor(), env);
     }
 
-    public static class ProgVisitorSignature implements javalette.Absyn.Prog.Visitor<Void, EnvTypecheck> {
-        public Void visit(javalette.Absyn.Program p, EnvTypecheck env) {
-            for (javalette.Absyn.TopDef def : p.listtopdef_) {
+    public static class ProgVisitorSignature implements Prog.Visitor<Void, EnvTypecheck> {
+        public Void visit(Program p, EnvTypecheck env) {
+            for (TopDef def : p.listtopdef_) {
                 def.accept(new TopDefVisitorSignature(), env);
             }
 
@@ -70,20 +133,20 @@ public class TypeChecker {
         }
     }
 
-    public static class ProgVisitor implements javalette.Absyn.Prog.Visitor<javalette.Absyn.Prog, EnvTypecheck> {
-        public javalette.Absyn.Prog visit(javalette.Absyn.Program p, EnvTypecheck env) {
-            javalette.Absyn.ListTopDef topDef = new javalette.Absyn.ListTopDef();
+    public static class ProgVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
+        public Prog visit(Program p, EnvTypecheck env) {
+            ListTopDef topDef = new ListTopDef();
 
-            for (javalette.Absyn.TopDef def : p.listtopdef_) {
+            for (TopDef def : p.listtopdef_) {
                 topDef.add(def.accept(new TopDefVisitor(), env));
             }
 
-            return new javalette.Absyn.Program(topDef);
+            return new Program(topDef);
         }
     }
 
-    public static class TopDefVisitor implements javalette.Absyn.TopDef.Visitor<javalette.Absyn.TopDef, EnvTypecheck> {
-        public javalette.Absyn.TopDef visit(javalette.Absyn.FnDef f, EnvTypecheck env) {
+    public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvTypecheck> {
+        public TopDef visit(FnDef f, EnvTypecheck env) {
             FunType func = env.lookupFun(f.ident_);
 
             env.enterScope();
@@ -94,26 +157,23 @@ public class TypeChecker {
 
             env.currentFunctionType = func.retType;
 
-            javalette.Absyn.ListStmt statements = new javalette.Absyn.ListStmt();
-
-            for (javalette.Absyn.Stmt stm : ((javalette.Absyn.Block) f.blk_).liststmt_) {
-                statements.add(stm.accept(new StmtVisitor(), env));
-            }
+            Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
 
             env.leaveScope();
-            return new javalette.Absyn.FnDef(
+
+            return new FnDef(
                 f.type_,
                 f.ident_,
                 f.listarg_,
-                new javalette.Absyn.Block(statements)
+                nBlock
             );
         }
     }
 
-    public static class TopDefVisitorSignature implements javalette.Absyn.TopDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(javalette.Absyn.FnDef p, EnvTypecheck env) {
+    public static class TopDefVisitorSignature implements TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(FnDef p, EnvTypecheck env) {
             LinkedList<FunArg> argsType = new LinkedList<>();
-            for (javalette.Absyn.Arg arg : p.listarg_) {
+            for (Arg arg : p.listarg_) {
                 argsType.add(arg.accept(new ArgVisitor(), null));
             }
 
@@ -124,126 +184,223 @@ public class TypeChecker {
         }
     }
 
-    public static class ArgVisitor implements javalette.Absyn.Arg.Visitor<FunArg, Void> {
-        public FunArg visit(javalette.Absyn.Argument p, Void ignored) {
-            /* Code For Argument Goes Here */
-            p.type_.accept(new TypeVisitor(), null);
-            //p.ident_;
-            return null;
+    public static class ArgVisitor implements Arg.Visitor<FunArg, Void> {
+        public FunArg visit(Argument a, Void ignored) {
+            TypeCode type = a.type_.accept(new TypeVisitor(), null);
+
+            if (type == TypeCode.CVoid) {
+                throw new InvalidDeclaredTypeException(type.toString(), a.ident_);
+            }
+
+            return new FunArg(type, a.ident_);
         }
     }
 
-    public static class BlkVisitor implements javalette.Absyn.Blk.Visitor<javalette.Absyn.Blk, EnvTypecheck> {
-        public javalette.Absyn.Blk visit(javalette.Absyn.Block p, EnvTypecheck env) {
-            /* Code For Block Goes Here */
-            for (javalette.Absyn.Stmt x : p.liststmt_) { /* ... */ }
-            return null;
+    public static class BlkVisitor implements Blk.Visitor<Blk, EnvTypecheck> {
+        public Blk visit(Block p, EnvTypecheck env) {
+            ListStmt statements = new ListStmt();
+
+            env.enterScope();
+
+            for (Stmt s : p.liststmt_) {
+                statements.add(s.accept(new StmtVisitor(), env));
+            }
+
+            env.leaveScope();
+
+            return new Block(statements);
         }
     }
 
-    public static class StmtVisitor implements javalette.Absyn.Stmt.Visitor<javalette.Absyn.Stmt, EnvTypecheck> {
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Empty p, EnvTypecheck env) {
-            /* Code For Empty Goes Here */
-            return null;
+    public static class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
+        public Stmt visit(Empty s, EnvTypecheck env) {
+            return new Empty();
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.BStmt p, EnvTypecheck env) {
-            /* Code For BStmt Goes Here */
-            p.blk_.accept(new BlkVisitor(), env);
-            return null;
+        public Stmt visit(BStmt s, EnvTypecheck env) {
+            return new BStmt(s.blk_.accept(new BlkVisitor(), env));
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Decl p, EnvTypecheck env) {
-            /* Code For Decl Goes Here */
-            p.type_.accept(new TypeVisitor(), null);
-            for (javalette.Absyn.Item x : p.listitem_) { /* ... */ }
-            return null;
+        public Stmt visit(Decl s, EnvTypecheck env) {
+            TypeCode type = s.type_.accept(new TypeVisitor(), null);
+            if (type == TypeCode.CVoid) {
+                throw new InvalidDeclaredTypeException(
+                    type.toString()
+                );
+            }
+
+            ListItem items = new ListItem();
+
+            for (Item item : s.listitem_) {
+                items.add(item.accept(new ItemVisitor(), new Object[]{env, type}));
+            }
+
+            return new Decl(s.type_, items);
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Ass p, EnvTypecheck env) {
-            /* Code For Ass Goes Here */
-            //p.ident_;
-            p.expr_.accept(new ExprVisitor(), env);
-            return null;
+        public Stmt visit(Ass s, EnvTypecheck env) {
+            TypeCode expectedType = env.lookupVar(s.ident_);
+            if (expectedType == null) {
+                throw new NoSuchVariableException(s.ident_);
+            }
+
+            ExpCustom exp = s.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(exp.type, expectedType)) {
+                throw new InvalidAssignmentTypeException(
+                    s.ident_,
+                    expectedType.toString(),
+                    exp.type.toString()
+                );
+            }
+
+            return new Ass(s.ident_, exp.maybeCoertTo(expectedType));
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Incr p, EnvTypecheck env) {
-            /* Code For Incr Goes Here */
-            //p.ident_;
-            return null;
+        public Stmt visit(Incr s, EnvTypecheck env) {
+            TypeCode varType = env.lookupVar(s.ident_);
+
+            if (varType == null) {
+                throw new NoSuchVariableException(s.ident_);
+            }
+
+            if (!canCoerce(varType, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    "increment",
+                    varType.toString(),
+                    TypeCode.CInt.toString(),
+                    TypeCode.CDouble.toString()
+                );
+            }
+
+            return new Incr(s.ident_);
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Decr p, EnvTypecheck env) {
-            /* Code For Decr Goes Here */
-            //p.ident_;
-            return null;
+        public Stmt visit(Decr s, EnvTypecheck env) {
+            TypeCode varType = env.lookupVar(s.ident_);
+
+            if (varType == null) {
+                throw new NoSuchVariableException(s.ident_);
+            }
+
+            if (!canCoerce(varType, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    "decrement",
+                    varType.toString(),
+                    TypeCode.CInt.toString(),
+                    TypeCode.CDouble.toString()
+                );
+            }
+
+            return new Decr(s.ident_);
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Ret p, EnvTypecheck env) {
-            /* Code For Ret Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            return null;
+        public Stmt visit(Ret s, EnvTypecheck env) {
+            ExpCustom exp = s.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(exp.type, env.currentFunctionType)) {
+                throw new InvalidReturnedTypeException(
+                    env.currentFunctionType.toString(),
+                    exp.type.toString()
+                );
+            }
+
+            return new Ret(exp.maybeCoertTo(env.currentFunctionType));
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.VRet p, EnvTypecheck env) {
-            /* Code For VRet Goes Here */
-            return null;
+        public Stmt visit(VRet s, EnvTypecheck env) {
+            if (env.currentFunctionType != TypeCode.CVoid) {
+                throw new InvalidReturnedTypeException(
+                    env.currentFunctionType.toString(),
+                    TypeCode.CVoid.toString()
+                );
+            }
+
+            return new VRet();
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.Cond p, EnvTypecheck env) {
-            /* Code For Cond Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            p.stmt_.accept(new StmtVisitor(), env);
-            return null;
+        public Stmt visit(Cond s, EnvTypecheck env) {
+            ExpCustom exp = s.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(exp.type, TypeCode.CBool)) {
+                throw new InvalidConditionTypeException("if", exp.type.toString());
+            }
+
+            env.enterScope();
+            Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
+            env.leaveScope();
+
+            return new Cond(exp.maybeCoertTo(TypeCode.CBool), stmt);
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.CondElse p, EnvTypecheck env) {
-            /* Code For CondElse Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            p.stmt_1.accept(new StmtVisitor(), env);
-            p.stmt_2.accept(new StmtVisitor(), env);
-            return null;
+        public Stmt visit(CondElse s, EnvTypecheck env) {
+            ExpCustom exp = s.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(exp.type, TypeCode.CBool)) {
+                throw new InvalidConditionTypeException("if-else", exp.type.toString());
+            }
+
+            env.enterScope();
+            Stmt stmt1 = s.stmt_1.accept(new StmtVisitor(), env);
+            env.leaveScope();
+
+            env.enterScope();
+            Stmt stmt2 = s.stmt_2.accept(new StmtVisitor(), env);
+            env.leaveScope();
+
+            return new CondElse(exp.maybeCoertTo(TypeCode.CBool), stmt1, stmt2);
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.While p, EnvTypecheck env) {
-            /* Code For While Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            p.stmt_.accept(new StmtVisitor(), env);
-            return null;
+        public Stmt visit(While s, EnvTypecheck env) {
+            ExpCustom exp = s.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(exp.type, TypeCode.CBool)) {
+                throw new InvalidConditionTypeException("while", exp.type.toString());
+            }
+
+            env.enterScope();
+            Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
+            env.leaveScope();
+
+            return new While(exp.maybeCoertTo(TypeCode.CBool), stmt);
         }
 
-        public javalette.Absyn.Stmt visit(javalette.Absyn.SExp p, EnvTypecheck env) {
-            /* Code For SExp Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            return null;
+        public Stmt visit(SExp s, EnvTypecheck env) {
+            return new SExp(s.expr_.accept(new ExprVisitor(), env));
         }
     }
 
-    public static class ItemVisitor implements javalette.Absyn.Item.Visitor<javalette.Absyn.Item, EnvTypecheck> {
-        public javalette.Absyn.Item visit(javalette.Absyn.NoInit p, EnvTypecheck env) {
-            /* Code For NoInit Goes Here */
-            //p.ident_;
-            return null;
+    public static class ItemVisitor implements Item.Visitor<Item, Object[]> {
+        public Item visit(NoInit p, Object[] args) {
+            EnvTypecheck env = (EnvTypecheck) args[0];
+            TypeCode varType = (TypeCode) args[1];
+            env.insertVar(p.ident_, varType);
+            return new NoInit(p.ident_);
         }
 
-        public javalette.Absyn.Item visit(javalette.Absyn.Init p, EnvTypecheck env) {
-            /* Code For Init Goes Here */
-            //p.ident_;
-            p.expr_.accept(new ExprVisitor(), env);
-            return null;
+        public Item visit(Init s, Object[] args) {
+            EnvTypecheck env = (EnvTypecheck) args[0];
+            TypeCode varType = (TypeCode) args[1];
+            env.insertVar(s.ident_, varType);
+            ExpCustom exp = s.expr_.accept(new ExprVisitor(), env);
+
+            if (!canCoerce(exp.type, varType)) {
+                throw new InvalidAssignmentTypeException(
+                    s.ident_,
+                    varType.toString(),
+                    exp.type.toString()
+                );
+            }
+
+            return new Init(s.ident_, exp);
         }
     }
 
-    public static class TypeVisitor implements javalette.Absyn.Type.Visitor<TypeCode, Void> {
-        public TypeCode visit(javalette.Absyn.Bool t, Void ignored) {
+    public static class TypeVisitor implements Type.Visitor<TypeCode, Void> {
+        public TypeCode visit(Bool t, Void ignored) {
             return TypeCode.CBool;
         }
 
-        public TypeCode visit(javalette.Absyn.Int t, Void ignored) {
+        public TypeCode visit(Int t, Void ignored) {
             return TypeCode.CInt;
         }
 
-        public TypeCode visit(javalette.Absyn.Doub t, Void ignored) {
+        public TypeCode visit(Doub t, Void ignored) {
             return TypeCode.CDouble;
         }
 
@@ -251,161 +408,275 @@ public class TypeChecker {
             return TypeCode.CVoid;
         }
 
-        public TypeCode visit(javalette.Absyn.Fun p, Void ignored) {
-            /* Code For Fun Goes Here */
-            // p.type_.accept(new TypeVisitor<R, A>(), arg);
-            // for (Type x : p.listtype_) { /* ... */ }
-            // return null;
+        public TypeCode visit(Fun p, Void ignored) {
             throw new UnsupportedOperationException("visit(javalette.Absyn.Fun)");
         }
     }
 
-    public static class ExprVisitor implements javalette.Absyn.Expr.Visitor<ExpCustom, EnvTypecheck> {
-        public ExpCustom visit(javalette.Absyn.EVar p, EnvTypecheck env) {
-            /* Code For EVar Goes Here */
-            //p.ident_;
-            return null;
+    public static class ExprVisitor implements Expr.Visitor<ExpCustom, EnvTypecheck> {
+        public ExpCustom visit(EVar e, EnvTypecheck env) {
+            TypeCode varType = env.lookupVar(e.ident_);
+            if (varType == null) {
+                throw new NoSuchVariableException(e.ident_);
+            }
+
+            return new ExpCustom(varType, e);
         }
 
-        public ExpCustom visit(javalette.Absyn.ELitInt p, EnvTypecheck env) {
-            /* Code For ELitInt Goes Here */
-            //p.integer_;
-            return null;
+        public ExpCustom visit(ELitInt e, EnvTypecheck env) {
+            return new ExpCustom(TypeCode.CInt, e);
         }
 
-        public ExpCustom visit(javalette.Absyn.ELitDoub p, EnvTypecheck env) {
-            /* Code For ELitDoub Goes Here */
-            //p.double_;
-            return null;
+        public ExpCustom visit(ELitDoub e, EnvTypecheck env) {
+            return new ExpCustom(TypeCode.CDouble, e);
         }
 
-        public ExpCustom visit(javalette.Absyn.ELitTrue p, EnvTypecheck env) {
-            /* Code For ELitTrue Goes Here */
-            return null;
+        public ExpCustom visit(ELitTrue e, EnvTypecheck env) {
+            return new ExpCustom(TypeCode.CBool, e);
         }
 
-        public ExpCustom visit(javalette.Absyn.ELitFalse p, EnvTypecheck env) {
-            /* Code For ELitFalse Goes Here */
-            return null;
+        public ExpCustom visit(ELitFalse e, EnvTypecheck env) {
+            return new ExpCustom(TypeCode.CBool, e);
         }
 
-        public ExpCustom visit(javalette.Absyn.EApp p, EnvTypecheck env) {
-            /* Code For EApp Goes Here */
-            //p.ident_;
-            for (javalette.Absyn.Expr x : p.listexpr_) { /* ... */ }
-            return null;
+        public ExpCustom visit(EApp e, EnvTypecheck env) {
+            FunType funcType = env.lookupFun(e.ident_);
+            if (funcType == null) {
+                throw new NoSuchFunctionException(e.ident_);
+            }
+
+            if (e.listexpr_.size() != funcType.args.size()) {
+                throw new InvalidArgumentCountException(
+                    e.ident_,
+                    funcType.args.size(),
+                    e.listexpr_.size()
+                );
+            }
+
+            ListExpr exps = new ListExpr();
+            for (int i = 0; i < funcType.args.size(); ++i) {
+                FunArg expected = funcType.args.get(i);
+                ExpCustom exp = e.listexpr_.get(i).accept(new ExprVisitor(), env);
+                if (!canCoerce(exp.type, expected.type)) {
+                    throw new InvalidAssignmentTypeException(
+                        expected.name,
+                        expected.type.toString(),
+                        exp.type.toString()
+                    );
+                }
+                exps.add(exp.maybeCoertTo(expected.type));
+            }
+
+            return new ExpCustom(funcType.retType, new EApp(e.ident_, exps));
         }
 
-        public ExpCustom visit(javalette.Absyn.EString p, EnvTypecheck env) {
-            /* Code For EString Goes Here */
-            //p.string_;
-            return null;
+        public ExpCustom visit(EString e, EnvTypecheck env) {
+            throw new UnsupportedOperationException("visit(javalette.Absyn.EString)");
         }
 
-        public ExpCustom visit(javalette.Absyn.Neg p, EnvTypecheck env) {
-            /* Code For Neg Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(Neg e, EnvTypecheck env) {
+            ExpCustom expr = e.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(expr.type, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    "negation",
+                    expr.type.toString(),
+                    TypeCode.CInt.toString(),
+                    TypeCode.CDouble.toString()
+                );
+            }
+
+            return new ExpCustom(expr.type, new Neg(expr));
         }
 
-        public ExpCustom visit(javalette.Absyn.Not p, EnvTypecheck env) {
-            /* Code For Not Goes Here */
-            p.expr_.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(Not e, EnvTypecheck env) {
+            ExpCustom expr = e.expr_.accept(new ExprVisitor(), env);
+            if (!canCoerce(expr.type, TypeCode.CBool)) {
+                throw new InvalidOperationException(
+                    "not",
+                    expr.type.toString(),
+                    TypeCode.CBool.toString()
+                );
+            }
+
+            return new ExpCustom(
+                TypeCode.CBool,
+                new Not(expr.maybeCoertTo(TypeCode.CBool))
+            );
         }
 
-        public ExpCustom visit(javalette.Absyn.EMul p, EnvTypecheck env) {
-            /* Code For EMul Goes Here */
-            p.expr_1.accept(new ExprVisitor(), env);
-            // p.mulop_.accept(new MulOpVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(EMul e, EnvTypecheck env) {
+            ExpCustom left = e.expr_1.accept(new ExprVisitor(), env);
+            ExpCustom right = e.expr_2.accept(new ExprVisitor(), env);
+            TypeCode min = minType(left.type, right.type);
+
+            if (!canCoerce(min, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    e.mulop_.accept(new MulOpVisitor(), null),
+                    left.type.toString(),
+                    right.type.toString()
+                );
+            }
+
+            return new ExpCustom(
+                min,
+                new EMul(
+                    left.maybeCoertTo(min),
+                    e.mulop_,
+                    right.maybeCoertTo(min)
+                )
+            );
         }
 
-        public ExpCustom visit(javalette.Absyn.EAdd p, EnvTypecheck env) {
-            /* Code For EAdd Goes Here */
-            p.expr_1.accept(new ExprVisitor(), env);
-            // p.addop_.accept(new AddOpVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(EAdd e, EnvTypecheck env) {
+            ExpCustom left = e.expr_1.accept(new ExprVisitor(), env);
+            ExpCustom right = e.expr_2.accept(new ExprVisitor(), env);
+            TypeCode min = minType(left.type, right.type);
+
+            if (!canCoerce(min, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    e.addop_.accept(new AddOpVisitor(), null),
+                    left.type.toString(),
+                    right.type.toString()
+                );
+            }
+
+            return new ExpCustom(
+                min,
+                new EAdd(
+                    left.maybeCoertTo(min),
+                    e.addop_,
+                    right.maybeCoertTo(min)
+                )
+            );
         }
 
-        public ExpCustom visit(javalette.Absyn.ERel p, EnvTypecheck env) {
-            /* Code For ERel Goes Here */
-            p.expr_1.accept(new ExprVisitor(), env);
-            // p.relop_.accept(new RelOpVisitor<R, A>(), arg);
-            p.expr_2.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(ERel e, EnvTypecheck env) {
+            ExpCustom left = e.expr_1.accept(new ExprVisitor(), env);
+            ExpCustom right = e.expr_2.accept(new ExprVisitor(), env);
+            String opName = e.relop_.accept(
+                new RelOpVisitor(),
+                new TypeCode[]{left.type, right.type}
+            );
+
+            if (opName != null) {
+                throw new InvalidOperationException(
+                    opName,
+                    left.type.toString(),
+                    right.type.toString()
+                );
+            }
+
+            TypeCode min = minType(left.type, right.type);
+            return new ExpCustom(
+                TypeCode.CBool,
+                new ERel(
+                    left.maybeCoertTo(min),
+                    e.relop_,
+                    right.maybeCoertTo(min)
+                )
+            );
         }
 
-        public ExpCustom visit(javalette.Absyn.EAnd p, EnvTypecheck env) {
-            /* Code For EAnd Goes Here */
-            p.expr_1.accept(new ExprVisitor(), env);
-            p.expr_2.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(EAnd e, EnvTypecheck env) {
+            ExpCustom left = e.expr_1.accept(new ExprVisitor(), env);
+            ExpCustom right = e.expr_2.accept(new ExprVisitor(), env);
+
+            if (!canCoerce(left.type, TypeCode.CBool) || !canCoerce(right.type, TypeCode.CBool)) {
+                throw new InvalidOperationException(
+                    "conjunction",
+                    left.type.toString(),
+                    right.type.toString()
+                );
+            }
+
+            return new ExpCustom(
+                TypeCode.CBool,
+                new EAnd(
+                    left.maybeCoertTo(TypeCode.CBool),
+                    right.maybeCoertTo(TypeCode.CBool)
+                )
+            );
         }
 
-        public ExpCustom visit(javalette.Absyn.EOr p, EnvTypecheck env) {
-            /* Code For EOr Goes Here */
-            p.expr_1.accept(new ExprVisitor(), env);
-            p.expr_2.accept(new ExprVisitor(), env);
-            return null;
+        public ExpCustom visit(EOr e, EnvTypecheck env) {
+            ExpCustom left = e.expr_1.accept(new ExprVisitor(), env);
+            ExpCustom right = e.expr_2.accept(new ExprVisitor(), env);
+
+            if (!canCoerce(left.type, TypeCode.CBool) || !canCoerce(right.type, TypeCode.CBool)) {
+                throw new InvalidOperationException(
+                    "disjunction",
+                    left.type.toString(),
+                    right.type.toString()
+                );
+            }
+
+            return new ExpCustom(
+                TypeCode.CBool,
+                new EOr(
+                    left.maybeCoertTo(TypeCode.CBool),
+                    right.maybeCoertTo(TypeCode.CBool)
+                )
+            );
         }
     }
 
-    public static class AddOpVisitor implements javalette.Absyn.AddOp.Visitor<String, Void> {
-        public String visit(javalette.Absyn.Plus p, Void ignored) {
+    public static class AddOpVisitor implements AddOp.Visitor<String, Void> {
+        public String visit(Plus p, Void ignored) {
             return "addition";
         }
 
-        public String visit(javalette.Absyn.Minus p, Void ignored) {
+        public String visit(Minus p, Void ignored) {
             return "subtraction";
         }
     }
 
-    public static class MulOpVisitor implements javalette.Absyn.MulOp.Visitor<String, Void> {
-        public String visit(javalette.Absyn.Times p, Void ignored) {
+    public static class MulOpVisitor implements MulOp.Visitor<String, Void> {
+        public String visit(Times p, Void ignored) {
             return "multiplication";
         }
 
-        public String visit(javalette.Absyn.Div p, Void ignored) {
+        public String visit(Div p, Void ignored) {
             return "division";
         }
 
-        public String visit(javalette.Absyn.Mod p, Void ignored) {
+        public String visit(Mod p, Void ignored) {
             return "modulo";
         }
     }
 
-    public static class RelOpVisitor implements javalette.Absyn.RelOp.Visitor<String, TypeCode[]> {
-        private boolean sameTypes(TypeCode[] types) {
+    public static class RelOpVisitor implements RelOp.Visitor<String, TypeCode[]> {
+        private boolean bothTypes(TypeCode[] types, TypeCode type) {
             TypeCode left = types[0];
             TypeCode right = types[1];
-            return canCoerce(minType(left, right), TypeCode.CDouble);
+            return canCoerce(minType(left, right), type);
         }
 
-        public String visit(javalette.Absyn.LTH p, TypeCode[] types) {
-            return sameTypes(types) ? null : "lower than";
+        public String visit(LTH p, TypeCode[] types) {
+            return bothTypes(types, TypeCode.CDouble) ? null : "lower than";
         }
 
-        public String visit(javalette.Absyn.LE p, TypeCode[] types) {
-            return sameTypes(types) ? null : "lower or equal";
+        public String visit(LE p, TypeCode[] types) {
+            return bothTypes(types, TypeCode.CDouble) ? null : "lower or equal";
         }
 
-        public String visit(javalette.Absyn.GTH p, TypeCode[] types) {
-            return sameTypes(types) ? null : "greater than";
+        public String visit(GTH p, TypeCode[] types) {
+            return bothTypes(types, TypeCode.CDouble) ? null : "greater than";
         }
 
-        public String visit(javalette.Absyn.GE p, TypeCode[] types) {
-            return sameTypes(types) ? null : "greater or equal";
+        public String visit(GE p, TypeCode[] types) {
+            return bothTypes(types, TypeCode.CDouble) ? null : "greater or equal";
         }
 
-        public String visit(javalette.Absyn.EQU p, TypeCode[] types) {
-            return sameTypes(types) ? null : "equality";
+        public String visit(EQU p, TypeCode[] types) {
+            return bothTypes(types, TypeCode.CDouble) || bothTypes(types, TypeCode.CBool)
+                   ? null
+                   : "equality";
         }
 
-        public String visit(javalette.Absyn.NE p, TypeCode[] types) {
-            return sameTypes(types) ? null : "difference";
+        public String visit(NE p, TypeCode[] types) {
+            return bothTypes(types, TypeCode.CDouble) || bothTypes(types, TypeCode.CBool)
+                   ? null
+                   : "difference";
         }
     }
 }

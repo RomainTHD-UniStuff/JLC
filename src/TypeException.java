@@ -5,38 +5,19 @@ class SymbolAlreadyDefinedException extends TypeException {
 }
 
 class InvalidDeclaredTypeException extends TypeException {
-    private final String message;
-
-    public InvalidDeclaredTypeException(String type, String... names) {
-        super("TBD");
-
-        StringBuilder varNames = new StringBuilder();
-        varNames.append("variable");
-        if (names.length == 1) {
-            varNames.append(String.format(" `%s`", names[0]));
-        } else {
-            for (int i = 0; i < names.length; ++i) {
-                if (i == names.length - 1) {
-                    varNames.append(String.format(" and `%s`", names[i]));
-                } else {
-                    varNames.append(String.format("`%s`", names[i]));
-                    if (i != names.length - 2) {
-                        varNames.append(", ");
-                    }
-                }
-            }
-        }
-
-        this.message = String.format(
-            "Invalid declared type received, found `%s` for %s",
-            type,
-            varNames
-        );
+    public InvalidDeclaredTypeException(String type) {
+        super(String.format(
+            "Invalid declared type received, found `%s`",
+            type
+        ));
     }
 
-    @Override
-    public String getMessage() {
-        return this.message;
+    public InvalidDeclaredTypeException(String type, String varName) {
+        super(String.format(
+            "Invalid declared type received, found `%s` for variable `%s`",
+            type,
+            varName
+        ));
     }
 }
 
@@ -56,6 +37,14 @@ class InvalidAssignmentTypeException extends TypeException {
 }
 
 class InvalidReturnedTypeException extends TypeException {
+    public InvalidReturnedTypeException(String expected, String actual) {
+        super(String.format(
+            "Invalid return type, expected `%s`, found `%s`",
+            expected,
+            actual
+        ));
+    }
+
     public InvalidReturnedTypeException(String funcName, String expected, String actual) {
         super(String.format(
             "Invalid return type in %s, expected `%s`, found `%s`",
