@@ -1,11 +1,11 @@
 import javalette.Absyn.Expr;
 
-public class ExpCustom extends Expr {
-    public final Expr parentExp;
+public class ExpCustom<T extends Expr> extends Expr {
+    public final T parentExp;
     public TypeCode type;
     public TypeCode coertTo;
 
-    public ExpCustom(TypeCode expType, Expr parentExp) {
+    public ExpCustom(TypeCode expType, T parentExp) {
         this.type = expType;
         this.parentExp = parentExp;
         this.coertTo = null;
