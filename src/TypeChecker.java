@@ -46,11 +46,13 @@ public class TypeChecker {
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {
+                // FIXME: Should it be there or in the compiler directly?
                 throw new NoSuchFunctionException("main");
             }
 
             if (mainFunc.retType != TypeCode.CInt) {
                 throw new InvalidReturnedTypeException(
+                    "main",
                     TypeCode.CInt.toString(),
                     mainFunc.retType.toString()
                 );
@@ -70,20 +72,41 @@ public class TypeChecker {
 
     public static class ProgVisitor implements javalette.Absyn.Prog.Visitor<javalette.Absyn.Prog, EnvTypecheck> {
         public javalette.Absyn.Prog visit(javalette.Absyn.Program p, EnvTypecheck env) {
-            /* Code For Program Goes Here */
-            for (javalette.Absyn.TopDef x : p.listtopdef_) { /* ... */ }
-            return null;
+            javalette.Absyn.ListTopDef topDef = new javalette.Absyn.ListTopDef();
+
+            for (javalette.Absyn.TopDef def : p.listtopdef_) {
+                topDef.add(def.accept(new TopDefVisitor(), env));
+            }
+
+            return new javalette.Absyn.Program(topDef);
         }
     }
 
     public static class TopDefVisitor implements javalette.Absyn.TopDef.Visitor<javalette.Absyn.TopDef, EnvTypecheck> {
-        public javalette.Absyn.TopDef visit(javalette.Absyn.FnDef p, EnvTypecheck env) {
-            /* Code For FnDef Goes Here */
-            p.type_.accept(new TypeVisitor(), null);
-            //p.ident_;
-            for (javalette.Absyn.Arg x : p.listarg_) { /* ... */ }
-            p.blk_.accept(new BlkVisitor(), env);
-            return null;
+        public javalette.Absyn.TopDef visit(javalette.Absyn.FnDef f, EnvTypecheck env) {
+            FunType func = env.lookupFun(f.ident_);
+
+            env.enterScope();
+
+            for (FunArg arg : func.args) {
+                env.insertVar(arg.name, arg.type);
+            }
+
+            env.currentFunctionType = func.retType;
+
+            javalette.Absyn.ListStmt statements = new javalette.Absyn.ListStmt();
+
+            for (javalette.Absyn.Stmt stm : ((javalette.Absyn.Block) f.blk_).liststmt_) {
+                statements.add(stm.accept(new StmtVisitor(), env));
+            }
+
+            env.leaveScope();
+            return new javalette.Absyn.FnDef(
+                f.type_,
+                f.ident_,
+                f.listarg_,
+                new javalette.Absyn.Block(statements)
+            );
         }
     }
 
