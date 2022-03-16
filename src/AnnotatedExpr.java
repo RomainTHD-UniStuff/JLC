@@ -1,17 +1,17 @@
 import javalette.Absyn.Expr;
 
-public class ExpCustom<T extends Expr> extends Expr {
+public class AnnotatedExpr<T extends Expr> extends Expr {
     public final T parentExp;
     public TypeCode type;
     public TypeCode coertTo;
 
-    public ExpCustom(TypeCode expType, T parentExp) {
+    public AnnotatedExpr(TypeCode expType, T parentExp) {
         this.type = expType;
         this.parentExp = parentExp;
         this.coertTo = null;
     }
 
-    public ExpCustom maybeCoertTo(TypeCode coertTo) {
+    public AnnotatedExpr maybeCoertTo(TypeCode coertTo) {
         if (coertTo != type) {
             this.coertTo = coertTo;
         }

@@ -86,14 +86,14 @@ public class TypeChecker {
 
     public Prog typecheck(Prog p) {
         EnvTypecheck env = new EnvTypecheck();
-        p.accept(new ProgVisitorSignature(), env);
+        p.accept(new ProgSignatureVisitor(), env);
         return p.accept(new ProgVisitor(), env);
     }
 
-    public static class ProgVisitorSignature implements Prog.Visitor<Void, EnvTypecheck> {
+    public static class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
         public Void visit(Program p, EnvTypecheck env) {
             for (TopDef def : p.listtopdef_) {
-                def.accept(new TopDefVisitorSignature(), env);
+                def.accept(new TopDefSignatureVisitor(), env);
             }
 
             env.insertFun("printInt", new FunType(
@@ -170,7 +170,7 @@ public class TypeChecker {
         }
     }
 
-    public static class TopDefVisitorSignature implements TopDef.Visitor<Void, EnvTypecheck> {
+    public static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
         public Void visit(FnDef p, EnvTypecheck env) {
             LinkedList<FunArg> argsType = new LinkedList<>();
             for (Arg arg : p.listarg_) {
@@ -244,7 +244,7 @@ public class TypeChecker {
                 throw new NoSuchVariableException(s.ident_);
             }
 
-            ExpCustom<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(exp.type, expectedType)) {
                 throw new InvalidAssignmentTypeException(
                     s.ident_,
@@ -295,7 +295,7 @@ public class TypeChecker {
         }
 
         public Ret visit(Ret s, EnvTypecheck env) {
-            ExpCustom<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(exp.type, env.currentFunctionType)) {
                 throw new InvalidReturnedTypeException(
                     env.currentFunctionType.toString(),
@@ -318,7 +318,7 @@ public class TypeChecker {
         }
 
         public Cond visit(Cond s, EnvTypecheck env) {
-            ExpCustom<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(exp.type, TypeCode.CBool)) {
                 throw new InvalidConditionTypeException("if", exp.type.toString());
             }
@@ -331,7 +331,7 @@ public class TypeChecker {
         }
 
         public CondElse visit(CondElse s, EnvTypecheck env) {
-            ExpCustom<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(exp.type, TypeCode.CBool)) {
                 throw new InvalidConditionTypeException("if-else", exp.type.toString());
             }
@@ -348,7 +348,7 @@ public class TypeChecker {
         }
 
         public While visit(While s, EnvTypecheck env) {
-            ExpCustom<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(exp.type, TypeCode.CBool)) {
                 throw new InvalidConditionTypeException("while", exp.type.toString());
             }
@@ -377,7 +377,7 @@ public class TypeChecker {
             EnvTypecheck env = (EnvTypecheck) args[0];
             TypeCode varType = (TypeCode) args[1];
             env.insertVar(s.ident_, varType);
-            ExpCustom<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
 
             if (!canCoerce(exp.type, varType)) {
                 throw new InvalidAssignmentTypeException(
@@ -413,33 +413,33 @@ public class TypeChecker {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<ExpCustom<?>, EnvTypecheck> {
-        public ExpCustom<EVar> visit(EVar e, EnvTypecheck env) {
+    public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
+        public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
             TypeCode varType = env.lookupVar(e.ident_);
             if (varType == null) {
                 throw new NoSuchVariableException(e.ident_);
             }
 
-            return new ExpCustom<>(varType, e);
+            return new AnnotatedExpr<>(varType, e);
         }
 
-        public ExpCustom<ELitInt> visit(ELitInt e, EnvTypecheck env) {
-            return new ExpCustom<>(TypeCode.CInt, e);
+        public AnnotatedExpr<ELitInt> visit(ELitInt e, EnvTypecheck env) {
+            return new AnnotatedExpr<>(TypeCode.CInt, e);
         }
 
-        public ExpCustom<ELitDoub> visit(ELitDoub e, EnvTypecheck env) {
-            return new ExpCustom<>(TypeCode.CDouble, e);
+        public AnnotatedExpr<ELitDoub> visit(ELitDoub e, EnvTypecheck env) {
+            return new AnnotatedExpr<>(TypeCode.CDouble, e);
         }
 
-        public ExpCustom<ELitTrue> visit(ELitTrue e, EnvTypecheck env) {
-            return new ExpCustom<>(TypeCode.CBool, e);
+        public AnnotatedExpr<ELitTrue> visit(ELitTrue e, EnvTypecheck env) {
+            return new AnnotatedExpr<>(TypeCode.CBool, e);
         }
 
-        public ExpCustom<ELitFalse> visit(ELitFalse e, EnvTypecheck env) {
-            return new ExpCustom<>(TypeCode.CBool, e);
+        public AnnotatedExpr<ELitFalse> visit(ELitFalse e, EnvTypecheck env) {
+            return new AnnotatedExpr<>(TypeCode.CBool, e);
         }
 
-        public ExpCustom<EApp> visit(EApp e, EnvTypecheck env) {
+        public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
             FunType funcType = env.lookupFun(e.ident_);
             if (funcType == null) {
                 throw new NoSuchFunctionException(e.ident_);
@@ -456,7 +456,7 @@ public class TypeChecker {
             ListExpr exps = new ListExpr();
             for (int i = 0; i < funcType.args.size(); ++i) {
                 FunArg expected = funcType.args.get(i);
-                ExpCustom<?> exp = e.listexpr_.get(i).accept(new ExprVisitor(), env);
+                AnnotatedExpr<?> exp = e.listexpr_.get(i).accept(new ExprVisitor(), env);
                 if (!canCoerce(exp.type, expected.type)) {
                     throw new InvalidAssignmentTypeException(
                         expected.name,
@@ -467,15 +467,15 @@ public class TypeChecker {
                 exps.add(exp.maybeCoertTo(expected.type));
             }
 
-            return new ExpCustom<>(funcType.retType, new EApp(e.ident_, exps));
+            return new AnnotatedExpr<>(funcType.retType, new EApp(e.ident_, exps));
         }
 
-        public ExpCustom<EString> visit(EString e, EnvTypecheck env) {
+        public AnnotatedExpr<EString> visit(EString e, EnvTypecheck env) {
             throw new UnsupportedOperationException("visit(javalette.Absyn.EString)");
         }
 
-        public ExpCustom<Neg> visit(Neg e, EnvTypecheck env) {
-            ExpCustom<?> expr = e.expr_.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
+            AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(expr.type, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     "negation",
@@ -485,11 +485,11 @@ public class TypeChecker {
                 );
             }
 
-            return new ExpCustom<>(expr.type, new Neg(expr));
+            return new AnnotatedExpr<>(expr.type, new Neg(expr));
         }
 
-        public ExpCustom<Not> visit(Not e, EnvTypecheck env) {
-            ExpCustom<?> expr = e.expr_.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<Not> visit(Not e, EnvTypecheck env) {
+            AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
             if (!canCoerce(expr.type, TypeCode.CBool)) {
                 throw new InvalidOperationException(
                     "not",
@@ -498,15 +498,15 @@ public class TypeChecker {
                 );
             }
 
-            return new ExpCustom<>(
+            return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new Not(expr.maybeCoertTo(TypeCode.CBool))
             );
         }
 
-        public ExpCustom<EMul> visit(EMul e, EnvTypecheck env) {
-            ExpCustom<?> left = e.expr_1.accept(new ExprVisitor(), env);
-            ExpCustom<?> right = e.expr_2.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<EMul> visit(EMul e, EnvTypecheck env) {
+            AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
             TypeCode min = minType(left.type, right.type);
 
             if (!canCoerce(min, TypeCode.CDouble)) {
@@ -517,7 +517,7 @@ public class TypeChecker {
                 );
             }
 
-            return new ExpCustom<>(
+            return new AnnotatedExpr<>(
                 min,
                 new EMul(
                     left.maybeCoertTo(min),
@@ -527,9 +527,9 @@ public class TypeChecker {
             );
         }
 
-        public ExpCustom<EAdd> visit(EAdd e, EnvTypecheck env) {
-            ExpCustom<?> left = e.expr_1.accept(new ExprVisitor(), env);
-            ExpCustom<?> right = e.expr_2.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<EAdd> visit(EAdd e, EnvTypecheck env) {
+            AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
             TypeCode min = minType(left.type, right.type);
 
             if (!canCoerce(min, TypeCode.CDouble)) {
@@ -540,7 +540,7 @@ public class TypeChecker {
                 );
             }
 
-            return new ExpCustom<>(
+            return new AnnotatedExpr<>(
                 min,
                 new EAdd(
                     left.maybeCoertTo(min),
@@ -550,9 +550,9 @@ public class TypeChecker {
             );
         }
 
-        public ExpCustom<ERel> visit(ERel e, EnvTypecheck env) {
-            ExpCustom<?> left = e.expr_1.accept(new ExprVisitor(), env);
-            ExpCustom<?> right = e.expr_2.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<ERel> visit(ERel e, EnvTypecheck env) {
+            AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
             String opName = e.relop_.accept(
                 new RelOpVisitor(),
                 new TypeCode[]{left.type, right.type}
@@ -567,7 +567,7 @@ public class TypeChecker {
             }
 
             TypeCode min = minType(left.type, right.type);
-            return new ExpCustom<>(
+            return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new ERel(
                     left.maybeCoertTo(min),
@@ -577,9 +577,9 @@ public class TypeChecker {
             );
         }
 
-        public ExpCustom<EAnd> visit(EAnd e, EnvTypecheck env) {
-            ExpCustom<?> left = e.expr_1.accept(new ExprVisitor(), env);
-            ExpCustom<?> right = e.expr_2.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<EAnd> visit(EAnd e, EnvTypecheck env) {
+            AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
             if (!canCoerce(left.type, TypeCode.CBool) || !canCoerce(right.type, TypeCode.CBool)) {
                 throw new InvalidOperationException(
@@ -589,7 +589,7 @@ public class TypeChecker {
                 );
             }
 
-            return new ExpCustom<>(
+            return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new EAnd(
                     left.maybeCoertTo(TypeCode.CBool),
@@ -598,9 +598,9 @@ public class TypeChecker {
             );
         }
 
-        public ExpCustom<EOr> visit(EOr e, EnvTypecheck env) {
-            ExpCustom<?> left = e.expr_1.accept(new ExprVisitor(), env);
-            ExpCustom<?> right = e.expr_2.accept(new ExprVisitor(), env);
+        public AnnotatedExpr<EOr> visit(EOr e, EnvTypecheck env) {
+            AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
+            AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
             if (!canCoerce(left.type, TypeCode.CBool) || !canCoerce(right.type, TypeCode.CBool)) {
                 throw new InvalidOperationException(
@@ -610,7 +610,7 @@ public class TypeChecker {
                 );
             }
 
-            return new ExpCustom<>(
+            return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new EOr(
                     left.maybeCoertTo(TypeCode.CBool),

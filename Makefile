@@ -5,8 +5,8 @@
 
 # Edit to add new java source files, if needed!
 LABSRC    = src/jlc.java \
+			src/AnnotatedExpr.java \
 			src/Env.java \
-			src/ExpCustom.java \
 			src/Runtime.java \
 			src/TypeChecker.java \
 			src/TypeCode.java \
