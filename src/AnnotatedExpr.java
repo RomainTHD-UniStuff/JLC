@@ -11,25 +11,8 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
         this.coertTo = null;
     }
 
-    public AnnotatedExpr maybeCoertTo(TypeCode coertTo) {
-        if (coertTo != type) {
-            this.coertTo = coertTo;
-        }
-        return this;
-    }
-
-    public boolean needsCoercion() {
-        return coertTo != null;
-    }
-
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
         return parentExp.accept(v, arg);
-    }
-
-    public void markAsCoerced() {
-        if (this.needsCoercion()) {
-            this.type = this.coertTo;
-        }
     }
 }

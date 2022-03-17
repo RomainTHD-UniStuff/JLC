@@ -61,6 +61,7 @@ import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 class EnvTypecheck extends Env<TypeCode, FunType> {
@@ -78,20 +79,9 @@ class EnvTypecheck extends Env<TypeCode, FunType> {
 }
 
 public class TypeChecker {
-    public static boolean canCoerce(TypeCode from, TypeCode to) {
-        return from != null && from == to
-               || from == TypeCode.CInt && to == TypeCode.CDouble;
-    }
-
-    public static TypeCode minType(TypeCode left, TypeCode right) {
-        if (left == right) {
-            return left;
-        } else if (left == TypeCode.CDouble && right == TypeCode.CInt
-                   || left == TypeCode.CInt && right == TypeCode.CDouble) {
-            return TypeCode.CDouble;
-        } else {
-            return null;
-        }
+    public static boolean isNotSubsetOf(TypeCode from, TypeCode to) {
+        return (from == null || from != to)
+               && (from != TypeCode.CInt || to != TypeCode.CDouble);
     }
 
     public Prog typecheck(Prog p) {
@@ -263,7 +253,7 @@ public class TypeChecker {
             }
 
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(exp.type, expectedType)) {
+            if (exp.type != expectedType) {
                 throw new InvalidAssignmentTypeException(
                     s.ident_,
                     expectedType.toString(),
@@ -271,7 +261,7 @@ public class TypeChecker {
                 );
             }
 
-            return new Ass(s.ident_, exp.maybeCoertTo(expectedType));
+            return new Ass(s.ident_, exp);
         }
 
         public Incr visit(Incr s, EnvTypecheck env) {
@@ -281,7 +271,7 @@ public class TypeChecker {
                 throw new NoSuchVariableException(s.ident_);
             }
 
-            if (!canCoerce(varType, TypeCode.CDouble)) {
+            if (isNotSubsetOf(varType, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     "increment",
                     varType.toString(),
@@ -300,7 +290,7 @@ public class TypeChecker {
                 throw new NoSuchVariableException(s.ident_);
             }
 
-            if (!canCoerce(varType, TypeCode.CDouble)) {
+            if (isNotSubsetOf(varType, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     "decrement",
                     varType.toString(),
@@ -314,7 +304,7 @@ public class TypeChecker {
 
         public Ret visit(Ret s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(exp.type, env.currentFunctionType)) {
+            if (exp.type != env.currentFunctionType) {
                 throw new InvalidReturnedTypeException(
                     env.currentFunctionType.toString(),
                     exp.type.toString()
@@ -322,7 +312,7 @@ public class TypeChecker {
             }
 
             env.setReturn(true);
-            return new Ret(exp.maybeCoertTo(env.currentFunctionType));
+            return new Ret(exp);
         }
 
         public VRet visit(VRet s, EnvTypecheck env) {
@@ -339,7 +329,7 @@ public class TypeChecker {
 
         public Stmt visit(Cond s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(exp.type, TypeCode.CBool)) {
+            if (isNotSubsetOf(exp.type, TypeCode.CBool)) {
                 throw new InvalidConditionTypeException("if", exp.type.toString());
             }
 
@@ -356,13 +346,13 @@ public class TypeChecker {
 
                 env.setReturn(doesReturn);
 
-                return new Cond(exp.maybeCoertTo(TypeCode.CBool), stmt);
+                return new Cond(exp, stmt);
             }
         }
 
         public Stmt visit(CondElse s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(exp.type, TypeCode.CBool)) {
+            if (isNotSubsetOf(exp.type, TypeCode.CBool)) {
                 throw new InvalidConditionTypeException("if-else", exp.type.toString());
             }
 
@@ -388,13 +378,13 @@ public class TypeChecker {
 
                 env.setReturn(doesReturn || (doesReturnIf && doesReturnElse));
 
-                return new CondElse(exp.maybeCoertTo(TypeCode.CBool), stmt1, stmt2);
+                return new CondElse(exp, stmt1, stmt2);
             }
         }
 
         public Stmt visit(While s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(exp.type, TypeCode.CBool)) {
+            if (isNotSubsetOf(exp.type, TypeCode.CBool)) {
                 throw new InvalidConditionTypeException("while", exp.type.toString());
             }
 
@@ -411,7 +401,7 @@ public class TypeChecker {
                     env.setReturn(doesReturn);
                 }
 
-                return new While(exp.maybeCoertTo(TypeCode.CBool), stmt);
+                return new While(exp, stmt);
             }
         }
 
@@ -443,7 +433,7 @@ public class TypeChecker {
             env.insertVar(s.ident_, varType);
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
 
-            if (!canCoerce(exp.type, varType)) {
+            if (exp.type != varType) {
                 throw new InvalidAssignmentTypeException(
                     s.ident_,
                     varType.toString(),
@@ -521,14 +511,15 @@ public class TypeChecker {
             for (int i = 0; i < funcType.args.size(); ++i) {
                 FunArg expected = funcType.args.get(i);
                 AnnotatedExpr<?> exp = e.listexpr_.get(i).accept(new ExprVisitor(), env);
-                if (!canCoerce(exp.type, expected.type)) {
+                if (exp.type != expected.type) {
                     throw new InvalidAssignmentTypeException(
                         expected.name,
                         expected.type.toString(),
-                        exp.type.toString()
+                        exp.type.toString(),
+                        true
                     );
                 }
-                exps.add(exp.maybeCoertTo(expected.type));
+                exps.add(exp);
             }
 
             return new AnnotatedExpr<>(funcType.retType, new EApp(e.ident_, exps));
@@ -540,7 +531,7 @@ public class TypeChecker {
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
             AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(expr.type, TypeCode.CDouble)) {
+            if (isNotSubsetOf(expr.type, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     "negation",
                     expr.type.toString(),
@@ -554,7 +545,7 @@ public class TypeChecker {
 
         public AnnotatedExpr<Not> visit(Not e, EnvTypecheck env) {
             AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-            if (!canCoerce(expr.type, TypeCode.CBool)) {
+            if (isNotSubsetOf(expr.type, TypeCode.CBool)) {
                 throw new InvalidOperationException(
                     "not",
                     expr.type.toString(),
@@ -564,7 +555,7 @@ public class TypeChecker {
 
             return new AnnotatedExpr<>(
                 TypeCode.CBool,
-                new Not(expr.maybeCoertTo(TypeCode.CBool))
+                new Not(expr)
             );
         }
 
@@ -590,7 +581,7 @@ public class TypeChecker {
                 }
             }
 
-            if (!canCoerce(left.type, TypeCode.CDouble)) {
+            if (isNotSubsetOf(left.type, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
                     left.type.toString(),
@@ -621,7 +612,7 @@ public class TypeChecker {
                 );
             }
 
-            if (!canCoerce(left.type, TypeCode.CDouble)) {
+            if (isNotSubsetOf(left.type, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     e.addop_.accept(new AddOpVisitor(), null),
                     left.type.toString(),
@@ -656,22 +647,22 @@ public class TypeChecker {
                 );
             }
 
-            TypeCode min = minType(left.type, right.type);
             return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new ERel(
-                    left.maybeCoertTo(min),
+                    left,
                     e.relop_,
-                    right.maybeCoertTo(min)
+                    right
                 )
             );
+            // FIXME: Should we auto-cast here?
         }
 
         public AnnotatedExpr<EAnd> visit(EAnd e, EnvTypecheck env) {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-            if (!canCoerce(left.type, TypeCode.CBool) || !canCoerce(right.type, TypeCode.CBool)) {
+            if (isNotSubsetOf(left.type, TypeCode.CBool) || isNotSubsetOf(right.type, TypeCode.CBool)) {
                 throw new InvalidOperationException(
                     "conjunction",
                     left.type.toString(),
@@ -682,8 +673,8 @@ public class TypeChecker {
             return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new EAnd(
-                    left.maybeCoertTo(TypeCode.CBool),
-                    right.maybeCoertTo(TypeCode.CBool)
+                    left,
+                    right
                 )
             );
         }
@@ -692,7 +683,7 @@ public class TypeChecker {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-            if (!canCoerce(left.type, TypeCode.CBool) || !canCoerce(right.type, TypeCode.CBool)) {
+            if (isNotSubsetOf(left.type, TypeCode.CBool) || isNotSubsetOf(right.type, TypeCode.CBool)) {
                 throw new InvalidOperationException(
                     "disjunction",
                     left.type.toString(),
@@ -703,8 +694,8 @@ public class TypeChecker {
             return new AnnotatedExpr<>(
                 TypeCode.CBool,
                 new EOr(
-                    left.maybeCoertTo(TypeCode.CBool),
-                    right.maybeCoertTo(TypeCode.CBool)
+                    left,
+                    right
                 )
             );
         }
@@ -735,36 +726,44 @@ public class TypeChecker {
     }
 
     public static class RelOpVisitor implements RelOp.Visitor<String, TypeCode[]> {
-        private boolean bothTypes(TypeCode[] types, TypeCode type) {
-            TypeCode left = types[0];
-            TypeCode right = types[1];
-            return canCoerce(minType(left, right), type);
+        private boolean bothTypes(TypeCode[] actual, TypeCode... expected) {
+            TypeCode left = actual[0];
+            TypeCode right = actual[1];
+            return left == right && Arrays.asList(expected).contains(left);
         }
 
         public String visit(LTH p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CDouble) ? null : "lower than";
+            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+                   ? null
+                   : "lower than";
         }
 
         public String visit(LE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CDouble) ? null : "lower or equal";
+            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+                   ? null
+                   : "lower or equal";
         }
 
         public String visit(GTH p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CDouble) ? null : "greater than";
+            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+                   ? null
+                   : "greater than";
         }
 
         public String visit(GE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CDouble) ? null : "greater or equal";
+            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+                   ? null
+                   : "greater or equal";
         }
 
         public String visit(EQU p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CDouble) || bothTypes(types, TypeCode.CBool)
+            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble, TypeCode.CBool)
                    ? null
                    : "equality";
         }
 
         public String visit(NE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CDouble) || bothTypes(types, TypeCode.CBool)
+            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble, TypeCode.CBool)
                    ? null
                    : "difference";
         }
