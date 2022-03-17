@@ -145,6 +145,16 @@ class NoReturnException extends TypeException {
     }
 }
 
+class InvalidExpressionTypeException extends TypeException {
+    public InvalidExpressionTypeException(String actual, String expected) {
+        super(String.format(
+            "Invalid expression type `%s`, expected `%s`",
+            actual,
+            expected
+        ));
+    }
+}
+
 public class TypeException extends RuntimeException {
     protected TypeException(String msg) {
         super(msg);

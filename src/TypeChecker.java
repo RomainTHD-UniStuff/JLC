@@ -416,7 +416,16 @@ public class TypeChecker {
         }
 
         public SExp visit(SExp s, EnvTypecheck env) {
-            return new SExp(s.expr_.accept(new ExprVisitor(), env));
+            AnnotatedExpr<?> expr = s.expr_.accept(new ExprVisitor(), env);
+
+            if (expr.type != TypeCode.CVoid) {
+                throw new InvalidExpressionTypeException(
+                    expr.type.toString(),
+                    TypeCode.CVoid.toString()
+                );
+            }
+
+            return new SExp(expr);
         }
     }
 
