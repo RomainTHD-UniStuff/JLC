@@ -507,9 +507,8 @@ public class TypeChecker {
         public AnnotatedExpr<EMul> visit(EMul e, EnvTypecheck env) {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
-            TypeCode min = minType(left.type, right.type);
 
-            if (!canCoerce(min, TypeCode.CDouble)) {
+            if (left.type != right.type) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
                     left.type.toString(),
@@ -517,12 +516,21 @@ public class TypeChecker {
                 );
             }
 
+            if (!canCoerce(left.type, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    e.mulop_.accept(new MulOpVisitor(), null),
+                    left.type.toString(),
+                    TypeCode.CInt.toString(),
+                    TypeCode.CDouble.toString()
+                );
+            }
+
             return new AnnotatedExpr<>(
-                min,
+                left.type,
                 new EMul(
-                    left.maybeCoertTo(min),
+                    left,
                     e.mulop_,
-                    right.maybeCoertTo(min)
+                    right
                 )
             );
         }
@@ -530,9 +538,8 @@ public class TypeChecker {
         public AnnotatedExpr<EAdd> visit(EAdd e, EnvTypecheck env) {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
-            TypeCode min = minType(left.type, right.type);
 
-            if (!canCoerce(min, TypeCode.CDouble)) {
+            if (left.type != right.type) {
                 throw new InvalidOperationException(
                     e.addop_.accept(new AddOpVisitor(), null),
                     left.type.toString(),
@@ -540,12 +547,21 @@ public class TypeChecker {
                 );
             }
 
+            if (!canCoerce(left.type, TypeCode.CDouble)) {
+                throw new InvalidOperationException(
+                    e.addop_.accept(new AddOpVisitor(), null),
+                    left.type.toString(),
+                    TypeCode.CInt.toString(),
+                    TypeCode.CDouble.toString()
+                );
+            }
+
             return new AnnotatedExpr<>(
-                min,
+                left.type,
                 new EAdd(
-                    left.maybeCoertTo(min),
+                    left,
                     e.addop_,
-                    right.maybeCoertTo(min)
+                    right
                 )
             );
         }
