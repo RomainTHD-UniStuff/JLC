@@ -2,7 +2,8 @@ public enum TypeCode {
     CInt("int", 'I', 1),
     CDouble("double", 'D', 2),
     CBool("bool", 'I', 1),
-    CVoid("void", 'V', 0);
+    CVoid("void", 'V', 0),
+    CString("string", 'S', 0);
 
     private final String _typename;
     private final char _shortType;

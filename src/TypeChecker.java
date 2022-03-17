@@ -114,6 +114,10 @@ public class TypeChecker {
                 TypeCode.CVoid,
                 new FunArg(TypeCode.CDouble, "d")
             ));
+            env.insertFun("printString", new FunType(
+                TypeCode.CVoid,
+                new FunArg(TypeCode.CString, "s")
+            ));
             env.insertFun("readInt", new FunType(TypeCode.CInt));
             env.insertFun("readDouble", new FunType(TypeCode.CDouble));
 
@@ -504,7 +508,7 @@ public class TypeChecker {
         }
 
         public AnnotatedExpr<EString> visit(EString e, EnvTypecheck env) {
-            throw new UnsupportedOperationException("visit(javalette.Absyn.EString)");
+            return new AnnotatedExpr<>(TypeCode.CString, e);
         }
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
