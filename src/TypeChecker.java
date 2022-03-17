@@ -580,6 +580,16 @@ public class TypeChecker {
                 );
             }
 
+            if (e.mulop_ instanceof Mod) {
+                if (left.type != TypeCode.CInt) {
+                    throw new InvalidOperationException(
+                        e.mulop_.accept(new MulOpVisitor(), null),
+                        left.type.toString(),
+                        TypeCode.CInt.toString()
+                    );
+                }
+            }
+
             if (!canCoerce(left.type, TypeCode.CDouble)) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
