@@ -65,6 +65,16 @@ import java.util.LinkedList;
 
 class EnvTypecheck extends Env<TypeCode, FunType> {
     public TypeCode currentFunctionType = null;
+
+    private boolean _doesReturn;
+
+    public boolean doesReturn() {
+        return this._doesReturn;
+    }
+
+    public void setReturn(boolean doesReturn) {
+        this._doesReturn = doesReturn;
+    }
 }
 
 public class TypeChecker {
@@ -149,6 +159,7 @@ public class TypeChecker {
         public FnDef visit(FnDef f, EnvTypecheck env) {
             FunType func = env.lookupFun(f.ident_);
 
+            env.setReturn(false);
             env.enterScope();
 
             for (FunArg arg : func.args) {
@@ -160,6 +171,9 @@ public class TypeChecker {
             Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
 
             env.leaveScope();
+            if (func.retType != TypeCode.CVoid && !env.doesReturn()) {
+                throw new NoReturnException(f.ident_);
+            }
 
             return new FnDef(
                 f.type_,
@@ -303,6 +317,7 @@ public class TypeChecker {
                 );
             }
 
+            env.setReturn(true);
             return new Ret(exp.maybeCoertTo(env.currentFunctionType));
         }
 
@@ -314,6 +329,7 @@ public class TypeChecker {
                 );
             }
 
+            env.setReturn(true);
             return new VRet();
         }
 
@@ -323,9 +339,13 @@ public class TypeChecker {
                 throw new InvalidConditionTypeException("if", exp.type.toString());
             }
 
+            boolean doesReturn = env.doesReturn();
+
             env.enterScope();
             Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
             env.leaveScope();
+
+            env.setReturn(doesReturn);
 
             return new Cond(exp.maybeCoertTo(TypeCode.CBool), stmt);
         }
@@ -336,13 +356,22 @@ public class TypeChecker {
                 throw new InvalidConditionTypeException("if-else", exp.type.toString());
             }
 
+            boolean doesReturn = env.doesReturn();
+
             env.enterScope();
             Stmt stmt1 = s.stmt_1.accept(new StmtVisitor(), env);
             env.leaveScope();
 
+            boolean doesReturn1 = env.doesReturn();
+            env.setReturn(doesReturn);
+
             env.enterScope();
             Stmt stmt2 = s.stmt_2.accept(new StmtVisitor(), env);
             env.leaveScope();
+
+            boolean doesReturn2 = env.doesReturn();
+
+            env.setReturn(doesReturn || (doesReturn1 && doesReturn2));
 
             return new CondElse(exp.maybeCoertTo(TypeCode.CBool), stmt1, stmt2);
         }
@@ -353,9 +382,13 @@ public class TypeChecker {
                 throw new InvalidConditionTypeException("while", exp.type.toString());
             }
 
+            boolean doesReturn = env.doesReturn();
+
             env.enterScope();
             Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
             env.leaveScope();
+
+            env.setReturn(doesReturn);
 
             return new While(exp.maybeCoertTo(TypeCode.CBool), stmt);
         }

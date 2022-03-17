@@ -136,6 +136,15 @@ class InvalidOperationException extends TypeException {
     }
 }
 
+class NoReturnException extends TypeException {
+    public NoReturnException(String funcName) {
+        super(String.format(
+            "Function `%s` has no return statement, or not all paths return a value",
+            funcName
+        ));
+    }
+}
+
 public class TypeException extends RuntimeException {
     protected TypeException(String msg) {
         super(msg);
