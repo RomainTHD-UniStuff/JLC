@@ -4,13 +4,7 @@
 ###########################################################################
 
 # Edit to add new java source files, if needed!
-LABSRC    = src/jlc.java \
-			src/AnnotatedExpr.java \
-			src/Env.java \
-			src/Runtime.java \
-			src/TypeChecker.java \
-			src/TypeCode.java \
-			src/TypeException.java
+LABSRC    = $(filter-out src/javalette/*.java, $(wildcard src/*.java src/**/*.java))
 LABSRCDIR = src
 LABSRCOUT = src/javalette
 
