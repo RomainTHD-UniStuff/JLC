@@ -3,8 +3,9 @@ import javalette.Yylex;
 import javalette.parser;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.Scanner;
 
 /**
  * Main class of the Javalette compiler.
@@ -16,18 +17,23 @@ public class jlc {
      *     <SourceFile>`
      */
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.err.println("Usage: jlc --backend <Backend> <SourceFile>");
+        if (args.length != 2) {
+            System.err.println("Usage: jlc --backend <Backend>");
             System.exit(1);
         }
 
         String backend = args[1].toLowerCase().replaceAll("-+", "");
-        String srcFile = args[2];
+
+        StringBuilder input = new StringBuilder();
+        Scanner sc = new Scanner(System.in);
+        while (sc.hasNextLine()) {
+            input.append(sc.nextLine()).append("\n");
+        }
 
         Yylex lex = null;
         try {
             // Parse
-            lex = new Yylex(new FileReader(srcFile));
+            lex = new Yylex(new StringReader(input.toString()));
             parser p = new parser(lex);
             Prog parseTree = p.pProg();
 
@@ -47,7 +53,7 @@ public class jlc {
             System.exit(-1);
         } catch (IOException e) {
             System.err.println("ERROR");
-            System.err.println("File not found: " + srcFile);
+            System.err.println("IO error: " + e.getMessage());
             System.exit(1);
         } catch (Throwable e) {
             assert lex != null;
