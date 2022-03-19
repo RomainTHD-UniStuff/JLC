@@ -1,3 +1,5 @@
+package fr.rthd.jlc;
+
 import javalette.Absyn.Expr;
 
 public class AnnotatedExpr<T extends Expr> extends Expr {

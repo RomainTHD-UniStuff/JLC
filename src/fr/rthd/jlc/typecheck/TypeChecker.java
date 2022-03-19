@@ -1,3 +1,19 @@
+package fr.rthd.jlc.typecheck;
+
+import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.FunArg;
+import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
+import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidDeclaredTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidExpressionTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidOperationException;
+import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
+import fr.rthd.jlc.typecheck.exception.NoReturnException;
+import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
+import fr.rthd.jlc.typecheck.exception.NoSuchVariableException;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
 import javalette.Absyn.Argument;
@@ -63,20 +79,6 @@ import javalette.Absyn.While;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-
-class EnvTypecheck extends Env<TypeCode, FunType> {
-    public TypeCode currentFunctionType = null;
-
-    private boolean _doesReturn;
-
-    public boolean doesReturn() {
-        return this._doesReturn;
-    }
-
-    public void setReturn(boolean doesReturn) {
-        this._doesReturn = doesReturn;
-    }
-}
 
 public class TypeChecker {
     public Prog typecheck(Prog p) {

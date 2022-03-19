@@ -1,3 +1,7 @@
+package fr.rthd.jlc;
+
+import fr.rthd.jlc.typecheck.TypeChecker;
+import fr.rthd.jlc.typecheck.exception.TypeException;
 import javalette.Absyn.Prog;
 import javalette.Yylex;
 import javalette.parser;
@@ -10,7 +14,7 @@ import java.util.Scanner;
 /**
  * Main class of the Javalette compiler.
  */
-public class jlc {
+public class Main {
     /**
      * Main method
      * @param args Command line arguments. Here, `--backend <Backend>
@@ -18,7 +22,7 @@ public class jlc {
      */
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("Usage: jlc --backend <Backend>");
+            System.err.println("Usage: fr.rthd.jlc.jlc --backend <Backend>");
             System.exit(1);
         }
 

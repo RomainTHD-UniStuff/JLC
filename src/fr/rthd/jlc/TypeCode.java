@@ -1,3 +1,5 @@
+package fr.rthd.jlc;
+
 public enum TypeCode {
     CInt("int", 'I', 1),
     CDouble("double", 'D', 2),

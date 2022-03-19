@@ -36,7 +36,7 @@ java        = ${JAVA}  ${JAVA_FLAGS}
 .PHONY : default all clean distclean vclean
 
 # As the first goal is default goal, this goal needs to remain first.
-default : build/jlc.class build/Runtime.class
+default : build/fr/rthd/jlc/Main.class
 
 # Build and ship
 all : default sdist
@@ -44,16 +44,7 @@ all : default sdist
 # Rules for compiling Main classes (modify or add as needed)
 ###########################################################################
 
-build/TypeChecker.class : src/TypeChecker.java build/TypeException.class build/javalette/Test.class
-	$(javac) $<
-
-# build/Compiler.class : src/Compiler.java build/javalette/Test.class
-# 	$(javac) $<
-
-# build/jlc.class : src/jlc.java build/TypeChecker.class build/Compiler.class build/javalette/Test.class
-# 	$(javac) $<
-
-build/jlc.class : src/jlc.java build/TypeChecker.class build/javalette/Test.class
+build/fr/rthd/jlc/Main.class : src/fr/rthd/jlc/Main.java build/javalette/Test.class
 	$(javac) $<
 
 
@@ -122,8 +113,9 @@ submission.tar.gz : javalette.cf Makefile
 ###########################################################################
 
 clean :
-	-rm -f build/*.class
-	-rm -f build/**/.class
+	-rm -r build
+	mkdir build
+	touch build/.gitkeep
 # Uncomment to also remove all .class files in current directory
 #	-rm -f *.class
 

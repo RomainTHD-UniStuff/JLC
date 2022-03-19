@@ -1,46 +1,12 @@
-import java.util.Arrays;
+package fr.rthd.jlc.env;
+
+import fr.rthd.jlc.typecheck.exception.SymbolAlreadyDefinedException;
+import fr.rthd.jlc.typecheck.exception.TypeException;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-
-class FunArg {
-    public final TypeCode type;
-    public final String name;
-
-    public FunArg(TypeCode type, String name) {
-        this.type = type;
-        this.name = name;
-    }
-}
-
-class FunType {
-    public final TypeCode retType;
-    public final List<FunArg> args;
-
-    public FunType(TypeCode retVal, FunArg... args) {
-        this(retVal, Arrays.asList(args));
-    }
-
-    public FunType(TypeCode retVal, List<FunArg> args) {
-        this.retType = retVal;
-        this.args = args;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder argsTypes = new StringBuilder();
-        for (FunArg typeArg : args) {
-            argsTypes.append(typeArg.name)
-                     .append(":")
-                     .append(typeArg.type)
-                     .append(" ");
-        }
-
-        return this.retType.name() + " <- " + argsTypes;
-    }
-}
 
 public class Env<Value, Func> {
     private final Map<String, Func> _signature;
