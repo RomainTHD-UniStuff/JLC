@@ -7,7 +7,8 @@ public class InvalidArgumentCountException extends TypeException {
         int actual
     ) {
         super(String.format(
-                  "Invalid number of arguments while calling the function `%s`, expected %d, found %d",
+                  "Invalid number of arguments while calling the function `%s`, " +
+                  "expected %d, found %d",
                   funcName,
                   expected,
                   actual

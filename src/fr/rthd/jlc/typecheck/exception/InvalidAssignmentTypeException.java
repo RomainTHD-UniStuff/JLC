@@ -1,10 +1,12 @@
 package fr.rthd.jlc.typecheck.exception;
 
+import fr.rthd.jlc.TypeCode;
+
 public class InvalidAssignmentTypeException extends TypeException {
     public InvalidAssignmentTypeException(
         String varName,
-        String expected,
-        String actual,
+        TypeCode expected,
+        TypeCode actual,
         boolean isVar
     ) {
         super(String.format(
@@ -18,8 +20,8 @@ public class InvalidAssignmentTypeException extends TypeException {
 
     public InvalidAssignmentTypeException(
         String varName,
-        String expected,
-        String actual
+        TypeCode expected,
+        TypeCode actual
     ) {
         this(varName, expected, actual, false);
     }

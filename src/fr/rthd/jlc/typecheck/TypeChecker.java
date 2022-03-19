@@ -117,8 +117,8 @@ public class TypeChecker {
             if (mainFunc.retType != TypeCode.CInt) {
                 throw new InvalidReturnedTypeException(
                     "main",
-                    TypeCode.CInt.toString(),
-                    mainFunc.retType.toString()
+                    TypeCode.CInt,
+                    mainFunc.retType
                 );
             }
 
@@ -194,7 +194,7 @@ public class TypeChecker {
             TypeCode type = a.type_.accept(new TypeVisitor(), null);
 
             if (type == TypeCode.CVoid) {
-                throw new InvalidDeclaredTypeException(type.toString(), a.ident_);
+                throw new InvalidDeclaredTypeException(type, a.ident_);
             }
 
             return new FunArg(type, a.ident_);
@@ -230,7 +230,7 @@ public class TypeChecker {
             TypeCode type = s.type_.accept(new TypeVisitor(), null);
             if (type == TypeCode.CVoid) {
                 throw new InvalidDeclaredTypeException(
-                    type.toString()
+                    type
                 );
             }
 
@@ -253,8 +253,8 @@ public class TypeChecker {
             if (exp.type != expectedType) {
                 throw new InvalidAssignmentTypeException(
                     s.ident_,
-                    expectedType.toString(),
-                    exp.type.toString()
+                    expectedType,
+                    exp.type
                 );
             }
 
@@ -271,9 +271,9 @@ public class TypeChecker {
             if (varType != TypeCode.CInt) {
                 throw new InvalidOperationException(
                     "increment",
-                    varType.toString(),
-                    TypeCode.CInt.toString(),
-                    TypeCode.CDouble.toString()
+                    varType,
+                    TypeCode.CInt,
+                    TypeCode.CDouble
                 );
             }
 
@@ -290,9 +290,9 @@ public class TypeChecker {
             if (varType != TypeCode.CInt) {
                 throw new InvalidOperationException(
                     "decrement",
-                    varType.toString(),
-                    TypeCode.CInt.toString(),
-                    TypeCode.CDouble.toString()
+                    varType,
+                    TypeCode.CInt,
+                    TypeCode.CDouble
                 );
             }
 
@@ -303,8 +303,8 @@ public class TypeChecker {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != env.currentFunctionType) {
                 throw new InvalidReturnedTypeException(
-                    env.currentFunctionType.toString(),
-                    exp.type.toString()
+                    env.currentFunctionType,
+                    exp.type
                 );
             }
 
@@ -315,8 +315,8 @@ public class TypeChecker {
         public VRet visit(VRet s, EnvTypecheck env) {
             if (env.currentFunctionType != TypeCode.CVoid) {
                 throw new InvalidReturnedTypeException(
-                    env.currentFunctionType.toString(),
-                    TypeCode.CVoid.toString()
+                    env.currentFunctionType,
+                    TypeCode.CVoid
                 );
             }
 
@@ -327,7 +327,7 @@ public class TypeChecker {
         public Cond visit(Cond s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != TypeCode.CBool) {
-                throw new InvalidConditionTypeException("if", exp.type.toString());
+                throw new InvalidConditionTypeException("if", exp.type);
             }
 
             boolean doesReturn = env.doesReturn();
@@ -344,7 +344,7 @@ public class TypeChecker {
         public CondElse visit(CondElse s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != TypeCode.CBool) {
-                throw new InvalidConditionTypeException("if-else", exp.type.toString());
+                throw new InvalidConditionTypeException("if-else", exp.type);
             }
 
             boolean doesReturn = env.doesReturn();
@@ -370,7 +370,7 @@ public class TypeChecker {
         public While visit(While s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != TypeCode.CBool) {
-                throw new InvalidConditionTypeException("while", exp.type.toString());
+                throw new InvalidConditionTypeException("while", exp.type);
             }
 
             boolean doesReturn = env.doesReturn();
@@ -389,8 +389,8 @@ public class TypeChecker {
 
             if (expr.type != TypeCode.CVoid) {
                 throw new InvalidExpressionTypeException(
-                    expr.type.toString(),
-                    TypeCode.CVoid.toString()
+                    expr.type,
+                    TypeCode.CVoid
                 );
             }
 
@@ -415,8 +415,8 @@ public class TypeChecker {
             if (exp.type != varType) {
                 throw new InvalidAssignmentTypeException(
                     s.ident_,
-                    varType.toString(),
-                    exp.type.toString()
+                    varType,
+                    exp.type
                 );
             }
 
@@ -493,8 +493,8 @@ public class TypeChecker {
                 if (exp.type != expected.type) {
                     throw new InvalidAssignmentTypeException(
                         expected.name,
-                        expected.type.toString(),
-                        exp.type.toString(),
+                        expected.type,
+                        exp.type,
                         true
                     );
                 }
@@ -513,9 +513,9 @@ public class TypeChecker {
             if (expr.type != TypeCode.CInt && expr.type != TypeCode.CDouble) {
                 throw new InvalidOperationException(
                     "negation",
-                    expr.type.toString(),
-                    TypeCode.CInt.toString(),
-                    TypeCode.CDouble.toString()
+                    expr.type,
+                    TypeCode.CInt,
+                    TypeCode.CDouble
                 );
             }
 
@@ -527,8 +527,8 @@ public class TypeChecker {
             if (expr.type != TypeCode.CBool) {
                 throw new InvalidOperationException(
                     "not",
-                    expr.type.toString(),
-                    TypeCode.CBool.toString()
+                    expr.type,
+                    TypeCode.CBool
                 );
             }
 
@@ -545,8 +545,8 @@ public class TypeChecker {
             if (left.type != right.type) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
-                    left.type.toString(),
-                    right.type.toString()
+                    left.type,
+                    right.type
                 );
             }
 
@@ -554,8 +554,8 @@ public class TypeChecker {
                 if (left.type != TypeCode.CInt) {
                     throw new InvalidOperationException(
                         e.mulop_.accept(new MulOpVisitor(), null),
-                        left.type.toString(),
-                        TypeCode.CInt.toString()
+                        left.type,
+                        TypeCode.CInt
                     );
                 }
             }
@@ -563,9 +563,9 @@ public class TypeChecker {
             if (left.type != TypeCode.CInt && left.type != TypeCode.CDouble) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
-                    left.type.toString(),
-                    TypeCode.CInt.toString(),
-                    TypeCode.CDouble.toString()
+                    left.type,
+                    TypeCode.CInt,
+                    TypeCode.CDouble
                 );
             }
 
@@ -586,17 +586,17 @@ public class TypeChecker {
             if (left.type != right.type) {
                 throw new InvalidOperationException(
                     e.addop_.accept(new AddOpVisitor(), null),
-                    left.type.toString(),
-                    right.type.toString()
+                    left.type,
+                    right.type
                 );
             }
 
             if (left.type != TypeCode.CInt && left.type != TypeCode.CDouble) {
                 throw new InvalidOperationException(
                     e.addop_.accept(new AddOpVisitor(), null),
-                    left.type.toString(),
-                    TypeCode.CInt.toString(),
-                    TypeCode.CDouble.toString()
+                    left.type,
+                    TypeCode.CInt,
+                    TypeCode.CDouble
                 );
             }
 
@@ -621,8 +621,8 @@ public class TypeChecker {
             if (opName != null) {
                 throw new InvalidOperationException(
                     opName,
-                    left.type.toString(),
-                    right.type.toString()
+                    left.type,
+                    right.type
                 );
             }
 
@@ -643,8 +643,8 @@ public class TypeChecker {
             if (left.type != TypeCode.CBool || right.type != TypeCode.CBool) {
                 throw new InvalidOperationException(
                     "conjunction",
-                    left.type.toString(),
-                    right.type.toString()
+                    left.type,
+                    right.type
                 );
             }
 
@@ -664,8 +664,8 @@ public class TypeChecker {
             if (left.type != TypeCode.CBool || right.type != TypeCode.CBool) {
                 throw new InvalidOperationException(
                     "disjunction",
-                    left.type.toString(),
-                    right.type.toString()
+                    left.type,
+                    right.type
                 );
             }
 

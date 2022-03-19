@@ -1,12 +1,14 @@
 package fr.rthd.jlc.typecheck.exception;
 
+import fr.rthd.jlc.TypeCode;
+
 public class InvalidOperationException extends TypeException {
     private final String message;
 
     public InvalidOperationException(
         String operationName,
-        String actual,
-        String... expected
+        TypeCode actual,
+        TypeCode... expected
     ) {
         super("TBD");
 

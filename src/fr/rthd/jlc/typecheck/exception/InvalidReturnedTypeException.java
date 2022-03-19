@@ -1,7 +1,9 @@
 package fr.rthd.jlc.typecheck.exception;
 
+import fr.rthd.jlc.TypeCode;
+
 public class InvalidReturnedTypeException extends TypeException {
-    public InvalidReturnedTypeException(String expected, String actual) {
+    public InvalidReturnedTypeException(TypeCode expected, TypeCode actual) {
         super(String.format(
             "Invalid return type, expected `%s`, found `%s`",
             expected,
@@ -9,7 +11,11 @@ public class InvalidReturnedTypeException extends TypeException {
         ));
     }
 
-    public InvalidReturnedTypeException(String funcName, String expected, String actual) {
+    public InvalidReturnedTypeException(
+        String funcName,
+        TypeCode expected,
+        TypeCode actual
+    ) {
         super(String.format(
             "Invalid return type in %s, expected `%s`, found `%s`",
             funcName,
