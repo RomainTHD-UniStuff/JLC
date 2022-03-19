@@ -79,11 +79,6 @@ class EnvTypecheck extends Env<TypeCode, FunType> {
 }
 
 public class TypeChecker {
-    public static boolean isNotSubsetOf(TypeCode from, TypeCode to) {
-        return (from == null || from != to)
-               && (from != TypeCode.CInt || to != TypeCode.CDouble);
-    }
-
     public Prog typecheck(Prog p) {
         EnvTypecheck env = new EnvTypecheck();
         p.accept(new ProgSignatureVisitor(), env);
@@ -271,7 +266,7 @@ public class TypeChecker {
                 throw new NoSuchVariableException(s.ident_);
             }
 
-            if (isNotSubsetOf(varType, TypeCode.CDouble)) {
+            if (varType != TypeCode.CInt) {
                 throw new InvalidOperationException(
                     "increment",
                     varType.toString(),
@@ -290,7 +285,7 @@ public class TypeChecker {
                 throw new NoSuchVariableException(s.ident_);
             }
 
-            if (isNotSubsetOf(varType, TypeCode.CDouble)) {
+            if (varType != TypeCode.CInt) {
                 throw new InvalidOperationException(
                     "decrement",
                     varType.toString(),
@@ -329,7 +324,7 @@ public class TypeChecker {
 
         public Stmt visit(Cond s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (isNotSubsetOf(exp.type, TypeCode.CBool)) {
+            if (exp.type != TypeCode.CBool) {
                 throw new InvalidConditionTypeException("if", exp.type.toString());
             }
 
@@ -352,7 +347,7 @@ public class TypeChecker {
 
         public Stmt visit(CondElse s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (isNotSubsetOf(exp.type, TypeCode.CBool)) {
+            if (exp.type != TypeCode.CBool) {
                 throw new InvalidConditionTypeException("if-else", exp.type.toString());
             }
 
@@ -384,7 +379,7 @@ public class TypeChecker {
 
         public Stmt visit(While s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (isNotSubsetOf(exp.type, TypeCode.CBool)) {
+            if (exp.type != TypeCode.CBool) {
                 throw new InvalidConditionTypeException("while", exp.type.toString());
             }
 
@@ -531,7 +526,7 @@ public class TypeChecker {
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
             AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-            if (isNotSubsetOf(expr.type, TypeCode.CDouble)) {
+            if (expr.type != TypeCode.CInt && expr.type != TypeCode.CDouble) {
                 throw new InvalidOperationException(
                     "negation",
                     expr.type.toString(),
@@ -545,7 +540,7 @@ public class TypeChecker {
 
         public AnnotatedExpr<Not> visit(Not e, EnvTypecheck env) {
             AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-            if (isNotSubsetOf(expr.type, TypeCode.CBool)) {
+            if (expr.type != TypeCode.CBool) {
                 throw new InvalidOperationException(
                     "not",
                     expr.type.toString(),
@@ -581,7 +576,7 @@ public class TypeChecker {
                 }
             }
 
-            if (isNotSubsetOf(left.type, TypeCode.CDouble)) {
+            if (left.type != TypeCode.CInt && left.type != TypeCode.CDouble) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
                     left.type.toString(),
@@ -612,7 +607,7 @@ public class TypeChecker {
                 );
             }
 
-            if (isNotSubsetOf(left.type, TypeCode.CDouble)) {
+            if (left.type != TypeCode.CInt && left.type != TypeCode.CDouble) {
                 throw new InvalidOperationException(
                     e.addop_.accept(new AddOpVisitor(), null),
                     left.type.toString(),
@@ -655,14 +650,13 @@ public class TypeChecker {
                     right
                 )
             );
-            // FIXME: Should we auto-cast here?
         }
 
         public AnnotatedExpr<EAnd> visit(EAnd e, EnvTypecheck env) {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-            if (isNotSubsetOf(left.type, TypeCode.CBool) || isNotSubsetOf(right.type, TypeCode.CBool)) {
+            if (left.type != TypeCode.CBool || right.type != TypeCode.CBool) {
                 throw new InvalidOperationException(
                     "conjunction",
                     left.type.toString(),
@@ -683,7 +677,7 @@ public class TypeChecker {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-            if (isNotSubsetOf(left.type, TypeCode.CBool) || isNotSubsetOf(right.type, TypeCode.CBool)) {
+            if (left.type != TypeCode.CBool || right.type != TypeCode.CBool) {
                 throw new InvalidOperationException(
                     "disjunction",
                     left.type.toString(),
