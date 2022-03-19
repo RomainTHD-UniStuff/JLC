@@ -98,4 +98,3 @@ Your compiler should be named `jlc` (without quotes) for the LLVM backend,
 * If your program does not succeed (there are some errors), it should print a
   line containing the word `ERROR` to standard error (stderr), and terminate
   with a non-zero exit code.
-
