@@ -322,82 +322,64 @@ public class TypeChecker {
             return new VRet();
         }
 
-        public Stmt visit(Cond s, EnvTypecheck env) {
+        public Cond visit(Cond s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != TypeCode.CBool) {
                 throw new InvalidConditionTypeException("if", exp.type.toString());
             }
 
-            if (exp.parentExp instanceof ELitTrue) {
-                return s.stmt_.accept(new StmtVisitor(), env);
-            } else if (exp.parentExp instanceof ELitFalse) {
-                return new Empty();
-            } else {
-                boolean doesReturn = env.doesReturn();
+            boolean doesReturn = env.doesReturn();
 
-                env.enterScope();
-                Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
-                env.leaveScope();
+            env.enterScope();
+            Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
+            env.leaveScope();
 
-                env.setReturn(doesReturn);
+            env.setReturn(doesReturn);
 
-                return new Cond(exp, stmt);
-            }
+            return new Cond(exp, stmt);
         }
 
-        public Stmt visit(CondElse s, EnvTypecheck env) {
+        public CondElse visit(CondElse s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != TypeCode.CBool) {
                 throw new InvalidConditionTypeException("if-else", exp.type.toString());
             }
 
-            if (exp.parentExp instanceof ELitTrue) {
-                return s.stmt_1.accept(new StmtVisitor(), env);
-            } else if (exp.parentExp instanceof ELitFalse) {
-                return s.stmt_2.accept(new StmtVisitor(), env);
-            } else {
-                boolean doesReturn = env.doesReturn();
+            boolean doesReturn = env.doesReturn();
 
-                env.enterScope();
-                Stmt stmt1 = s.stmt_1.accept(new StmtVisitor(), env);
-                env.leaveScope();
+            env.enterScope();
+            Stmt stmt1 = s.stmt_1.accept(new StmtVisitor(), env);
+            env.leaveScope();
 
-                boolean doesReturnIf = env.doesReturn();
-                env.setReturn(doesReturn);
+            boolean doesReturnIf = env.doesReturn();
+            env.setReturn(doesReturn);
 
-                env.enterScope();
-                Stmt stmt2 = s.stmt_2.accept(new StmtVisitor(), env);
-                env.leaveScope();
+            env.enterScope();
+            Stmt stmt2 = s.stmt_2.accept(new StmtVisitor(), env);
+            env.leaveScope();
 
-                boolean doesReturnElse = env.doesReturn();
+            boolean doesReturnElse = env.doesReturn();
 
-                env.setReturn(doesReturn || (doesReturnIf && doesReturnElse));
+            env.setReturn(doesReturn || (doesReturnIf && doesReturnElse));
 
-                return new CondElse(exp, stmt1, stmt2);
-            }
+            return new CondElse(exp, stmt1, stmt2);
         }
 
-        public Stmt visit(While s, EnvTypecheck env) {
+        public While visit(While s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
             if (exp.type != TypeCode.CBool) {
                 throw new InvalidConditionTypeException("while", exp.type.toString());
             }
 
-            if (exp.parentExp instanceof ELitFalse) {
-                return new Empty();
-            } else {
-                boolean doesReturn = env.doesReturn();
+            boolean doesReturn = env.doesReturn();
 
-                env.enterScope();
-                Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
-                env.leaveScope();
+            env.enterScope();
+            Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
+            env.leaveScope();
 
-                if (!(exp.parentExp instanceof ELitTrue)) {
-                    env.setReturn(doesReturn);
-                }
+            env.setReturn(doesReturn);
 
-                return new While(exp, stmt);
-            }
+            return new While(exp, stmt);
         }
 
         public SExp visit(SExp s, EnvTypecheck env) {
