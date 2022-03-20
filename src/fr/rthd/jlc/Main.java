@@ -1,5 +1,6 @@
 package fr.rthd.jlc;
 
+import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
 import javalette.Absyn.Prog;
@@ -43,6 +44,7 @@ public class Main {
 
             // Type check
             Prog typedTree = new TypeChecker().typecheck(parseTree);
+            Prog optimizedTree = new Optimizer().optimize(typedTree);
 
             // Generate code
             // TODO: Generate code for the backend
