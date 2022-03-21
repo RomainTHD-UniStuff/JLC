@@ -1,5 +1,7 @@
 package fr.rthd.jlc;
 
+import fr.rthd.jlc.env.Env;
+import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
@@ -43,8 +45,9 @@ public class Main {
             Prog parseTree = p.pProg();
 
             // Type check
-            Prog typedTree = new TypeChecker().typecheck(parseTree);
-            Prog optimizedTree = new Optimizer().optimize(typedTree);
+            Env<?, FunType> env = new Env<>();
+            Prog typedTree = new TypeChecker().typecheck(parseTree, env);
+            Prog optimizedTree = new Optimizer().optimize(typedTree, env);
 
             // Generate code
             // TODO: Generate code for the backend
@@ -54,7 +57,7 @@ public class Main {
             System.err.println("ERROR");
             System.err.println("Type error: " + e.getMessage());
             System.exit(1);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | StackOverflowError e) {
             e.printStackTrace();
             System.exit(-1);
         } catch (IOException e) {

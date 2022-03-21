@@ -5,4 +5,7 @@ import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
 public class EnvOptimizer extends Env<AnnotatedExpr<?>, FunType> {
+    public EnvOptimizer(Env<?, FunType> env) {
+        super(env);
+    }
 }

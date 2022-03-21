@@ -2,6 +2,7 @@ package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
@@ -81,8 +82,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 public class TypeChecker {
-    public Prog typecheck(Prog p) {
-        EnvTypecheck env = new EnvTypecheck();
+    public Prog typecheck(Prog p, Env<?, FunType> parentEnv) {
+        EnvTypecheck env = new EnvTypecheck(parentEnv);
         p.accept(new ProgSignatureVisitor(), env);
         return p.accept(new ProgVisitor(), env);
     }

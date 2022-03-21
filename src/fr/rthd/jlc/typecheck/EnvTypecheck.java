@@ -9,6 +9,10 @@ public class EnvTypecheck extends Env<TypeCode, FunType> {
 
     private boolean _doesReturn;
 
+    public EnvTypecheck(Env<?, FunType> parent) {
+        super(parent);
+    }
+
     public boolean doesReturn() {
         return this._doesReturn;
     }
