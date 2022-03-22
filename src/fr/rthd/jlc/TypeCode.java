@@ -1,11 +1,11 @@
 package fr.rthd.jlc;
 
 public enum TypeCode {
-    CInt("int", 'I', 1),
+    CInt("i32", 'I', 1),
     CDouble("double", 'D', 2),
-    CBool("bool", 'I', 1),
+    CBool("i1", 'I', 1),
     CVoid("void", 'V', 0),
-    CString("string", 'S', 0);
+    CString("i8*", 'S', 0);
 
     private final String _typename;
     private final char _shortType;
