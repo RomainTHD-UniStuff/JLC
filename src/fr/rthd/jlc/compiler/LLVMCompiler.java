@@ -1,7 +1,9 @@
 package fr.rthd.jlc.compiler;
 
+import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import javalette.Absyn.AddOp;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
@@ -10,6 +12,7 @@ import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
+import javalette.Absyn.Div;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -19,27 +22,38 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.EOr;
+import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.GE;
+import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
+import javalette.Absyn.LE;
+import javalette.Absyn.LTH;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListItem;
 import javalette.Absyn.ListStmt;
-import javalette.Absyn.ListTopDef;
+import javalette.Absyn.Minus;
+import javalette.Absyn.Mod;
+import javalette.Absyn.MulOp;
+import javalette.Absyn.NE;
 import javalette.Absyn.Neg;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Not;
+import javalette.Absyn.Plus;
 import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
+import javalette.Absyn.RelOp;
 import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
+import javalette.Absyn.Times;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
@@ -63,33 +77,43 @@ public class LLVMCompiler extends Compiler {
 
     public static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
         public Void visit(FnDef p, EnvCompiler env) {
-            FunType funType = env.lookupFun(p.ident_);
+            FunType func = env.lookupFun(p.ident_);
 
+            env.emit(Instruction.functionDeclarationStart(func));
+            env.emit(Instruction.label("entry"));
 
+            env.resetScope();
+            env.indent();
+            env.enterScope();
+
+            env.leaveScope();
+            env.unindent();
+
+            env.emit(Instruction.functionDeclarationEnd());
 
             return null;
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<Expr, EnvCompiler> {
-        public EVar visit(EVar p, EnvCompiler env) {
-            return p;
+    public static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+        public Variable visit(EVar p, EnvCompiler env) {
+            return env.lookupVar(p.ident_);
         }
 
-        public ELitInt visit(ELitInt p, EnvCompiler env) {
-            return p;
+        public Literal visit(ELitInt p, EnvCompiler env) {
+            return new Literal(TypeCode.CInt, p.integer_);
         }
 
-        public ELitDoub visit(ELitDoub p, EnvCompiler env) {
-            return p;
+        public Literal visit(ELitDoub p, EnvCompiler env) {
+            return new Literal(TypeCode.CDouble, p.double_);
         }
 
-        public ELitTrue visit(ELitTrue p, EnvCompiler env) {
-            return p;
+        public Literal visit(ELitTrue p, EnvCompiler env) {
+            return new Literal(TypeCode.CBool, true);
         }
 
-        public ELitFalse visit(ELitFalse p, EnvCompiler env) {
-            return p;
+        public Literal visit(ELitFalse p, EnvCompiler env) {
+            return new Literal(TypeCode.CBool, false);
         }
 
         public EApp visit(EApp p, EnvCompiler env) {
@@ -104,50 +128,45 @@ public class LLVMCompiler extends Compiler {
             return p;
         }
 
-        public Neg visit(Neg p, EnvCompiler env) {
-            return new Neg(p.expr_.accept(new ExprVisitor(), null));
+        public Variable visit(Neg p, EnvCompiler env) {
+            OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
+            Variable var = env.createTempVar(expr.type, "neg");
+            env.emit(Instruction.neg(var, expr));
+            return var;
         }
 
-        public Not visit(Not p, EnvCompiler env) {
-            return new Not(p.expr_.accept(new ExprVisitor(), null));
+        public OperationItem visit(Not p, EnvCompiler env) {
+            OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
+            Variable var = env.createTempVar(expr.type, "not");
+            env.emit(Instruction.not(var, expr));
+            return var;
         }
 
-        public EMul visit(EMul p, EnvCompiler env) {
-            return new EMul(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.mulop_,
-                p.expr_2.accept(new ExprVisitor(), null)
-            );
-        }
-
-        public EAdd visit(EAdd p, EnvCompiler env) {
-            return new EAdd(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.addop_,
-                p.expr_2.accept(new ExprVisitor(), null)
-            );
-        }
-
-        public ERel visit(ERel p, EnvCompiler env) {
-            return new ERel(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.relop_,
-                p.expr_2.accept(new ExprVisitor(), null)
-            );
-        }
-
-        public EAnd visit(EAnd p, EnvCompiler env) {
-            return new EAnd(
+        public OperationItem visit(EMul p, EnvCompiler env) {
+            return p.mulop_.accept(new MulOpVisitor(
                 p.expr_1.accept(new ExprVisitor(), null),
                 p.expr_2.accept(new ExprVisitor(), null)
-            );
+            ), env);
         }
 
-        public EOr visit(EOr p, EnvCompiler env) {
-            return new EOr(
+        public OperationItem visit(EAdd p, EnvCompiler env) {
+            return p.addop_.accept(new AddOpVisitor(
                 p.expr_1.accept(new ExprVisitor(), null),
                 p.expr_2.accept(new ExprVisitor(), null)
-            );
+            ), env);
+        }
+
+        public OperationItem visit(ERel p, EnvCompiler env) {
+            return p.relop_.accept(new RelOpVisitor(
+                p.expr_1.accept(new ExprVisitor(), null),
+                p.expr_2.accept(new ExprVisitor(), null)
+            ), env);
+        }
+
+        public OperationItem visit(EAnd p, EnvCompiler env) {
+        }
+
+        public OperationItem visit(EOr p, EnvCompiler env) {
         }
     }
 
@@ -236,6 +255,102 @@ public class LLVMCompiler extends Compiler {
 
         public Init visit(Init p, EnvCompiler env) {
             return new Init(p.ident_, p.expr_.accept(new ExprVisitor(), null));
+        }
+    }
+
+    public static class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
+        private final OperationItem left;
+        private final OperationItem right;
+
+        public AddOpVisitor(OperationItem left, OperationItem right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public OperationItem visit(Plus p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "add");
+            env.emit(Instruction.add(var, left, right));
+            return var;
+        }
+
+        public OperationItem visit(Minus p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "sub");
+            env.emit(Instruction.subtract(var, left, right));
+            return var;
+        }
+    }
+
+    public static class MulOpVisitor implements MulOp.Visitor<OperationItem, EnvCompiler> {
+        private final OperationItem left;
+        private final OperationItem right;
+
+        public MulOpVisitor(OperationItem left, OperationItem right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public OperationItem visit(Times p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "mult");
+            env.emit(Instruction.multiply(var, left, right));
+            return var;
+        }
+
+        public OperationItem visit(Div p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "div");
+            env.emit(Instruction.divide(var, left, right));
+            return var;
+        }
+
+        public OperationItem visit(Mod p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "mod");
+            env.emit(Instruction.modulo(var, left, right));
+            return var;
+        }
+    }
+
+    public static class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
+        private final OperationItem left;
+        private final OperationItem right;
+
+        public RelOpVisitor(OperationItem left, OperationItem right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public OperationItem visit(LTH p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "lt");
+            env.emit(Instruction.compare(var, left, ComparisonOperator.LT, right));
+            return var;
+        }
+
+        public OperationItem visit(LE p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "le");
+            env.emit(Instruction.compare(var, left, ComparisonOperator.LE, right));
+            return var;
+        }
+
+        public OperationItem visit(GTH p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "gt");
+            env.emit(Instruction.compare(var, left, ComparisonOperator.GT, right));
+            return var;
+        }
+
+        public OperationItem visit(GE p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "ge");
+            env.emit(Instruction.compare(var, left, ComparisonOperator.GE, right));
+            return var;
+        }
+
+        public OperationItem visit(EQU p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "eq");
+            env.emit(Instruction.compare(var, left, ComparisonOperator.EQ, right));
+            return var;
+        }
+
+        public OperationItem visit(NE p, EnvCompiler env) {
+            Variable var = env.createTempVar(left.type, "ne");
+            env.emit(Instruction.compare(var, left, ComparisonOperator.NE, right));
+            return var;
         }
     }
 }
