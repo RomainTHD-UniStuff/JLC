@@ -4,12 +4,10 @@ import fr.rthd.jlc.TypeCode;
 
 public class Variable extends OperationItem {
     public final String name;
-    public final int address;
 
-    public Variable(TypeCode type, String name, int address) {
+    public Variable(TypeCode type, String name) {
         super(type);
         this.name = name;
-        this.address = address;
     }
 
     @Override
