@@ -12,263 +12,267 @@ public class Instruction {
         this._commands = new ArrayList<>();
     }
 
-    private Instruction(String command, int stackDifference) {
+    private Instruction(String command) {
         this();
-        this.add(command, stackDifference);
+        this.add(command);
     }
 
     public static Instruction comment(String comment) {
-        return new Instruction(String.format("; %s", comment), 0);
-    }
-
-    public static Instruction dup(TypeCode type) {
-        Instruction instruction = new Instruction();
-        if (type == TypeCode.CInt || type == TypeCode.CBool) {
-            instruction.add("dup", type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("dup2", type.getSize());
-        }
-
-        return instruction;
-    }
-
-    public static Instruction loadDefault(TypeCode type) {
-        switch (type) {
-            case CBool:
-                return loadLit(type, false);
-
-            case CDouble:
-                return loadLit(type, 0.0);
-
-            case CInt:
-                return loadLit(type, 0);
-
-            case CVoid:
-            default:
-                return noop();
-        }
+        return new Instruction(String.format("; %s", comment));
     }
 
     public static Instruction noop() {
-        return new Instruction("nop", 0);
+        return new Instruction("nop");
     }
 
-    public static Instruction loadLit(TypeCode type, Object abstractValue) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("load %s lit %s",
-                                              type.toString(),
-                                              abstractValue.toString()
-        )));
-
-        if (type == TypeCode.CInt) {
-            int value = (int) abstractValue;
-            String instStr;
-            if (value == -1) {
-                instStr = "iconst_m1";
-            } else if (value >= 0 && value <= 5) {
-                instStr = String.format("iconst_%d", value);
-            } else if (value < Byte.MAX_VALUE) {
-                instStr = String.format("bipush %d", value);
-            } else if (value < Short.MAX_VALUE) {
-                instStr = String.format("sipush %d", value);
-            } else {
-                instStr = String.format("ldc %d", value);
-            }
-            instruction.add(instStr, type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            double value = (double) abstractValue;
-            if (value == 0.) {
-                instruction.add("dconst_0", type.getSize());
-            } else if (value == 1.) {
-                instruction.add("dconst_1", type.getSize());
-            } else {
-                instruction.add(String.format("ldc2_w %f", value), type.getSize());
-            }
-        } else if (type == TypeCode.CBool) {
-            boolean value = (boolean) abstractValue;
-            if (value) {
-                instruction.add("iconst_1", type.getSize());
-            } else {
-                instruction.add("iconst_0", type.getSize());
-            }
-        }
-
-        return instruction;
+    public static Instruction store(Variable dst, OperationItem src) {
+        return new Instruction(String.format(
+            "store %s %s, %s* %s",
+            src.type,
+            src,
+            src.type,
+            dst
+        ));
     }
 
-    public static Instruction storeVar(TypeCode type, int address) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("store %s var", type.toString())));
-
-        if (type == TypeCode.CInt || type == TypeCode.CBool) {
-            if (address >= 0 && address <= 3) {
-                instruction.add(String.format("istore_%d", address), -type.getSize());
-            } else {
-                instruction.add(String.format("istore %d", address), -type.getSize());
-            }
-        } else if (type == TypeCode.CDouble) {
-            if (address >= 0 && address <= 3) {
-                instruction.add(String.format("dstore_%d", address), -type.getSize());
-            } else {
-                instruction.add(String.format("dstore %d", address), -type.getSize());
-            }
-        }
-
-        return instruction;
+    public static Instruction load(Variable dst, Variable src) {
+        return new Instruction(String.format(
+            "%s = load %s, %s* %s",
+            dst,
+            dst.type,
+            dst.type,
+            src
+        ));
     }
 
-    public static Instruction loadVar(TypeCode type, int address) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("load %s var", type.toString())));
-
-        if (type == TypeCode.CInt || type == TypeCode.CBool) {
-            if (address >= 0 && address <= 3) {
-                instruction.add(String.format("iload_%d", address), type.getSize());
-            } else {
-                instruction.add(String.format("iload %d", address), type.getSize());
-            }
-        } else if (type == TypeCode.CDouble) {
-            if (address >= 0 && address <= 3) {
-                instruction.add(String.format("dload_%d", address), type.getSize());
-            } else {
-                instruction.add(String.format("dload %d", address), type.getSize());
-            }
-        }
-
-        return instruction;
+    public static Instruction declare(Variable dst) {
+        return new Instruction(String.format(
+            "%s = alloca %s",
+            dst,
+            dst.type
+        ));
     }
 
-    public static Instruction declVar(TypeCode type, int address) {
-        Instruction instruction = new Instruction();
-        instruction.add(loadDefault(type));
-        instruction.add(storeVar(type, address));
-        return instruction;
+    public static Instruction call(
+        String funcName,
+        List<Variable> args
+    ) {
+        return call(null, funcName, args);
     }
 
-    public static Instruction functionCall(String path, List<TypeCode> argsTypes, TypeCode returnType) {
-        Instruction instruction = new Instruction();
-
-        StringBuilder call = new StringBuilder();
-        call.append("invokestatic ");
-        call.append(path);
-        call.append("(");
-
-        for (TypeCode arg : argsTypes) {
-            call.append(arg.getShortType());
-        }
-
-        call.append(")");
-        call.append(returnType.getShortType());
-
-        instruction.add(call.toString(), returnType.getSize());
-        return instruction;
+    public static Instruction call(
+        Variable dst,
+        String funcName,
+        List<Variable> args
+    ) {
+        return new Instruction(String.format(
+            "%scall %s @%s(%s)",
+            dst == null ? "" : dst + " = ",
+            dst == null ? TypeCode.CVoid : dst.type,
+            funcName,
+            args.stream()
+                .map(arg -> String.format("%s %s", arg.type, arg))
+                .reduce((a, b) -> String.format("%s, %s", a, b))
+                .orElse("")
+        ));
     }
 
-    public static Instruction label(int address) {
-        return new Instruction(String.format("L%d:", address), 0);
+    public static Instruction label(String labelName) {
+        return new Instruction(String.format("%s:", labelName));
     }
 
-    public static Instruction add(TypeCode type) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("add 2 %s values", type.toString())));
-
-        if (type == TypeCode.CInt) {
-            instruction.add("iadd", -type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("dadd", -type.getSize());
-        }
-
-        return instruction;
+    public static Instruction add(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = %sadd %s %s, %s",
+            dst,
+            left.type == TypeCode.CDouble ? "f" : "",
+            left.type,
+            left,
+            right
+        ));
     }
 
-    public static Instruction subtract(TypeCode type) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("subtract 2 %s values", type.toString())));
-
-        if (type == TypeCode.CInt) {
-            instruction.add("isub", -type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("dsub", -type.getSize());
-        }
-
-        return instruction;
+    public static Instruction subtract(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = %ssub %s %s, %s",
+            dst,
+            left.type == TypeCode.CDouble ? "f" : "",
+            left.type,
+            left,
+            right
+        ));
     }
 
-    public static Instruction multiply(TypeCode type) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("multiply 2 %s values", type.toString())));
-
-        if (type == TypeCode.CInt) {
-            instruction.add("imul", -type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("dmul", -type.getSize());
-        }
-
-        return instruction;
+    public static Instruction multiply(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = %smul %s %s, %s",
+            dst,
+            left.type == TypeCode.CDouble ? "f" : "",
+            left.type,
+            left,
+            right
+        ));
     }
 
-    public static Instruction divide(TypeCode type) {
-        Instruction instruction = new Instruction();
-        instruction.add(comment(String.format("divide 2 %s values", type.toString())));
-
-        if (type == TypeCode.CInt) {
-            instruction.add("idiv", -type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("ddiv", -type.getSize());
-        }
-
-        return instruction;
+    public static Instruction divide(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = %sdiv %s %s, %s",
+            dst,
+            left.type == TypeCode.CDouble ? "f" : "",
+            left.type,
+            left,
+            right
+        ));
     }
 
-    public static Instruction pop(TypeCode type) {
-        Instruction instruction = new Instruction();
-        if (type == TypeCode.CInt || type == TypeCode.CBool) {
-            instruction.add("pop", -type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("pop2", -type.getSize());
-        }
-
-        return instruction;
+    public static Instruction modulo(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = srem %s %s, %s",
+            dst,
+            left.type,
+            left,
+            right
+        ));
     }
 
-    public static Instruction compare(TypeCode type, Comparator comparator, int label) {
-        Instruction instruction = new Instruction();
-        if (type == TypeCode.CInt || type == TypeCode.CBool) {
-            instruction.add(String.format("%s L%d", comparator.getInstName(), label), -2 * type.getSize());
-        } else if (type == TypeCode.CDouble) {
-            instruction.add("dcmpg", -type.getSize());
-            instruction.add(Instruction.loadLit(TypeCode.CInt, comparator.getDoubleComparatorValue()));
-            instruction.add(Instruction.compare(TypeCode.CInt, comparator.getDoubleComparator(), label));
-        }
-
-        return instruction;
+    public static Instruction compare(
+        Variable dst,
+        OperationItem left,
+        ComparisonOperator operator,
+        OperationItem right
+    ) {
+        // Example: "%temp = fcmp oeq double %x, %y"
+        return new Instruction(String.format(
+            "%s = %ccmp %s %s %s, %s",
+            dst,
+            left.type == TypeCode.CDouble ? 'f' : 'i',
+            operator.getOperand(left.type),
+            left.type,
+            left,
+            right
+        ));
     }
 
-    public static Instruction jumpTo(int label) {
-        return new Instruction(String.format("goto L%d", label), 0);
+    public static Instruction jump(String label) {
+        return new Instruction(String.format("br label %%%s", label));
+    }
+
+    public static Instruction conditionalJump(
+        Variable condition,
+        String labelTrue,
+        String labelFalse
+    ) {
+        return new Instruction(String.format(
+            "br i1 %s, label %%%s, label %%%s",
+            condition,
+            labelTrue,
+            labelFalse
+        ));
     }
 
     public static Instruction newLine() {
-        return new Instruction("", 0);
+        return new Instruction("");
     }
 
-    public static Instruction returnInstruction(TypeCode type) {
-        switch (type) {
-            case CInt:
-            case CBool:
-                return new Instruction("ireturn", -type.getSize());
+    public static Instruction ret() {
+        // FIXME: Check if this is correct
+        return new Instruction("ret void");
+    }
 
-            case CDouble:
-                return new Instruction("dreturn", -type.getSize());
+    public static Instruction ret(OperationItem returned) {
+        return new Instruction(String.format(
+            "ret %s %s",
+            returned.type,
+            returned
+        ));
+    }
 
-            case CVoid:
-            default:
-                return new Instruction("return", -type.getSize());
+    public static Instruction and(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = and %s %s, %s",
+            dst,
+            left.type,
+            left,
+            right
+        ));
+    }
+
+    public static Instruction or(
+        Variable dst,
+        OperationItem left,
+        OperationItem right
+    ) {
+        return new Instruction(String.format(
+            "%s = or %s %s, %s",
+            dst,
+            left.type,
+            left,
+            right
+        ));
+    }
+
+    public static Instruction not(
+        Variable dst,
+        OperationItem src
+    ) {
+        return new Instruction(String.format(
+            "%s = xor %s %s, 1",
+            dst,
+            src.type,
+            src
+        ));
+    }
+
+    public static Instruction neg(
+        Variable dst,
+        OperationItem src
+    ) {
+        if (src.type == TypeCode.CDouble) {
+            return new Instruction(String.format(
+                "%s = fneg %s %s",
+                dst,
+                src.type,
+                src
+            ));
+        } else {
+            return Instruction.subtract(
+                dst,
+                new Literal(src.type, 0),
+                src
+            );
         }
     }
 
     private void add(Instruction inst) {
         this._commands.addAll(inst.emit());
+    }
+
+    private void add(String command) {
+        this._commands.add(command);
     }
 
     private void add(String command, int stackDifference) {
