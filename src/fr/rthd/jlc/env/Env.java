@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class Env<Value, Func> {
+public class Env<Value, Func extends FunType> {
     private final Map<String, Func> _signature;
     private final LinkedList<Map<String, Value>> _contexts;
 
@@ -81,11 +81,11 @@ public class Env<Value, Func> {
         }
     }
 
-    public void insertFun(String id, Func func) throws TypeException {
-        if (lookupFun(id) == null) {
-            _signature.put(id, func);
+    public void insertFun(Func func) throws TypeException {
+        if (lookupFun(func.name) == null) {
+            _signature.put(func.name, func);
         } else {
-            throw new SymbolAlreadyDefinedException(id);
+            throw new SymbolAlreadyDefinedException(func.name);
         }
     }
 

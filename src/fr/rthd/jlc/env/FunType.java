@@ -7,14 +7,16 @@ import java.util.List;
 
 public class FunType {
     public final TypeCode retType;
+    public final String name;
     public final List<FunArg> args;
 
-    public FunType(TypeCode retVal, FunArg... args) {
-        this(retVal, Arrays.asList(args));
+    public FunType(TypeCode retVal, String name, FunArg... args) {
+        this(retVal, name, Arrays.asList(args));
     }
 
-    public FunType(TypeCode retVal, List<FunArg> args) {
+    public FunType(TypeCode retVal, String name, List<FunArg> args) {
         this.retType = retVal;
+        this.name = name;
         this.args = args;
     }
 

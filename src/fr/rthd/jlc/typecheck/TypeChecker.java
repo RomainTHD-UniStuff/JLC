@@ -94,20 +94,23 @@ public class TypeChecker {
                 def.accept(new TopDefSignatureVisitor(), env);
             }
 
-            env.insertFun("printInt", new FunType(
+            env.insertFun(new FunType(
                 TypeCode.CVoid,
+                "printInt",
                 new FunArg(TypeCode.CInt, "i")
             ));
-            env.insertFun("printDouble", new FunType(
+            env.insertFun(new FunType(
                 TypeCode.CVoid,
+                "printDouble",
                 new FunArg(TypeCode.CDouble, "d")
             ));
-            env.insertFun("printString", new FunType(
+            env.insertFun(new FunType(
                 TypeCode.CVoid,
+                "printString",
                 new FunArg(TypeCode.CString, "s")
             ));
-            env.insertFun("readInt", new FunType(TypeCode.CInt));
-            env.insertFun("readDouble", new FunType(TypeCode.CDouble));
+            env.insertFun(new FunType(TypeCode.CInt, "readInt"));
+            env.insertFun(new FunType(TypeCode.CDouble, "readDouble"));
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {
@@ -184,7 +187,7 @@ public class TypeChecker {
             }
 
             TypeCode retType = p.type_.accept(new TypeVisitor(), null);
-            env.insertFun(p.ident_, new FunType(retType, argsType));
+            env.insertFun(new FunType(retType, p.ident_, argsType));
 
             return null;
         }
