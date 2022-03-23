@@ -1,7 +1,10 @@
 package fr.rthd.jlc;
 
+import fr.rthd.jlc.compiler.Compiler;
+import fr.rthd.jlc.compiler.llvm.LLVMInstructionBuilder;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.env.exception.EnvException;
 import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
@@ -48,12 +51,10 @@ public class Main {
             Env<?, FunType> env = new Env<>();
             Prog typedTree = new TypeChecker().typecheck(parseTree, env);
             Prog optimizedTree = new Optimizer().optimize(typedTree, env);
-
-            // Generate code
-            // TODO: Generate code for the backend
-
+            System.out.println(new Compiler(new LLVMInstructionBuilder())
+                                   .compile(optimizedTree, env));
             System.err.println("OK");
-        } catch (TypeException e) {
+        } catch (TypeException | EnvException e) {
             System.err.println("ERROR");
             System.err.println("Type error: " + e.getMessage());
             System.exit(1);

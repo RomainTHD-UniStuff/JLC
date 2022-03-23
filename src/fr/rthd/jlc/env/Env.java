@@ -1,7 +1,7 @@
 package fr.rthd.jlc.env;
 
-import fr.rthd.jlc.typecheck.exception.SymbolAlreadyDefinedException;
-import fr.rthd.jlc.typecheck.exception.TypeException;
+import fr.rthd.jlc.env.exception.EnvException;
+import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -60,7 +60,7 @@ public class Env<Value, Func extends FunType> {
         return _signature.get(id);
     }
 
-    public void insertVar(String id, Value value) throws TypeException {
+    public void insertVar(String id, Value value) throws EnvException {
         assert value != null;
         Map<String, Value> env = _contexts.peek();
         assert env != null;
@@ -81,7 +81,7 @@ public class Env<Value, Func extends FunType> {
         }
     }
 
-    public void insertFun(Func func) throws TypeException {
+    public void insertFun(Func func) throws EnvException {
         if (lookupFun(func.name) == null) {
             _signature.put(func.name, func);
         } else {
