@@ -1,5 +1,6 @@
 package fr.rthd.jlc.compiler;
 
+import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
@@ -11,6 +12,7 @@ public class EnvCompiler extends Env<Variable, FunType> {
 
     private final List<String> output;
     private int indentLevel;
+    private int tempVarCount = 0;
 
     public EnvCompiler(Env<?, FunType> env) {
         super(env);
@@ -59,5 +61,13 @@ public class EnvCompiler extends Env<Variable, FunType> {
 
     public void emitNewLine() {
         output.add("");
+    }
+
+    public Variable createTempVar(TypeCode type, String ctx) {
+        return new Variable(type, String.format(
+            "temp_%s_%d",
+            ctx,
+            (tempVarCount++)
+        ));
     }
 }
