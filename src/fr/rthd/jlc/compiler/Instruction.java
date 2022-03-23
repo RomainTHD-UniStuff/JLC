@@ -1,6 +1,7 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.FunType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,22 @@ public class Instruction {
             dst,
             dst.type
         ));
+    }
+
+    public static Instruction functionDeclarationStart(FunType func) {
+        return new Instruction(String.format(
+            "define %s @%s(%s) {",
+            func.retType,
+            func.name,
+            func.args.stream()
+                     .map(arg -> String.format("%s %s", arg.type, arg))
+                     .reduce((a, b) -> String.format("%s, %s", a, b))
+                     .orElse("")
+        ));
+    }
+
+    public static Instruction functionDeclarationEnd() {
+        return new Instruction("}");
     }
 
     public static Instruction call(
@@ -265,6 +282,10 @@ public class Instruction {
                 src
             );
         }
+    }
+
+    public static Instruction raw(String raw) {
+        return new Instruction(raw);
     }
 
     private void add(Instruction inst) {
