@@ -101,7 +101,9 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
 
     @Override
     public Instruction label(String labelName) {
-        return new Instruction(String.format("%s:", labelName));
+        Instruction i = new Instruction(String.format("%s:", labelName));
+        i.indentable = false;
+        return i;
     }
 
     @Override

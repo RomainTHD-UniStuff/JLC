@@ -5,9 +5,11 @@ import java.util.List;
 
 public class Instruction {
     private final List<String> _commands;
+    public boolean indentable;
 
     public Instruction() {
         this._commands = new ArrayList<>();
+        this.indentable = true;
     }
 
     public Instruction(String command) {
