@@ -45,14 +45,14 @@ public class Main {
             // Parse
             lex = new Yylex(new StringReader(input.toString()));
             parser p = new parser(lex);
-            Prog parseTree = p.pProg();
+            Prog tree = p.pProg();
 
             // Type check
             Env<?, FunType> env = new Env<>();
-            Prog typedTree = new TypeChecker().typecheck(parseTree, env);
-            Prog optimizedTree = new Optimizer().optimize(typedTree, env);
+            tree = new TypeChecker().typecheck(tree, env);
+            // tree = new Optimizer().optimize(tree, env);
             System.out.println(new Compiler(new LLVMInstructionBuilder())
-                                   .compile(optimizedTree, env));
+                                   .compile(tree, env));
             System.err.println("OK");
         } catch (TypeException | EnvException e) {
             System.err.println("ERROR");
