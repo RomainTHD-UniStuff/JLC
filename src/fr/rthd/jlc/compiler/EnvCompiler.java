@@ -65,8 +65,16 @@ public class EnvCompiler extends Env<Variable, FunType> {
 
     public Variable createTempVar(TypeCode type, String ctx) {
         return new Variable(type, String.format(
-            "temp_%s_%d",
+            "_temp_%s_%d",
             ctx,
+            (tempVarCount++)
+        ));
+    }
+
+    public Variable createVar(TypeCode type, String name) {
+        return new Variable(type, String.format(
+            "%s_%d",
+            name,
             (tempVarCount++)
         ));
     }
