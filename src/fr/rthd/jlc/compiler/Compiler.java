@@ -1,6 +1,7 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.AddOp;
@@ -36,7 +37,6 @@ import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
-import javalette.Absyn.ListStmt;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
@@ -86,11 +86,9 @@ public class Compiler {
             env.emit(instructionBuilder.label("entry"));
 
             env.resetScope();
-            env.indent();
             env.enterScope();
-
+            p.blk_.accept(new BlkVisitor(), env);
             env.leaveScope();
-            env.unindent();
 
             env.emit(instructionBuilder.functionDeclarationEnd());
 
@@ -145,22 +143,22 @@ public class Compiler {
 
         public OperationItem visit(EMul p, EnvCompiler env) {
             return p.mulop_.accept(new MulOpVisitor(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.expr_2.accept(new ExprVisitor(), null)
+                p.expr_1.accept(new ExprVisitor(), env),
+                p.expr_2.accept(new ExprVisitor(), env)
             ), env);
         }
 
         public OperationItem visit(EAdd p, EnvCompiler env) {
             return p.addop_.accept(new AddOpVisitor(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.expr_2.accept(new ExprVisitor(), null)
+                p.expr_1.accept(new ExprVisitor(), env),
+                p.expr_2.accept(new ExprVisitor(), env)
             ), env);
         }
 
         public OperationItem visit(ERel p, EnvCompiler env) {
             return p.relop_.accept(new RelOpVisitor(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.expr_2.accept(new ExprVisitor(), null)
+                p.expr_1.accept(new ExprVisitor(), env),
+                p.expr_2.accept(new ExprVisitor(), env)
             ), env);
         }
 
@@ -175,80 +173,137 @@ public class Compiler {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Blk, EnvCompiler> {
-        public Block visit(Block p, EnvCompiler env) {
-            ListStmt stmt = new ListStmt();
+    public static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
+        public Void visit(Block p, EnvCompiler env) {
+            env.indent();
+            env.emit(instructionBuilder.comment("start new block"));
+            env.emit(instructionBuilder.newLine());
+
+            env.enterScope();
             for (Stmt s : p.liststmt_) {
-                stmt.add(s.accept(new StmtVisitor(), null));
+                s.accept(new StmtVisitor(), env);
             }
-            return new Block(stmt);
-        }
-    }
+            env.leaveScope();
 
-    public static class StmtVisitor implements Stmt.Visitor<Stmt, EnvCompiler> {
-        public Empty visit(Empty p, EnvCompiler env) {
-            return p;
-        }
-
-        public BStmt visit(BStmt p, EnvCompiler env) {
-            return new BStmt(p.blk_.accept(new BlkVisitor(), null));
-        }
-
-        public Decl visit(Decl p, EnvCompiler env) {
-            // TODO:
-            return null;
-        }
-
-        public Ass visit(Ass p, EnvCompiler env) {
-            // TODO:
-            return null;
-        }
-
-        public Incr visit(Incr p, EnvCompiler env) {
-            return p;
-        }
-
-        public Decr visit(Decr p, EnvCompiler env) {
-            return p;
-        }
-
-        public Ret visit(Ret p, EnvCompiler env) {
-            // TODO:
-            return null;
-        }
-
-        public VRet visit(VRet p, EnvCompiler env) {
-            return p;
-        }
-
-        public Cond visit(Cond p, EnvCompiler env) {
-            // TODO:
-            return null;
-        }
-
-        public CondElse visit(CondElse p, EnvCompiler env) {
-            // TODO:
-            return null;
-        }
-
-        public While visit(While p, EnvCompiler env) {
-            // TODO:
-            return null;
-        }
-
-        public SExp visit(SExp p, EnvCompiler env) {
-            // TODO:
+            env.emit(instructionBuilder.comment("end new block"));
+            env.unindent();
             return null;
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, EnvCompiler> {
-        public NoInit visit(NoInit p, EnvCompiler env) {
-            return p;
+    public static class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
+        public Void visit(Empty p, EnvCompiler env) {
+            env.emit(instructionBuilder.noop());
+            return null;
         }
 
-        public Init visit(Init p, EnvCompiler env) {
+        public Void visit(BStmt p, EnvCompiler env) {
+            p.blk_.accept(new BlkVisitor(), null);
+            return null;
+        }
+
+        public Void visit(Decl p, EnvCompiler env) {
+            p.listitem_.forEach(item -> item.accept(
+                new ItemVisitor(p.type_.accept(new TypeVisitor(), null)),
+                env
+            ));
+            return null;
+        }
+
+        public Void visit(Ass p, EnvCompiler env) {
+            env.emit(instructionBuilder.store(
+                env.lookupVar(p.ident_),
+                p.expr_.accept(new ExprVisitor(), env)
+            ));
+            env.emit(instructionBuilder.newLine());
+            return null;
+        }
+
+        public Void visit(Incr p, EnvCompiler env) {
+            Variable src = env.lookupVar(p.ident_);
+            Variable dst = env.createVar(src.type, p.ident_);
+            env.emit(instructionBuilder.increment(
+                dst,
+                src
+            ));
+            env.emit(instructionBuilder.newLine());
+            env.updateVar(p.ident_, dst);
+            return null;
+        }
+
+        public Void visit(Decr p, EnvCompiler env) {
+            Variable src = env.lookupVar(p.ident_);
+            Variable dst = env.createVar(src.type, p.ident_);
+            env.emit(instructionBuilder.decrement(
+                dst,
+                src
+            ));
+            env.emit(instructionBuilder.newLine());
+            env.updateVar(p.ident_, dst);
+            return null;
+        }
+
+        public Void visit(Ret p, EnvCompiler env) {
+            env.emit(instructionBuilder.ret(
+                p.expr_.accept(new ExprVisitor(), env)
+            ));
+            env.emit(instructionBuilder.newLine());
+            return null;
+        }
+
+        public Void visit(VRet p, EnvCompiler env) {
+            env.emit(instructionBuilder.ret());
+            env.emit(instructionBuilder.newLine());
+            return null;
+        }
+
+        public Void visit(Cond p, EnvCompiler env) {
             // TODO:
+            return null;
+        }
+
+        public Void visit(CondElse p, EnvCompiler env) {
+            // TODO:
+            return null;
+        }
+
+        public Void visit(While p, EnvCompiler env) {
+            // TODO:
+            return null;
+        }
+
+        public Void visit(SExp p, EnvCompiler env) {
+            p.expr_.accept(new ExprVisitor(), env);
+            return null;
+        }
+    }
+
+    public static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
+        private final TypeCode type;
+
+        public ItemVisitor(TypeCode type) {
+            this.type = type;
+        }
+
+        public Void visit(NoInit p, EnvCompiler env) {
+            env.insertVar(p.ident_, env.createVar(type, p.ident_));
+            env.emit(instructionBuilder.declare(
+                env.lookupVar(p.ident_)
+            ));
+            env.emit(instructionBuilder.newLine());
+            return null;
+        }
+
+        public Void visit(Init p, EnvCompiler env) {
+            env.insertVar(p.ident_, env.createVar(type, p.ident_));
+            env.emit(instructionBuilder.declare(
+                env.lookupVar(p.ident_)
+            ));
+            env.emit(instructionBuilder.store(
+                env.lookupVar(p.ident_),
+                p.expr_.accept(new ExprVisitor(), env)
+            ));
+            env.emit(instructionBuilder.newLine());
             return null;
         }
     }
