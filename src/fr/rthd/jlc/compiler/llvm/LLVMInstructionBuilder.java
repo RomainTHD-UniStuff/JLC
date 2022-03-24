@@ -121,6 +121,14 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     }
 
     @Override
+    public Instruction increment(
+        Variable dst,
+        Variable src
+    ) {
+        return add(dst, src, new Literal(src.type, 1));
+    }
+
+    @Override
     public Instruction subtract(
         Variable dst,
         OperationItem left,
@@ -134,6 +142,14 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
             left,
             right
         ));
+    }
+
+    @Override
+    public Instruction decrement(
+        Variable dst,
+        Variable src
+    ) {
+        return subtract(dst, src, new Literal(src.type, 1));
     }
 
     @Override

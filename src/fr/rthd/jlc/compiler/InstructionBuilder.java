@@ -38,10 +38,20 @@ public abstract class InstructionBuilder {
         OperationItem right
     );
 
+    public abstract Instruction increment(
+        Variable dst,
+        Variable src
+    );
+
     public abstract Instruction subtract(
         Variable dst,
         OperationItem left,
         OperationItem right
+    );
+
+    public abstract Instruction decrement(
+        Variable dst,
+        Variable src
     );
 
     public abstract Instruction multiply(
