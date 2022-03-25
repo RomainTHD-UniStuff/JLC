@@ -163,13 +163,93 @@ public class Compiler {
         }
 
         public OperationItem visit(EAnd p, EnvCompiler env) {
-            // TODO:
-            return null;
+            Variable res = env.createTempVar(TypeCode.CBool, "and");
+            env.emit(instructionBuilder.declare(res));
+
+            String trueLabel = env.getNewLabel("andTrue");
+            String falseLabel = env.getNewLabel("andFalse");
+            String endLabel = env.getNewLabel("andEnd");
+
+            env.emit(instructionBuilder.comment("and"));
+            env.indent();
+            env.emit(instructionBuilder.comment("and left"));
+
+            OperationItem left = p.expr_1.accept(new ExprVisitor(), env);
+            env.emit(instructionBuilder.conditionalJump(
+                left,
+                trueLabel,
+                falseLabel
+            ));
+
+            env.emit(instructionBuilder.label(trueLabel));
+            env.enterScope();
+            env.emit(instructionBuilder.comment("and true"));
+            env.emit(instructionBuilder.store(
+                res,
+                p.expr_2.accept(new ExprVisitor(), env)
+            ));
+            env.emit(instructionBuilder.jump(endLabel));
+            env.leaveScope();
+
+            env.emit(instructionBuilder.label(falseLabel));
+            env.emit(instructionBuilder.comment("and false"));
+            env.emit(instructionBuilder.store(
+                res,
+                new Literal(TypeCode.CBool, false)
+            ));
+            env.emit(instructionBuilder.jump(endLabel));
+
+            env.unindent();
+            env.emit(instructionBuilder.label(endLabel));
+            env.emit(instructionBuilder.comment("endand"));
+            env.emit(instructionBuilder.newLine());
+
+            return res;
         }
 
         public OperationItem visit(EOr p, EnvCompiler env) {
-            // TODO:
-            return null;
+            Variable res = env.createTempVar(TypeCode.CBool, "or");
+            env.emit(instructionBuilder.declare(res));
+
+            String trueLabel = env.getNewLabel("orTrue");
+            String falseLabel = env.getNewLabel("orFalse");
+            String endLabel = env.getNewLabel("orEnd");
+
+            env.emit(instructionBuilder.comment("or"));
+            env.indent();
+            env.emit(instructionBuilder.comment("or left"));
+
+            OperationItem left = p.expr_1.accept(new ExprVisitor(), env);
+            env.emit(instructionBuilder.conditionalJump(
+                left,
+                trueLabel,
+                falseLabel
+            ));
+
+            env.emit(instructionBuilder.label(trueLabel));
+            env.emit(instructionBuilder.comment("or true"));
+            env.emit(instructionBuilder.store(
+                res,
+                new Literal(TypeCode.CBool, true)
+            ));
+            env.emit(instructionBuilder.jump(endLabel));
+
+            env.emit(instructionBuilder.label(falseLabel));
+            env.enterScope();
+            env.emit(instructionBuilder.comment("or false"));
+            env.emit(instructionBuilder.store(
+                res,
+                p.expr_2.accept(new ExprVisitor(), env)
+            ));
+            env.emit(instructionBuilder.jump(endLabel));
+            env.leaveScope();
+
+            env.unindent();
+            env.emit(instructionBuilder.label(endLabel));
+            env.emit(instructionBuilder.comment("endor"));
+            env.emit(instructionBuilder.newLine());
+
+            return res;
         }
     }
 
