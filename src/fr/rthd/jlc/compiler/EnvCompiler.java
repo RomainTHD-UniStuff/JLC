@@ -6,26 +6,28 @@ import fr.rthd.jlc.env.FunType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class EnvCompiler extends Env<Variable, FunType> {
     public static final String INDENT = "\t";
 
-    private final List<String> output;
-    private final Map<String, Integer> varCount;
-    private int indentLevel;
+    private final List<String> _output;
+    private final LinkedList<Map<String, Integer>> _varCount;
+    private int _indentLevel;
 
     public EnvCompiler(Env<?, FunType> env) {
         super(env);
-        this.output = new ArrayList<>();
-        this.varCount = new HashMap<>();
-        this.indentLevel = 0;
+        this._output = new ArrayList<>();
+        this._varCount = new LinkedList<>();
+        this._varCount.add(new HashMap<>());
+        this._indentLevel = 0;
     }
 
     public String toAssembly() {
         StringBuilder res = new StringBuilder();
-        for (String inst : output) {
+        for (String inst : _output) {
             res.append(inst).append("\n");
         }
 
@@ -33,60 +35,68 @@ public class EnvCompiler extends Env<Variable, FunType> {
     }
 
     public void indent() {
-        ++this.indentLevel;
+        ++this._indentLevel;
     }
 
     public void unindent() {
-        --this.indentLevel;
+        --this._indentLevel;
     }
 
     private String getIndentString() {
-        return INDENT.repeat(indentLevel);
+        return INDENT.repeat(_indentLevel);
     }
 
     public void emit(Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
-                output.add("");
+                _output.add("");
             } else if (inst.indentable) {
-                output.add(getIndentString() + emitted);
+                _output.add(getIndentString() + emitted);
             } else {
-                output.add(emitted);
+                _output.add(emitted);
             }
         }
     }
 
-    protected void emitRaw(String command) {
-        output.add(getIndentString() + command);
-    }
-
-    protected void emitRaw(int index, String command) {
-        output.add(index, getIndentString() + command);
-    }
-
-    public void emitNewLine() {
-        output.add("");
-    }
-
-    private int getVarCount(String name) {
-        int count = varCount.getOrDefault(name, 0);
-        varCount.put(name, count + 1);
-        return count;
+    private String getVariableUID(String name) {
+        Map<String, Integer> scope = _varCount.peek();
+        assert scope != null;
+        int count = scope.getOrDefault(name, 0);
+        scope.put(name, count + 1);
+        return String.format("%d_%d", _varCount.size() - 1, count);
     }
 
     public Variable createTempVar(TypeCode type, String ctx) {
         return new Variable(type, String.format(
-            "_temp_%s_%d",
+            "_temp_%s_%s",
             ctx,
-            getVarCount(ctx)
+            getVariableUID(ctx)
         ));
     }
 
     public Variable createVar(TypeCode type, String name) {
         return new Variable(type, String.format(
-            "%s_%d",
+            "%s_%s",
             name,
-            getVarCount(name)
+            getVariableUID(name)
         ));
+    }
+
+    @Override
+    public void enterScope() {
+        super.enterScope();
+        _varCount.push(new HashMap<>());
+    }
+
+    @Override
+    public void leaveScope() {
+        super.leaveScope();
+        _varCount.pop();
+    }
+
+    @Override
+    public void resetScope() {
+        super.resetScope();
+        _varCount.clear();
     }
 }

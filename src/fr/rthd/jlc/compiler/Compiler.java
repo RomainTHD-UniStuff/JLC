@@ -175,9 +175,9 @@ public class Compiler {
 
     public static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
         public Void visit(Block p, EnvCompiler env) {
-            env.indent();
             env.emit(instructionBuilder.comment("start new block"));
             env.emit(instructionBuilder.newLine());
+            env.indent();
 
             env.enterScope();
             for (Stmt s : p.liststmt_) {
@@ -185,8 +185,9 @@ public class Compiler {
             }
             env.leaveScope();
 
-            env.emit(instructionBuilder.comment("end new block"));
             env.unindent();
+            env.emit(instructionBuilder.comment("end new block"));
+            env.emit(instructionBuilder.newLine());
             return null;
         }
     }
@@ -198,7 +199,7 @@ public class Compiler {
         }
 
         public Void visit(BStmt p, EnvCompiler env) {
-            p.blk_.accept(new BlkVisitor(), null);
+            p.blk_.accept(new BlkVisitor(), env);
             return null;
         }
 
