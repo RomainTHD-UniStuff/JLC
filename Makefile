@@ -1,22 +1,14 @@
-# Makefile for PLT lab 3 in JAVA
+# Compiler makefile
 
-# Variables for file lists
-###########################################################################
-
-# Edit to add new java source files, if needed!
+# Sources files
 LABSRC    = $(filter-out src/javalette/*.java, $(wildcard src/*.java src/**/*.java))
 LABSRCDIR = src
 LABSRCOUT = src/javalette
 
-# No need to edit these:
+# Object files
 PARSERSRC = $(wildcard src/javalette/Absyn/*.java src/javalette/*.java)
 PARSEROBJ = $(PARSERSRC:.java=.class)
 LABOBJ    = $(LABSRC:.java=.class)
-# Inner classes:
-# LABINNOBJ = $(wildcard $(LABSRC:.java=$$*.class))
-
-# Variables for the programming environment (edit as needed)
-###########################################################################
 
 # Name of generated .cup file for bnfc ≥ 2.8.1
 CUPFILE = src/javalette/javalette.cup
@@ -25,77 +17,75 @@ JAVAC       = javac
 JAVAC_FLAGS = -sourcepath ./src -d ./build
 JAVA        = java
 
-# No need to edit these:
 javac       = ${JAVAC} ${JAVAC_FLAGS}
 java        = ${JAVA}  ${JAVA_FLAGS}
 
-# Default rule
-###########################################################################
+# Global rules
+################################################################################
 
-# List of goals not corresponding to file names.
-.PHONY : default all clean distclean vclean
+# Goals not corresponding to file names
+.PHONY: default all clean distclean vclean
 
-# As the first goal is default goal, this goal needs to remain first.
-default : build/fr/rthd/jlc/Main.class
+# Default goal, needs to remain first
+default: build/fr/rthd/jlc/Main.class
 
 # Build and ship
-all : default sdist
+all: default sdist
 
-# Rules for compiling Main classes (modify or add as needed)
-###########################################################################
+# Compiling Main class
+################################################################################
 
-build/fr/rthd/jlc/Main.class : src/fr/rthd/jlc/Main.java build/javalette/Test.class
+build/fr/rthd/jlc/Main.class: src/fr/rthd/jlc/Main.java build/javalette/Test.class
 	$(javac) $<
 
+# Compiling the parser
+################################################################################
 
-# Rules for creating the parser
-###########################################################################
-
-# Create parser source via bnfc (dependency javalette.cf needs to be first).
-# Patch javalette/Absyn/Exp.java
-build/javalette/Yylex $(CUPFILE) src/javalette/Test.java : javalette.cf
+# Create parser source via bnfc
+build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: javalette.cf
 	bnfc --java -o src $<
 
-# Create parser and move it to the correct location.
-src/javalette/parser.java src/javalette/sym.java : $(CUPFILE)
+# Create parser and move it to the correct location
+src/javalette/parser.java src/javalette/sym.java: $(CUPFILE)
 	# FIXME: The BNFC grammar contains a conflict, which is not resolved.
 	$(java) java_cup.Main -expect 1 -package javalette $<
 	mv parser.java sym.java src/javalette/
 
-# Create lexer.
-src/javalette/Yylex.java : src/javalette/Yylex
+# Create lexer
+src/javalette/Yylex.java: src/javalette/Yylex
 	$(java) JLex.Main $<
 
-# Compile lexer.
-build/javalette/Yylex.class : src/javalette/Yylex.java build/javalette/sym.class
+# Compile lexer
+build/javalette/Yylex.class: src/javalette/Yylex.java build/javalette/sym.class
 	$(javac) $<
 
-# Create parser test.
-build/javalette/Test.class : src/javalette/Test.java build/javalette/parser.class build/javalette/sym.class build/javalette/Yylex.class
+# Create parser test
+build/javalette/Test.class: src/javalette/Test.java build/javalette/parser.class build/javalette/sym.class build/javalette/Yylex.class
 	$(javac) $<
 
-# Create parser.
-build/javalette/parser.class : src/javalette/parser.java
+# Create parser
+build/javalette/parser.class: src/javalette/parser.java
 	$(javac) $<
 
 # Sym
-build/javalette/sym.class : src/javalette/sym.java
+build/javalette/sym.class: src/javalette/sym.java
 	$(javac) $<
 
-# Default rules
-###########################################################################
+# Default rule for all source files
+################################################################################
 
-build/%.class : src/%.java build/javalette/Test.class
+build/%.class: src/%.java build/javalette/Test.class
 	$(javac) $<
-
 
 # Rules for shipping the solution
-###########################################################################
+################################################################################
 
-sdist : createTmp submission.tar.gz
+# Create distribution
+sdist: submission.tar.gz
 
-tmpdir := $(shell mktemp -d)
-createTmp :
+# Create submission zip
+submission.tar.gz: javalette.cf Makefile
+	$(eval tmpdir := $(shell mktemp -d))
 	mkdir $(tmpdir)/submission
 	cp -r $(LABSRCDIR) $(tmpdir)/submission
 	rm -r $(tmpdir)/submission/$(LABSRCOUT)
@@ -103,23 +93,21 @@ createTmp :
 	cp -r doc $(tmpdir)/submission
 	cp -r lib $(tmpdir)/submission
 	cp javalette.cf $(tmpdir)/submission
-
-submission.tar.gz : javalette.cf Makefile
 	cp $^ $(tmpdir)/submission/
 	cd $(tmpdir)/submission && tar -czhf $@ *
 	mv $(tmpdir)/submission/$@ .
 
 # Rules for cleaning generated files
-###########################################################################
+################################################################################
 
-clean :
+# Clean all output files
+clean:
 	-rm -r build
 	mkdir build
 	touch build/.gitkeep
-# Uncomment to also remove all .class files in current directory
-#	-rm -f *.class
 
-vclean : clean
+# Clean all generated files
+vclean: clean
 	-rm -rf $(LABSRCOUT)
 	-mkdir $(LABSRCOUT)
 	touch $(LABSRCOUT)/.gitkeep
@@ -127,13 +115,8 @@ vclean : clean
 	-mkdir build
 	touch build/.gitkeep
 
-distclean : vclean
+# Clean everything
+distclean: vclean
 	-rm -f submission.tar.gz
-
-# Debugging the Makefile
-###########################################################################
-
-debug :
-	echo $(LABINNOBJ)
 
 # EOF
