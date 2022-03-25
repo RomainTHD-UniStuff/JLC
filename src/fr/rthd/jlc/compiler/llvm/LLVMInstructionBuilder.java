@@ -227,7 +227,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
 
     @Override
     public Instruction conditionalJump(
-        Variable condition,
+        OperationItem condition,
         String labelTrue,
         String labelFalse
     ) {

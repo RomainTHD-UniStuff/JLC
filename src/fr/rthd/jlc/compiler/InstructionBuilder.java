@@ -82,7 +82,7 @@ public abstract class InstructionBuilder {
     public abstract Instruction jump(String label);
 
     public abstract Instruction conditionalJump(
-        Variable condition,
+        OperationItem condition,
         String labelTrue,
         String labelFalse
     );

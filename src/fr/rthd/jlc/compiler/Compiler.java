@@ -175,7 +175,7 @@ public class Compiler {
 
     public static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
         public Void visit(Block p, EnvCompiler env) {
-            env.emit(instructionBuilder.comment("start new block"));
+            env.emit(instructionBuilder.comment("start block"));
             env.emit(instructionBuilder.newLine());
             env.indent();
 
@@ -186,7 +186,7 @@ public class Compiler {
             env.leaveScope();
 
             env.unindent();
-            env.emit(instructionBuilder.comment("end new block"));
+            env.emit(instructionBuilder.comment("end block"));
             env.emit(instructionBuilder.newLine());
             return null;
         }
@@ -259,17 +259,105 @@ public class Compiler {
         }
 
         public Void visit(Cond p, EnvCompiler env) {
-            // TODO:
+            String thenLabel = env.getNewLabel("ifTrue");
+            String endLabel = env.getNewLabel("ifEnd");
+
+            env.emit(instructionBuilder.comment("if"));
+            env.indent();
+            env.emit(instructionBuilder.comment("if exp"));
+
+            OperationItem res = p.expr_.accept(new ExprVisitor(), env);
+            env.emit(instructionBuilder.conditionalJump(
+                res,
+                thenLabel,
+                endLabel
+            ));
+
+            env.emit(instructionBuilder.label(thenLabel));
+            env.enterScope();
+            env.emit(instructionBuilder.comment("if then"));
+            p.stmt_.accept(new StmtVisitor(), env);
+            // Not useful to emit a jump here since there is a fallthrough
+            env.emit(instructionBuilder.jump(endLabel));
+            env.leaveScope();
+
+            env.unindent();
+            env.emit(instructionBuilder.label(endLabel));
+            env.emit(instructionBuilder.comment("endif"));
+
+            env.emit(instructionBuilder.newLine());
             return null;
         }
 
         public Void visit(CondElse p, EnvCompiler env) {
-            // TODO:
+            String thenLabel = env.getNewLabel("ifTrue");
+            String elseLabel = env.getNewLabel("ifFalse");
+            String endLabel = env.getNewLabel("ifEnd");
+
+            env.emit(instructionBuilder.comment("if"));
+            env.indent();
+            env.emit(instructionBuilder.comment("if exp"));
+
+            OperationItem res = p.expr_.accept(new ExprVisitor(), env);
+            env.emit(instructionBuilder.conditionalJump(
+                res,
+                thenLabel,
+                elseLabel
+            ));
+
+            env.emit(instructionBuilder.label(thenLabel));
+            env.enterScope();
+            env.emit(instructionBuilder.comment("if then"));
+            p.stmt_1.accept(new StmtVisitor(), env);
+            env.emit(instructionBuilder.jump(endLabel));
+            env.leaveScope();
+
+            env.emit(instructionBuilder.label(elseLabel));
+            env.enterScope();
+            env.emit(instructionBuilder.comment("if else"));
+            p.stmt_2.accept(new StmtVisitor(), env);
+            // Not useful to emit a jump here since there is a fallthrough
+            env.emit(instructionBuilder.jump(endLabel));
+            env.leaveScope();
+
+            env.unindent();
+            env.emit(instructionBuilder.label(endLabel));
+            env.emit(instructionBuilder.comment("endif"));
+
+            env.emit(instructionBuilder.newLine());
             return null;
         }
 
         public Void visit(While p, EnvCompiler env) {
-            // TODO:
+            String cmpLabel = env.getNewLabel("whileCompare");
+            String loopLabel = env.getNewLabel("whileLoop");
+            String endLabel = env.getNewLabel("whileEnd");
+
+            env.emit(instructionBuilder.comment("while"));
+            env.emit(instructionBuilder.jump(cmpLabel));
+            env.indent();
+            env.emit(instructionBuilder.label(cmpLabel));
+            env.emit(instructionBuilder.comment("while exp"));
+
+            OperationItem res = p.expr_.accept(new ExprVisitor(), env);
+            env.emit(instructionBuilder.conditionalJump(
+                res,
+                loopLabel,
+                endLabel
+            ));
+
+            env.emit(instructionBuilder.label(loopLabel));
+            env.enterScope();
+            env.emit(instructionBuilder.comment("while loop"));
+            p.stmt_.accept(new StmtVisitor(), env);
+            env.emit(instructionBuilder.jump(cmpLabel));
+            env.leaveScope();
+            env.unindent();
+
+            env.emit(instructionBuilder.label(endLabel));
+            env.emit(instructionBuilder.comment("endwhile"));
+
+            env.emit(instructionBuilder.newLine());
             return null;
         }
 

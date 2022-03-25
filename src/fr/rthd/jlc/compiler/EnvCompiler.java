@@ -16,6 +16,7 @@ public class EnvCompiler extends Env<Variable, FunType> {
     private final List<String> _output;
     private final LinkedList<Map<String, Integer>> _varCount;
     private int _indentLevel;
+    private final LinkedList<Map<String, Integer>> _labelCount;
 
     public EnvCompiler(Env<?, FunType> env) {
         super(env);
@@ -23,6 +24,8 @@ public class EnvCompiler extends Env<Variable, FunType> {
         this._varCount = new LinkedList<>();
         this._varCount.add(new HashMap<>());
         this._indentLevel = 0;
+        this._labelCount = new LinkedList<>();
+        this._labelCount.add(new HashMap<>());
     }
 
     public String toAssembly() {
@@ -80,6 +83,14 @@ public class EnvCompiler extends Env<Variable, FunType> {
             name,
             getVariableUID(name)
         ));
+    }
+
+    public String getNewLabel(String ctx) {
+        Map<String, Integer> scope = _labelCount.peek();
+        assert scope != null;
+        int count = scope.getOrDefault(ctx, 0);
+        scope.put(ctx, count + 1);
+        return String.format("_label_%s_%d_%d", ctx, _varCount.size() - 1, count);
     }
 
     @Override
