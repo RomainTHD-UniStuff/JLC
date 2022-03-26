@@ -11,13 +11,11 @@ import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
-import javalette.Absyn.Bool;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.Div;
-import javalette.Absyn.Doub;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -34,12 +32,10 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
-import javalette.Absyn.Fun;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
-import javalette.Absyn.Int;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
@@ -63,7 +59,6 @@ import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
 import javalette.Absyn.TopDef;
-import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -198,7 +193,7 @@ public class Optimizer {
             ListItem items = new ListItem();
 
             for (Item item : s.listitem_) {
-                items.add(item.accept(new ItemVisitor(), new Object[]{env, type}));
+                items.add(item.accept(new ItemVisitor(type), env));
             }
 
             return new Decl(s.type_, items);
@@ -300,10 +295,14 @@ public class Optimizer {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, Object[]> {
-        public NoInit visit(NoInit s, Object[] args) {
-            EnvOptimizer env = (EnvOptimizer) args[0];
-            TypeCode varType = (TypeCode) args[1];
+    public static class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
+        private final TypeCode varType;
+
+        public ItemVisitor(TypeCode varType) {
+            this.varType = varType;
+        }
+
+        public NoInit visit(NoInit s, EnvOptimizer env) {
             env.insertVar(
                 s.ident_,
                 new AnnotatedExpr<>(varType, new EVar(s.ident_))
@@ -311,9 +310,7 @@ public class Optimizer {
             return new NoInit(s.ident_);
         }
 
-        public Init visit(Init s, Object[] args) {
-            EnvOptimizer env = (EnvOptimizer) args[0];
-
+        public Init visit(Init s, EnvOptimizer env) {
             // FIXME: Should it be evaluated before or after inserting var?
             // env.insertVar(s.ident_, null);
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);

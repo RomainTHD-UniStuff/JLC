@@ -23,13 +23,11 @@ import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
-import javalette.Absyn.Bool;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.Div;
-import javalette.Absyn.Doub;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -46,12 +44,10 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
-import javalette.Absyn.Fun;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
-import javalette.Absyn.Int;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
@@ -75,7 +71,6 @@ import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
 import javalette.Absyn.TopDef;
-import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -242,7 +237,7 @@ public class TypeChecker {
             ListItem items = new ListItem();
 
             for (Item item : s.listitem_) {
-                items.add(item.accept(new ItemVisitor(), new Object[]{env, type}));
+                items.add(item.accept(new ItemVisitor(type), env));
             }
 
             return new Decl(s.type_, items);
@@ -403,17 +398,19 @@ public class TypeChecker {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, Object[]> {
-        public NoInit visit(NoInit p, Object[] args) {
-            EnvTypecheck env = (EnvTypecheck) args[0];
-            TypeCode varType = (TypeCode) args[1];
+    public static class ItemVisitor implements Item.Visitor<Item, EnvTypecheck> {
+        private final TypeCode varType;
+
+        public ItemVisitor(TypeCode varType) {
+            this.varType = varType;
+        }
+
+        public NoInit visit(NoInit p, EnvTypecheck env) {
             env.insertVar(p.ident_, varType);
             return new NoInit(p.ident_);
         }
 
-        public Init visit(Init s, Object[] args) {
-            EnvTypecheck env = (EnvTypecheck) args[0];
-            TypeCode varType = (TypeCode) args[1];
+        public Init visit(Init s, EnvTypecheck env) {
             env.insertVar(s.ident_, varType);
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
 
