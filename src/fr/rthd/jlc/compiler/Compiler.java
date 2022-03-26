@@ -82,13 +82,18 @@ public class Compiler {
         public Void visit(FnDef p, EnvCompiler env) {
             FunType func = env.lookupFun(p.ident_);
 
+            env.resetScope();
+
+            func.args.forEach(arg -> {
+                Variable var = env.createVar(arg.type, arg.name);
+                env.insertVar(arg.name, var);
+                arg.setGeneratedName(var.name);
+            });
+
             env.emit(instructionBuilder.functionDeclarationStart(func));
             env.emit(instructionBuilder.label("entry"));
 
-            env.resetScope();
-            env.enterScope();
             p.blk_.accept(new BlkVisitor(), env);
-            env.leaveScope();
 
             env.emit(instructionBuilder.functionDeclarationEnd());
 

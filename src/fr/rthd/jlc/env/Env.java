@@ -20,7 +20,7 @@ public class Env<Value, Func extends FunType> {
     public Env(Env<?, Func> baseEnv) {
         this._signature = baseEnv._signature;
         this._contexts = new LinkedList<>();
-        this._contexts.add(new HashMap<>());
+        this._contexts.push(new HashMap<>());
     }
 
     @Override
@@ -99,5 +99,6 @@ public class Env<Value, Func extends FunType> {
 
     public void resetScope() {
         _contexts.clear();
+        _contexts.push(new HashMap<>());
     }
 }
