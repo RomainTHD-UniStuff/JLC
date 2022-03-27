@@ -15,17 +15,17 @@ public class EnvCompiler extends Env<Variable, FunType> {
 
     private final List<String> _output;
     private final LinkedList<Map<String, Integer>> _varCount;
-    private int _indentLevel;
     private final LinkedList<Map<String, Integer>> _labelCount;
+    private int _indentLevel;
 
     public EnvCompiler(Env<?, FunType> env) {
         super(env);
         this._output = new ArrayList<>();
         this._varCount = new LinkedList<>();
-        this._varCount.add(new HashMap<>());
+        this._varCount.push(new HashMap<>());
         this._indentLevel = 0;
         this._labelCount = new LinkedList<>();
-        this._labelCount.add(new HashMap<>());
+        this._labelCount.push(new HashMap<>());
     }
 
     public String toAssembly() {
@@ -57,6 +57,18 @@ public class EnvCompiler extends Env<Variable, FunType> {
                 _output.add(getIndentString() + emitted);
             } else {
                 _output.add(emitted);
+            }
+        }
+    }
+
+    public void emitAtBeginning(Instruction inst) {
+        for (String emitted : inst.emit()) {
+            if (emitted.isEmpty()) {
+                _output.add(0, "");
+            } else if (inst.indentable) {
+                _output.add(0, getIndentString() + emitted);
+            } else {
+                _output.add(0, emitted);
             }
         }
     }
@@ -109,5 +121,6 @@ public class EnvCompiler extends Env<Variable, FunType> {
     public void resetScope() {
         super.resetScope();
         _varCount.clear();
+        _varCount.push(new HashMap<>());
     }
 }
