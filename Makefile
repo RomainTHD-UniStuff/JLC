@@ -42,7 +42,7 @@ build/fr/rthd/jlc/Main.class: src/fr/rthd/jlc/Main.java build/javalette/Test.cla
 ################################################################################
 
 # Create parser source via bnfc
-build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: javalette.cf
+build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: src/javalette.cf
 	bnfc --java -o src $<
 
 # Create parser and move it to the correct location
@@ -84,15 +84,15 @@ build/%.class: src/%.java build/javalette/Test.class
 sdist: submission.tar.gz
 
 # Create submission zip
-submission.tar.gz: javalette.cf Makefile
+submission.tar.gz: src/javalette.cf Makefile
 	$(eval tmpdir := $(shell mktemp -d))
 	mkdir $(tmpdir)/submission
 	cp -r $(LABSRCDIR) $(tmpdir)/submission
 	rm -r $(tmpdir)/submission/$(LABSRCOUT)
 	cp jlc* $(tmpdir)/submission
-	cp -r doc $(tmpdir)/submission
+	mkdir $(tmpdir)/submission/doc
+	cp README.md $(tmpdir)/submission/doc
 	cp -r lib $(tmpdir)/submission
-	cp javalette.cf $(tmpdir)/submission
 	cp $^ $(tmpdir)/submission/
 	cd $(tmpdir)/submission && tar -czhf $@ *
 	mv $(tmpdir)/submission/$@ .
