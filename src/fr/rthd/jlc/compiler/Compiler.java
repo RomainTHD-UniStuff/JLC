@@ -204,9 +204,9 @@ public class Compiler {
             Variable res = env.createTempVar(TypeCode.CBool, "and");
             env.emit(instructionBuilder.declare(res));
 
-            String trueLabel = env.getNewLabel("andTrue");
-            String falseLabel = env.getNewLabel("andFalse");
-            String endLabel = env.getNewLabel("andEnd");
+            String trueLabel = env.getNewLabel("and_true");
+            String falseLabel = env.getNewLabel("and_false");
+            String endLabel = env.getNewLabel("and_end");
 
             env.emit(instructionBuilder.comment("and"));
             env.indent();
@@ -249,9 +249,9 @@ public class Compiler {
             Variable res = env.createTempVar(TypeCode.CBool, "or");
             env.emit(instructionBuilder.declare(res));
 
-            String trueLabel = env.getNewLabel("orTrue");
-            String falseLabel = env.getNewLabel("orFalse");
-            String endLabel = env.getNewLabel("orEnd");
+            String trueLabel = env.getNewLabel("or_true");
+            String falseLabel = env.getNewLabel("or_false");
+            String endLabel = env.getNewLabel("or_end");
 
             env.emit(instructionBuilder.comment("or"));
             env.indent();
@@ -377,8 +377,8 @@ public class Compiler {
         }
 
         public Void visit(Cond p, EnvCompiler env) {
-            String thenLabel = env.getNewLabel("ifTrue");
-            String endLabel = env.getNewLabel("ifEnd");
+            String thenLabel = env.getNewLabel("if_true");
+            String endLabel = env.getNewLabel("if_end");
 
             env.emit(instructionBuilder.comment("if"));
             env.indent();
@@ -408,9 +408,9 @@ public class Compiler {
         }
 
         public Void visit(CondElse p, EnvCompiler env) {
-            String thenLabel = env.getNewLabel("ifTrue");
-            String elseLabel = env.getNewLabel("ifFalse");
-            String endLabel = env.getNewLabel("ifEnd");
+            String thenLabel = env.getNewLabel("if_true");
+            String elseLabel = env.getNewLabel("if_false");
+            String endLabel = env.getNewLabel("if_end");
 
             env.emit(instructionBuilder.comment("if"));
             env.indent();
@@ -447,9 +447,9 @@ public class Compiler {
         }
 
         public Void visit(While p, EnvCompiler env) {
-            String cmpLabel = env.getNewLabel("whileCompare");
-            String loopLabel = env.getNewLabel("whileLoop");
-            String endLabel = env.getNewLabel("whileEnd");
+            String cmpLabel = env.getNewLabel("while_compare");
+            String loopLabel = env.getNewLabel("while_loop");
+            String endLabel = env.getNewLabel("while_end");
 
             env.emit(instructionBuilder.comment("while"));
             env.emit(instructionBuilder.jump(cmpLabel));
