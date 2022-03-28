@@ -84,7 +84,7 @@ build/%.class: src/%.java build/javalette/Test.class
 sdist: submission.tar.gz
 
 # Create submission zip
-submission.tar.gz: src/javalette.cf Makefile
+submission.tar.gz: Makefile
 	$(eval tmpdir := $(shell mktemp -d))
 	mkdir $(tmpdir)/submission
 	cp -r $(LABSRCDIR) $(tmpdir)/submission
