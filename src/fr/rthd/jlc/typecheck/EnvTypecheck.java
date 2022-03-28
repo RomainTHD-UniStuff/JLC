@@ -4,7 +4,7 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
-public class EnvTypecheck extends Env<TypeCode, FunType> {
+class EnvTypecheck extends Env<TypeCode, FunType> {
     public TypeCode currentFunctionType = null;
 
     private boolean _doesReturn;

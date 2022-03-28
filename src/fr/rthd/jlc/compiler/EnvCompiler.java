@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class EnvCompiler extends Env<Variable, FunType> {
+class EnvCompiler extends Env<Variable, FunType> {
     public static final String INDENT = "\t";
 
     private final List<String> _output;

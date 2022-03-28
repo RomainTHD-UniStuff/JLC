@@ -3,7 +3,7 @@ package fr.rthd.jlc.compiler.llvm;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.compiler.ComparisonOperator;
 
-public class LLVMComparisonOperator {
+class LLVMComparisonOperator {
     public static String getOperand(ComparisonOperator op, TypeCode type) {
         String prefix = "";
 
