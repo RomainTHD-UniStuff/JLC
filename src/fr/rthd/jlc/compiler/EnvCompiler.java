@@ -4,6 +4,8 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -16,6 +18,7 @@ public class EnvCompiler extends Env<Variable, FunType> {
     private final List<String> _output;
     private final LinkedList<Map<String, Integer>> _varCount;
     private final LinkedList<Map<String, Integer>> _labelCount;
+    private final MessageDigest _hashAlgorithm;
     private int _indentLevel;
 
     public EnvCompiler(Env<?, FunType> env) {
@@ -26,6 +29,12 @@ public class EnvCompiler extends Env<Variable, FunType> {
         this._indentLevel = 0;
         this._labelCount = new LinkedList<>();
         this._labelCount.push(new HashMap<>());
+
+        try {
+            this._hashAlgorithm = MessageDigest.getInstance("MD5");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String toAssembly() {
@@ -65,8 +74,6 @@ public class EnvCompiler extends Env<Variable, FunType> {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
                 _output.add(0, "");
-            } else if (inst.indentable) {
-                _output.add(0, getIndentString() + emitted);
             } else {
                 _output.add(0, emitted);
             }
@@ -78,12 +85,12 @@ public class EnvCompiler extends Env<Variable, FunType> {
         assert scope != null;
         int count = scope.getOrDefault(name, 0);
         scope.put(name, count + 1);
-        return String.format("%d_%d", _varCount.size() - 1, count);
+        return String.format("%d-%d", _varCount.size() - 1, count);
     }
 
     public Variable createTempVar(TypeCode type, String ctx) {
         return new Variable(type, String.format(
-            "_temp_%s_%s",
+            ".temp-%s-%s",
             ctx,
             getVariableUID(ctx)
         ));
@@ -91,10 +98,17 @@ public class EnvCompiler extends Env<Variable, FunType> {
 
     public Variable createVar(TypeCode type, String name) {
         return new Variable(type, String.format(
-            "%s_%s",
+            "%s-%s",
             name,
             getVariableUID(name)
         ));
+    }
+
+    public Variable createGlobalStringLiteral(String content) {
+        return new Variable(TypeCode.CString, String.format(
+            ".string-%s",
+            getHash(content)
+        ), true, content.length() + 1);
     }
 
     public String getNewLabel(String ctx) {
@@ -102,7 +116,12 @@ public class EnvCompiler extends Env<Variable, FunType> {
         assert scope != null;
         int count = scope.getOrDefault(ctx, 0);
         scope.put(ctx, count + 1);
-        return String.format("_label_%s_%d_%d", ctx, _varCount.size() - 1, count);
+        return String.format(
+            ".label-%s-%d-%d",
+            ctx,
+            _varCount.size() - 1,
+            count
+        );
     }
 
     @Override
@@ -122,5 +141,12 @@ public class EnvCompiler extends Env<Variable, FunType> {
         super.resetScope();
         _varCount.clear();
         _varCount.push(new HashMap<>());
+    }
+
+    private String getHash(String content) {
+        _hashAlgorithm.update(content.getBytes());
+        byte[] bytes = _hashAlgorithm.digest();
+        BigInteger bi = new BigInteger(1, bytes);
+        return String.format("%0" + (bytes.length << 1) + "X", bi);
     }
 }

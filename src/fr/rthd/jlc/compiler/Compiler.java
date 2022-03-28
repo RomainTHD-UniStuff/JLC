@@ -56,6 +56,9 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Compiler {
     private static InstructionBuilder instructionBuilder;
 
@@ -102,37 +105,67 @@ public class Compiler {
     }
 
     public static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
-        public Variable visit(EVar p, EnvCompiler env) {
+        public OperationItem visit(EVar p, EnvCompiler env) {
             return env.lookupVar(p.ident_);
         }
 
-        public Literal visit(ELitInt p, EnvCompiler env) {
+        public OperationItem visit(ELitInt p, EnvCompiler env) {
             return new Literal(TypeCode.CInt, p.integer_);
         }
 
-        public Literal visit(ELitDoub p, EnvCompiler env) {
+        public OperationItem visit(ELitDoub p, EnvCompiler env) {
             return new Literal(TypeCode.CDouble, p.double_);
         }
 
-        public Literal visit(ELitTrue p, EnvCompiler env) {
+        public OperationItem visit(ELitTrue p, EnvCompiler env) {
             return new Literal(TypeCode.CBool, true);
         }
 
-        public Literal visit(ELitFalse p, EnvCompiler env) {
+        public OperationItem visit(ELitFalse p, EnvCompiler env) {
             return new Literal(TypeCode.CBool, false);
         }
 
         public OperationItem visit(EApp p, EnvCompiler env) {
-            // TODO:
-            return null;
+            List<OperationItem> args = new ArrayList<>();
+
+            for (Expr expr : p.listexpr_) {
+                args.add(expr.accept(new ExprVisitor(), env));
+            }
+
+            FunType func = env.lookupFun(p.ident_);
+
+            if (func.retType == TypeCode.CVoid) {
+                env.emit(instructionBuilder.call(func.name, args));
+                return null;
+            } else {
+                Variable out = env.createTempVar(
+                    func.retType,
+                    "function_call"
+                );
+                env.emit(instructionBuilder.call(out, func.name, args));
+                return out;
+            }
         }
 
         public OperationItem visit(EString p, EnvCompiler env) {
-            // TODO:
-            return null;
+            String content = p.string_ + "\n";
+            Variable global = env.createGlobalStringLiteral(content);
+
+            if (env.lookupVar(global.name) == null) {
+                // Avoid loading the same string literal multiple times
+                env.insertVar(global.name, global);
+                env.emitAtBeginning(instructionBuilder.globalStringLiteral(
+                    global,
+                    content
+                ));
+            }
+
+            Variable tmp = env.createTempVar(TypeCode.CString, "string_literal");
+            env.emit(instructionBuilder.loadStringLiteral(tmp, global));
+            return tmp;
         }
 
-        public Variable visit(Neg p, EnvCompiler env) {
+        public OperationItem visit(Neg p, EnvCompiler env) {
             OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
             Variable var = env.createTempVar(expr.type, "neg");
             env.emit(instructionBuilder.neg(var, expr));

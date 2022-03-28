@@ -76,7 +76,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     @Override
     public Instruction call(
         String funcName,
-        List<Variable> args
+        List<OperationItem> args
     ) {
         return call(null, funcName, args);
     }
@@ -85,7 +85,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     public Instruction call(
         Variable dst,
         String funcName,
-        List<Variable> args
+        List<OperationItem> args
     ) {
         return new Instruction(String.format(
             "%scall %s @%s(%s)",
@@ -316,5 +316,42 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
                 src
             );
         }
+    }
+
+    @Override
+    public Instruction globalStringLiteral(
+        Variable global,
+        String content
+    ) {
+        // "%s = private unnamed_addr constant [%d x i8] c\"%s\\00\", align 1",
+        return new Instruction(String.format(
+            "%s = internal constant [%d x i8] c\"%s\\00\"",
+            global,
+            content.length() + 1,
+            content.replace("\n", "\\0A")
+        ));
+    }
+
+    @Override
+    public Instruction loadStringLiteral(
+        Variable dst,
+        Variable global
+    ) {
+        /*
+        return new Instruction(String.format(
+            "%s = load i8*, i8** %s",
+            dst,
+            global
+        ));
+         */
+
+        // "%s = getelementptr inbounds [%d x i8], [%d x i8]* %s, i32 0, i32 0",
+        return new Instruction(String.format(
+            "%s = getelementptr [%d x i8], [%d x i8]* %s, i32 0, i32 0",
+            dst,
+            global.length,
+            global.length,
+            global
+        ));
     }
 }

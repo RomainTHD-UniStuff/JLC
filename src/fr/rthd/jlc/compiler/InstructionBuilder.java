@@ -21,13 +21,13 @@ public abstract class InstructionBuilder {
 
     public abstract Instruction call(
         String funcName,
-        List<Variable> args
+        List<OperationItem> args
     );
 
     public abstract Instruction call(
         Variable dst,
         String funcName,
-        List<Variable> args
+        List<OperationItem> args
     );
 
     public abstract Instruction label(String labelName);
@@ -115,5 +115,15 @@ public abstract class InstructionBuilder {
     public abstract Instruction neg(
         Variable dst,
         OperationItem src
+    );
+
+    public abstract Instruction globalStringLiteral(
+        Variable global,
+        String content
+    );
+
+    public abstract Instruction loadStringLiteral(
+        Variable dst,
+        Variable global
     );
 }
