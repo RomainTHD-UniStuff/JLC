@@ -98,6 +98,10 @@ public class Compiler {
 
             p.blk_.accept(new BlkVisitor(), env);
 
+            if (func.retType == TypeCode.CVoid) {
+                env.emit(instructionBuilder.ret());
+            }
+
             env.emit(instructionBuilder.functionDeclarationEnd());
 
             return null;

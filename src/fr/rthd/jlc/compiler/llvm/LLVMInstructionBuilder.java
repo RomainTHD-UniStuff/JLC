@@ -241,7 +241,6 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
 
     @Override
     public Instruction ret() {
-        // FIXME: Check if this is correct
         return new Instruction("ret void");
     }
 
