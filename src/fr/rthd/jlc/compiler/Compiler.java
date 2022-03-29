@@ -148,7 +148,7 @@ public class Compiler {
         }
 
         public OperationItem visit(EString p, EnvCompiler env) {
-            String content = p.string_ + "\n";
+            String content = p.string_;
             Variable global = env.createGlobalStringLiteral(content);
 
             if (env.lookupVar(global.name) == null) {
