@@ -100,6 +100,11 @@ public class Compiler {
 
             if (func.retType == TypeCode.CVoid) {
                 env.emit(instructionBuilder.ret());
+            } else {
+                env.emit(instructionBuilder.ret(new Literal(
+                    func.retType,
+                    func.retType.getDefaultValue()
+                )));
             }
 
             env.emit(instructionBuilder.functionDeclarationEnd());
