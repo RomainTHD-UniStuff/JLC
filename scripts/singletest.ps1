@@ -7,7 +7,7 @@ cp lib/runtime.ll tmp/$fileName.ll;
 cat $testPath | ./jlc >> tmp/$fileName.ll;
 cd tmp;
 llc -filetype=obj $fileName.ll -o $fileName.o || exit;
-clang _test.o -o $fileName || exit;
+clang $fileName.o -o $fileName || exit;
 ./$fileName;
 "
 Write-Host "Done." -ForegroundColor Green
