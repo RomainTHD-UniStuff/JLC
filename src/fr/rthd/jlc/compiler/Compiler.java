@@ -477,24 +477,28 @@ public class Compiler {
             String endLabel = env.getNewLabel("while_end");
 
             env.emit(instructionBuilder.comment("while"));
+
+            // Jump to the expression comparison label
             env.emit(instructionBuilder.jump(cmpLabel));
+
+            env.emit(instructionBuilder.label(loopLabel));
+            env.emit(instructionBuilder.comment("while loop"));
             env.indent();
+            env.enterScope();
+            p.stmt_.accept(new StmtVisitor(), env);
+            env.leaveScope();
+            env.unindent();
+            env.emit(instructionBuilder.jump(cmpLabel));
+
             env.emit(instructionBuilder.label(cmpLabel));
             env.emit(instructionBuilder.comment("while exp"));
-
+            env.indent();
             OperationItem res = p.expr_.accept(new ExprVisitor(), env);
             env.emit(instructionBuilder.conditionalJump(
                 res,
                 loopLabel,
                 endLabel
             ));
-
-            env.emit(instructionBuilder.label(loopLabel));
-            env.enterScope();
-            env.emit(instructionBuilder.comment("while loop"));
-            p.stmt_.accept(new StmtVisitor(), env);
-            env.emit(instructionBuilder.jump(cmpLabel));
-            env.leaveScope();
             env.unindent();
 
             env.emit(instructionBuilder.label(endLabel));
