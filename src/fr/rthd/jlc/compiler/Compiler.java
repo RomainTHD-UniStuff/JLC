@@ -354,7 +354,10 @@ public class Compiler {
         }
 
         public Void visit(Incr p, EnvCompiler env) {
-            Variable src = env.lookupVar(p.ident_);
+            Variable src = (Variable) new EVar(p.ident_).accept(
+                new ExprVisitor(),
+                env
+            );
             Variable dst = env.createVar(src.type, p.ident_);
             env.emit(instructionBuilder.increment(
                 dst,
@@ -366,7 +369,10 @@ public class Compiler {
         }
 
         public Void visit(Decr p, EnvCompiler env) {
-            Variable src = env.lookupVar(p.ident_);
+            Variable src = (Variable) new EVar(p.ident_).accept(
+                new ExprVisitor(),
+                env
+            );
             Variable dst = env.createVar(src.type, p.ident_);
             env.emit(instructionBuilder.decrement(
                 dst,
