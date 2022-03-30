@@ -358,33 +358,25 @@ public class Compiler {
         }
 
         public Void visit(Incr p, EnvCompiler env) {
-            Variable src = (Variable) new EVar(p.ident_).accept(
-                new ExprVisitor(),
-                env
-            );
-            Variable dst = env.createVar(src.type, p.ident_, false);
-            env.emit(instructionBuilder.increment(
-                dst,
-                src
-            ));
-            env.emit(instructionBuilder.newLine());
-            env.updateVar(p.ident_, dst);
-            return null;
+            return new Ass(
+                p.ident_,
+                new EAdd(
+                    new EVar(p.ident_),
+                    new Plus(),
+                    new ELitInt(1)
+                )
+            ).accept(new StmtVisitor(), env);
         }
 
         public Void visit(Decr p, EnvCompiler env) {
-            Variable src = (Variable) new EVar(p.ident_).accept(
-                new ExprVisitor(),
-                env
-            );
-            Variable dst = env.createVar(src.type, p.ident_, false);
-            env.emit(instructionBuilder.decrement(
-                dst,
-                src
-            ));
-            env.emit(instructionBuilder.newLine());
-            env.updateVar(p.ident_, dst);
-            return null;
+            return new Ass(
+                p.ident_,
+                new EAdd(
+                    new EVar(p.ident_),
+                    new Minus(),
+                    new ELitInt(1)
+                )
+            ).accept(new StmtVisitor(), env);
         }
 
         public Void visit(Ret p, EnvCompiler env) {
