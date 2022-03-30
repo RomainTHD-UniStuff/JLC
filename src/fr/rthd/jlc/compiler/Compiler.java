@@ -536,14 +536,13 @@ public class Compiler {
         }
 
         public Void visit(Init p, EnvCompiler env) {
-            env.insertVar(p.ident_, env.createVar(type, p.ident_, true));
-            env.emit(instructionBuilder.declare(
-                env.lookupVar(p.ident_)
-            ));
+            Variable var = env.createVar(type, p.ident_, true);
+            env.emit(instructionBuilder.declare(var));
             env.emit(instructionBuilder.store(
-                env.lookupVar(p.ident_),
+                var,
                 p.expr_.accept(new ExprVisitor(), env)
             ));
+            env.insertVar(p.ident_, var);
             env.emit(instructionBuilder.newLine());
             return null;
         }
