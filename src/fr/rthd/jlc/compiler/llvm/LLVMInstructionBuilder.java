@@ -177,9 +177,9 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         OperationItem right
     ) {
         return new Instruction(String.format(
-            "%s = %sdiv %s %s, %s",
+            "%s = %cdiv %s %s, %s",
             dst,
-            left.type == TypeCode.CDouble ? "f" : "",
+            left.type == TypeCode.CDouble ? 'f' : 's',
             left.type,
             left,
             right
