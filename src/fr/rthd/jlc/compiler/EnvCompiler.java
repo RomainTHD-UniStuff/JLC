@@ -14,6 +14,7 @@ import java.util.Map;
 
 class EnvCompiler extends Env<Variable, FunType> {
     public static final String INDENT = "\t";
+    public static final char SEP = '$';
 
     private final List<String> _output;
     private final LinkedList<Map<String, Integer>> _varCount;
@@ -85,28 +86,37 @@ class EnvCompiler extends Env<Variable, FunType> {
         assert scope != null;
         int count = scope.getOrDefault(name, 0);
         scope.put(name, count + 1);
-        return String.format("%d-%d", _varCount.size() - 1, count);
+        return String.format(
+            "stack_%d%cscope_%d",
+            _varCount.size() - 1,
+            SEP,
+            count
+        );
     }
 
     public Variable createTempVar(TypeCode type, String ctx) {
         return new Variable(type, String.format(
-            ".temp-%s-%s",
+            ".temp%c%s%c%s",
+            SEP,
             ctx,
+            SEP,
             getVariableUID(ctx)
         ));
     }
 
     public Variable createVar(TypeCode type, String name) {
         return new Variable(type, String.format(
-            "%s-%s",
+            "%s%c%s",
             name,
+            SEP,
             getVariableUID(name)
         ));
     }
 
     public Variable createGlobalStringLiteral(String content) {
         return new Variable(TypeCode.CString, String.format(
-            ".string-%s",
+            ".string%c%s",
+            SEP,
             getHash(content)
         ), true, content.length() + 1);
     }
@@ -117,9 +127,12 @@ class EnvCompiler extends Env<Variable, FunType> {
         int count = scope.getOrDefault(ctx, 0);
         scope.put(ctx, count + 1);
         return String.format(
-            ".label-%s-%d-%d",
+            ".label%c%s%cstack_%d%cscope_%d",
+            SEP,
             ctx,
+            SEP,
             _varCount.size() - 1,
+            SEP,
             count
         );
     }
