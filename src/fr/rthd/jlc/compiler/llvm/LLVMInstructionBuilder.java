@@ -348,8 +348,8 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         return new Instruction(String.format(
             "%s = getelementptr [%d x i8], [%d x i8]* %s, i32 0, i32 0",
             dst,
-            global.length,
-            global.length,
+            global.getSize(),
+            global.getSize(),
             global
         ));
     }

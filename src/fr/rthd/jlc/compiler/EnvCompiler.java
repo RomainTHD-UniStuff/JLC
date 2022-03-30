@@ -114,11 +114,14 @@ class EnvCompiler extends Env<Variable, FunType> {
     }
 
     public Variable createGlobalStringLiteral(String content) {
-        return new Variable(TypeCode.CString, String.format(
+        Variable var = new Variable(TypeCode.CString, String.format(
             ".string%c%s",
             SEP,
             getHash(content)
-        ), true, content.length() + 1);
+        ));
+        var.setGlobal();
+        var.setSize(content.length() + 1);
+        return var;
     }
 
     public String getNewLabel(String ctx) {

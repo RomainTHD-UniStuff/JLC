@@ -89,6 +89,7 @@ public class Compiler {
 
             func.args.forEach(arg -> {
                 Variable var = env.createVar(arg.type, arg.name);
+                var.setPointerStatus(false);
                 env.insertVar(arg.name, var);
                 arg.setGeneratedName(var.name);
             });
@@ -116,12 +117,16 @@ public class Compiler {
     public static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         public OperationItem visit(EVar p, EnvCompiler env) {
             Variable var = env.lookupVar(p.ident_);
-            Variable tmp = env.createTempVar(var.type, String.format(
-                "var_%s",
-                var.name.replace(EnvCompiler.SEP, '-')
-            ));
-            env.emit(instructionBuilder.load(tmp, var));
-            return tmp;
+            if (var.isPointer()) {
+                Variable tmp = env.createTempVar(var.type, String.format(
+                    "var_%s",
+                    var.name.replace(EnvCompiler.SEP, '-')
+                ));
+                env.emit(instructionBuilder.load(tmp, var));
+                return tmp;
+            } else {
+                return var;
+            }
         }
 
         public OperationItem visit(ELitInt p, EnvCompiler env) {
