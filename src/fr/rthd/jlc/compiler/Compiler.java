@@ -66,6 +66,22 @@ public class Compiler {
         instructionBuilder = builder;
     }
 
+    public static Expr getDefaultValue(TypeCode type) {
+        switch (type) {
+            case CInt:
+                return new ELitInt(0);
+            case CDouble:
+                return new ELitDoub(0.0);
+            case CBool:
+                return new ELitFalse();
+            case CString:
+                return new EString("");
+            case CVoid:
+            default:
+                throw new UnsupportedOperationException("Unhandled type: " + type);
+        }
+    }
+
     public String compile(Prog p, Env<?, FunType> parent) {
         EnvCompiler env = new EnvCompiler(parent);
         p.accept(new ProgVisitor(), env);
@@ -532,6 +548,10 @@ public class Compiler {
             env.insertVar(p.ident_, env.createVar(type, p.ident_, true));
             env.emit(instructionBuilder.declare(
                 env.lookupVar(p.ident_)
+            ));
+            env.emit(instructionBuilder.store(
+                env.lookupVar(p.ident_),
+                getDefaultValue(type).accept(new ExprVisitor(), env)
             ));
             env.emit(instructionBuilder.newLine());
             return null;
