@@ -19,6 +19,7 @@ class EnvCompiler extends Env<Variable, FunType> {
     private final List<String> _output;
     private final LinkedList<Map<String, Integer>> _varCount;
     private final LinkedList<Map<String, Integer>> _labelCount;
+    private final Map<Integer, Integer> _depthAccessCount;
     private final MessageDigest _hashAlgorithm;
     private int _indentLevel;
 
@@ -26,10 +27,10 @@ class EnvCompiler extends Env<Variable, FunType> {
         super(env);
         this._output = new ArrayList<>();
         this._varCount = new LinkedList<>();
-        this._varCount.push(new HashMap<>());
-        this._indentLevel = 0;
         this._labelCount = new LinkedList<>();
-        this._labelCount.push(new HashMap<>());
+        this._depthAccessCount = new HashMap<>();
+        this._depthAccessCount.put(getScopeDepth(), 0);
+        this._indentLevel = 0;
 
         try {
             this._hashAlgorithm = MessageDigest.getInstance("MD5");
@@ -87,8 +88,9 @@ class EnvCompiler extends Env<Variable, FunType> {
         int count = scope.getOrDefault(name, 0);
         scope.put(name, count + 1);
         return String.format(
-            "stack_%d%cscope_%d",
-            _varCount.size() - 1,
+            "stack_%d_%d%cscope_%d",
+            getScopeDepth(),
+            _depthAccessCount.get(getScopeDepth()),
             SEP,
             count
         );
@@ -131,11 +133,12 @@ class EnvCompiler extends Env<Variable, FunType> {
         int count = scope.getOrDefault(ctx, 0);
         scope.put(ctx, count + 1);
         return String.format(
-            ".label%c%s%cstack_%d%cscope_%d",
+            ".label%c%s%cstack_%d_%d%cscope_%d",
             SEP,
             ctx,
             SEP,
-            _varCount.size() - 1,
+            getScopeDepth(),
+            _depthAccessCount.get(getScopeDepth()),
             SEP,
             count
         );
@@ -145,12 +148,19 @@ class EnvCompiler extends Env<Variable, FunType> {
     public void enterScope() {
         super.enterScope();
         _varCount.push(new HashMap<>());
+        _labelCount.push(new HashMap<>());
+        int depth = getScopeDepth();
+        _depthAccessCount.put(
+            depth,
+            _depthAccessCount.getOrDefault(depth, -1) + 1
+        );
     }
 
     @Override
     public void leaveScope() {
         super.leaveScope();
         _varCount.pop();
+        _labelCount.pop();
     }
 
     @Override
@@ -158,6 +168,8 @@ class EnvCompiler extends Env<Variable, FunType> {
         super.resetScope();
         _varCount.clear();
         _varCount.push(new HashMap<>());
+        _labelCount.clear();
+        _labelCount.push(new HashMap<>());
     }
 
     private String getHash(String content) {

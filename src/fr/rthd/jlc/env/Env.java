@@ -106,4 +106,8 @@ public class Env<Value, Func extends FunType> {
         _contexts.clear();
         _contexts.push(new HashMap<>());
     }
+
+    public int getScopeDepth() {
+        return _contexts.size() - 1;
+    }
 }
