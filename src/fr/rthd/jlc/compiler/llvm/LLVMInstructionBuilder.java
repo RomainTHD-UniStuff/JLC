@@ -313,7 +313,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     @Override
     public Instruction neg(
         Variable dst,
-        OperationItem src
+        Variable src
     ) {
         if (src.type == TypeCode.CDouble) {
             return new Instruction(String.format(

@@ -116,7 +116,7 @@ public abstract class InstructionBuilder {
 
     public abstract Instruction neg(
         Variable dst,
-        OperationItem src
+        Variable src
     );
 
     public abstract Instruction globalStringLiteral(

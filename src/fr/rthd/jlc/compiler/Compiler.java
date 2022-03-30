@@ -192,9 +192,20 @@ public class Compiler {
 
         public OperationItem visit(Neg p, EnvCompiler env) {
             OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
-            Variable var = env.createTempVar(expr.type, "neg");
-            env.emit(instructionBuilder.neg(var, expr));
-            return var;
+            if (expr instanceof Literal) {
+                Literal lit = (Literal) expr;
+                if (lit.type == TypeCode.CInt) {
+                    return new Literal(TypeCode.CInt, -(int) lit.value);
+                } else if (lit.type == TypeCode.CDouble) {
+                    return new Literal(TypeCode.CDouble, -(double) lit.value);
+                } else {
+                    throw new RuntimeException("Unsupported type for negation");
+                }
+            } else {
+                Variable var = env.createTempVar(expr.type, "neg");
+                env.emit(instructionBuilder.neg(var, (Variable) expr));
+                return var;
+            }
         }
 
         public OperationItem visit(Not p, EnvCompiler env) {
