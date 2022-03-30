@@ -110,7 +110,13 @@ public class Compiler {
 
     public static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         public OperationItem visit(EVar p, EnvCompiler env) {
-            return env.lookupVar(p.ident_);
+            Variable var = env.lookupVar(p.ident_);
+            Variable tmp = env.createTempVar(var.type, String.format(
+                "var_%s",
+                var.name.replace(EnvCompiler.SEP, '-')
+            ));
+            env.emit(instructionBuilder.load(tmp, var));
+            return tmp;
         }
 
         public OperationItem visit(ELitInt p, EnvCompiler env) {
