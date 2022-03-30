@@ -348,7 +348,9 @@ public class Compiler {
 
     public static class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         public Void visit(Empty p, EnvCompiler env) {
-            env.emit(instructionBuilder.noop());
+            String label = env.getNewLabel("noop");
+            env.emit(instructionBuilder.jump(label));
+            env.emit(instructionBuilder.label(label));
             return null;
         }
 

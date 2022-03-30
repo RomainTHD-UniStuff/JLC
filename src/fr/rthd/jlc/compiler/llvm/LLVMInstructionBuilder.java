@@ -21,7 +21,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
 
     @Override
     public Instruction noop() {
-        return new Instruction("nop");
+        throw new UnsupportedOperationException("Noop is not supported by LLVM");
     }
 
     @Override
