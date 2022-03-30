@@ -74,6 +74,12 @@ public class Compiler {
 
     public static class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
         public Void visit(Program p, EnvCompiler env) {
+            for (FunType fun : env.getAllFun()) {
+                if (fun.external) {
+                    env.emit(instructionBuilder.declareExternalFunction(fun));
+                }
+            }
+
             for (TopDef topdef : p.listtopdef_) {
                 topdef.accept(new TopDefVisitor(), env);
             }

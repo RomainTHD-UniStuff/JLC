@@ -93,20 +93,23 @@ public class TypeChecker {
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printInt",
+                true,
                 new FunArg(TypeCode.CInt, "i")
             ));
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printDouble",
+                true,
                 new FunArg(TypeCode.CDouble, "d")
             ));
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printString",
+                true,
                 new FunArg(TypeCode.CString, "s")
             ));
-            env.insertFun(new FunType(TypeCode.CInt, "readInt"));
-            env.insertFun(new FunType(TypeCode.CDouble, "readDouble"));
+            env.insertFun(new FunType(TypeCode.CInt, "readInt", true));
+            env.insertFun(new FunType(TypeCode.CDouble, "readDouble", true));
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {
@@ -183,7 +186,7 @@ public class TypeChecker {
             }
 
             TypeCode retType = p.type_.accept(new TypeVisitor(), null);
-            env.insertFun(new FunType(retType, p.ident_, argsType));
+            env.insertFun(new FunType(retType, p.ident_, false, argsType));
 
             return null;
         }

@@ -19,6 +19,8 @@ public abstract class InstructionBuilder {
 
     public abstract Instruction functionDeclarationEnd();
 
+    public abstract Instruction declareExternalFunction(FunType func);
+
     public abstract Instruction call(
         String funcName,
         List<OperationItem> args

@@ -6,6 +6,7 @@ import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class Env<Value, Func extends FunType> {
@@ -58,6 +59,10 @@ public class Env<Value, Func extends FunType> {
 
     public Func lookupFun(String id) {
         return _signature.get(id);
+    }
+
+    public List<Func> getAllFun() {
+        return new LinkedList<>(_signature.values());
     }
 
     public void insertVar(String id, Value value) throws EnvException {

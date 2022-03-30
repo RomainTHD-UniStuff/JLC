@@ -74,6 +74,20 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     }
 
     @Override
+    public Instruction declareExternalFunction(FunType func) {
+        return new Instruction(String.format(
+            "declare %s @%s(%s)",
+            func.retType,
+            func.name,
+            func.args
+                .stream()
+                .map(arg -> String.format("%s %%%s", arg.type, arg.getGeneratedName()))
+                .reduce((a, b) -> String.format("%s, %s", a, b))
+                .orElse("")
+        ));
+    }
+
+    @Override
     public Instruction call(
         String funcName,
         List<OperationItem> args
