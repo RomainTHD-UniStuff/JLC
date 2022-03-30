@@ -88,8 +88,7 @@ public class Compiler {
             env.resetScope();
 
             func.args.forEach(arg -> {
-                Variable var = env.createVar(arg.type, arg.name);
-                var.setPointerStatus(false);
+                Variable var = env.createVar(arg.type, arg.name, false);
                 env.insertVar(arg.name, var);
                 arg.setGeneratedName(var.name);
             });
@@ -363,7 +362,7 @@ public class Compiler {
                 new ExprVisitor(),
                 env
             );
-            Variable dst = env.createVar(src.type, p.ident_);
+            Variable dst = env.createVar(src.type, p.ident_, false);
             env.emit(instructionBuilder.increment(
                 dst,
                 src
@@ -378,7 +377,7 @@ public class Compiler {
                 new ExprVisitor(),
                 env
             );
-            Variable dst = env.createVar(src.type, p.ident_);
+            Variable dst = env.createVar(src.type, p.ident_, false);
             env.emit(instructionBuilder.decrement(
                 dst,
                 src
@@ -519,7 +518,7 @@ public class Compiler {
         }
 
         public Void visit(NoInit p, EnvCompiler env) {
-            env.insertVar(p.ident_, env.createVar(type, p.ident_));
+            env.insertVar(p.ident_, env.createVar(type, p.ident_, true));
             env.emit(instructionBuilder.declare(
                 env.lookupVar(p.ident_)
             ));
@@ -528,7 +527,7 @@ public class Compiler {
         }
 
         public Void visit(Init p, EnvCompiler env) {
-            env.insertVar(p.ident_, env.createVar(type, p.ident_));
+            env.insertVar(p.ident_, env.createVar(type, p.ident_, true));
             env.emit(instructionBuilder.declare(
                 env.lookupVar(p.ident_)
             ));

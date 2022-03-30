@@ -95,22 +95,23 @@ class EnvCompiler extends Env<Variable, FunType> {
     }
 
     public Variable createTempVar(TypeCode type, String ctx) {
-        return new Variable(type, String.format(
+        Variable var = new Variable(type, String.format(
             ".temp%c%s%c%s",
             SEP,
             ctx,
             SEP,
             getVariableUID(ctx)
-        ));
+        ), false);
+        return var;
     }
 
-    public Variable createVar(TypeCode type, String name) {
+    public Variable createVar(TypeCode type, String name, boolean isPointer) {
         return new Variable(type, String.format(
             "%s%c%s",
             name,
             SEP,
             getVariableUID(name)
-        ));
+        ), isPointer);
     }
 
     public Variable createGlobalStringLiteral(String content) {
@@ -118,7 +119,7 @@ class EnvCompiler extends Env<Variable, FunType> {
             ".string%c%s",
             SEP,
             getHash(content)
-        ));
+        ), false);
         var.setGlobal();
         var.setSize(content.length() + 1);
         return var;

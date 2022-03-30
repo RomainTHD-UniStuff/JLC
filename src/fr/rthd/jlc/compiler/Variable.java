@@ -9,11 +9,11 @@ public class Variable extends OperationItem {
     private boolean _isPointer;
     private int _size;
 
-    public Variable(TypeCode type, String name) {
+    public Variable(TypeCode type, String name, boolean isPointer) {
         super(type);
         this.name = name;
         this._isGlobal = false;
-        this._isPointer = true;
+        this._isPointer = isPointer;
         this._size = 1;
     }
 
