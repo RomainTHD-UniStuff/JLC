@@ -169,14 +169,14 @@ public class Optimizer {
             env.enterScope();
 
             for (Stmt s : p.liststmt_) {
-                Stmt stmt = s.accept(new StmtVisitor(), env);
-                if (stmt instanceof Empty) {
+                AnnotatedStmt<?> stmt = s.accept(new StmtVisitor(), env);
+                if (stmt.parentStmt instanceof Empty) {
                     continue;
                 }
 
                 statements.add(stmt);
 
-                if (stmt instanceof Ret || stmt instanceof VRet) {
+                if (stmt.doesReturn()) {
                     break;
                 }
             }
@@ -187,23 +187,28 @@ public class Optimizer {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<Stmt, EnvOptimizer> {
-        public Empty visit(Empty s, EnvOptimizer env) {
-            return new Empty();
+    public static class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOptimizer> {
+        public AnnotatedStmt<Empty> visit(Empty s, EnvOptimizer env) {
+            return new AnnotatedStmt<>(new Empty());
         }
 
-        public Stmt visit(BStmt s, EnvOptimizer env) {
-            Blk blk = s.blk_.accept(new BlkVisitor(), env);
-            if (blk instanceof Block) {
-                if (((Block) blk).liststmt_.size() == 0) {
-                    return new Empty();
-                }
+        public AnnotatedStmt<Stmt> visit(BStmt s, EnvOptimizer env) {
+            Block blk = (Block) s.blk_.accept(new BlkVisitor(), env);
+            if (blk.liststmt_.size() == 0) {
+                return new AnnotatedStmt<>(new Empty());
             }
 
-            return new BStmt(blk);
+            // Not empty because of above, and shouldn't contain a returning
+            //  statement if the last one isn't a returning statement as well,
+            //  otherwise it means we didn't do a clean cut
+            boolean doesReturn = (
+                (AnnotatedStmt<?>) blk.liststmt_.get(blk.liststmt_.size() - 1)
+            ).doesReturn();
+
+            return new AnnotatedStmt<>(new BStmt(blk), doesReturn);
         }
 
-        public Decl visit(Decl s, EnvOptimizer env) {
+        public AnnotatedStmt<Decl> visit(Decl s, EnvOptimizer env) {
             TypeCode type = s.type_.accept(new TypeVisitor(), null);
             ListItem items = new ListItem();
 
@@ -211,36 +216,36 @@ public class Optimizer {
                 items.add(item.accept(new ItemVisitor(type), env));
             }
 
-            return new Decl(s.type_, items);
+            return new AnnotatedStmt<>(new Decl(s.type_, items));
         }
 
-        public Ass visit(Ass s, EnvOptimizer env) {
-            return new Ass(s.ident_, s.expr_.accept(
+        public AnnotatedStmt<Ass> visit(Ass s, EnvOptimizer env) {
+            return new AnnotatedStmt<>(new Ass(s.ident_, s.expr_.accept(
                 new ExprVisitor(),
                 env
-            ));
+            )));
         }
 
-        public Incr visit(Incr s, EnvOptimizer env) {
-            return new Incr(s.ident_);
+        public AnnotatedStmt<Incr> visit(Incr s, EnvOptimizer env) {
+            return new AnnotatedStmt<>(new Incr(s.ident_));
         }
 
-        public Decr visit(Decr s, EnvOptimizer env) {
-            return new Decr(s.ident_);
+        public AnnotatedStmt<Decr> visit(Decr s, EnvOptimizer env) {
+            return new AnnotatedStmt<>(new Decr(s.ident_));
         }
 
-        public Ret visit(Ret s, EnvOptimizer env) {
-            return new Ret(s.expr_.accept(
+        public AnnotatedStmt<Ret> visit(Ret s, EnvOptimizer env) {
+            return new AnnotatedStmt<>(new Ret(s.expr_.accept(
                 new ExprVisitor(),
                 env
-            ));
+            )), true);
         }
 
-        public VRet visit(VRet s, EnvOptimizer env) {
-            return new VRet();
+        public AnnotatedStmt<VRet> visit(VRet s, EnvOptimizer env) {
+            return new AnnotatedStmt<>(new VRet(), true);
         }
 
-        public Stmt visit(Cond s, EnvOptimizer env) {
+        public AnnotatedStmt<?> visit(Cond s, EnvOptimizer env) {
             AnnotatedExpr<?> exp = s.expr_.accept(
                 new ExprVisitor(),
                 env
@@ -249,17 +254,17 @@ public class Optimizer {
             if (exp.parentExp instanceof ELitTrue) {
                 return s.stmt_.accept(new StmtVisitor(), env);
             } else if (exp.parentExp instanceof ELitFalse) {
-                return new Empty();
+                return new AnnotatedStmt<>(new Empty());
             } else {
                 env.enterScope();
                 Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
                 env.leaveScope();
 
-                return new Cond(exp, stmt);
+                return new AnnotatedStmt<>(new Cond(exp, stmt));
             }
         }
 
-        public Stmt visit(CondElse s, EnvOptimizer env) {
+        public AnnotatedStmt<?> visit(CondElse s, EnvOptimizer env) {
             AnnotatedExpr<?> exp = s.expr_.accept(
                 new ExprVisitor(),
                 env
@@ -271,18 +276,27 @@ public class Optimizer {
                 return s.stmt_2.accept(new StmtVisitor(), env);
             } else {
                 env.enterScope();
-                Stmt stmt1 = s.stmt_1.accept(new StmtVisitor(), env);
+                AnnotatedStmt<?> stmt1 = s.stmt_1.accept(
+                    new StmtVisitor(),
+                    env
+                );
                 env.leaveScope();
 
                 env.enterScope();
-                Stmt stmt2 = s.stmt_2.accept(new StmtVisitor(), env);
+                AnnotatedStmt<?> stmt2 = s.stmt_2.accept(
+                    new StmtVisitor(),
+                    env
+                );
                 env.leaveScope();
 
-                return new CondElse(exp, stmt1, stmt2);
+                return new AnnotatedStmt<>(
+                    new CondElse(exp, stmt1, stmt2),
+                    stmt1.doesReturn() && stmt2.doesReturn()
+                );
             }
         }
 
-        public Stmt visit(While s, EnvOptimizer env) {
+        public AnnotatedStmt<?> visit(While s, EnvOptimizer env) {
             AnnotatedExpr<?> exp = s.expr_.accept(
                 new ExprVisitor(),
                 env
@@ -291,22 +305,25 @@ public class Optimizer {
             // TODO: Optimize infinite loop
 
             if (exp.parentExp instanceof ELitFalse) {
-                return new Empty();
+                return new AnnotatedStmt<>(new Empty());
             } else {
                 env.enterScope();
                 Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
                 env.leaveScope();
 
-                return new While(exp, stmt);
+                return new AnnotatedStmt<>(
+                    new While(exp, stmt),
+                    exp.parentExp instanceof ELitTrue
+                );
             }
         }
 
-        public SExp visit(SExp s, EnvOptimizer env) {
+        public AnnotatedStmt<SExp> visit(SExp s, EnvOptimizer env) {
             AnnotatedExpr<?> expr = s.expr_.accept(
                 new ExprVisitor(),
                 env
             );
-            return new SExp(expr);
+            return new AnnotatedStmt<>(new SExp(expr));
         }
     }
 
@@ -340,7 +357,7 @@ public class Optimizer {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
+    public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOptimizer> {
         public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
             AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
             assert expr != null;
