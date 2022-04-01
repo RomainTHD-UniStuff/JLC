@@ -115,6 +115,8 @@ public class TypeChecker {
             if (mainFunc == null) {
                 // FIXME: Should it be there or in the compiler directly?
                 throw new NoSuchFunctionException("main");
+            } else {
+                mainFunc.setAsMain();
             }
 
             if (mainFunc.retType != TypeCode.CInt) {

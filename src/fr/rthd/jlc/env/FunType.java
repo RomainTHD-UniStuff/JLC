@@ -11,22 +11,29 @@ public class FunType {
     public final boolean external;
     public final List<FunArg> args;
 
+    private boolean _isMain;
+
+    public FunType(FunType other) {
+        this(other.retType, other.name, other.external, other.args);
+        this._isMain = other._isMain;
+    }
+
     public FunType(
-        TypeCode retVal,
+        TypeCode retType,
         String name,
         boolean external,
         FunArg... args
     ) {
-        this(retVal, name, external, Arrays.asList(args));
+        this(retType, name, external, Arrays.asList(args));
     }
 
     public FunType(
-        TypeCode retVal,
+        TypeCode retType,
         String name,
         boolean external,
         List<FunArg> args
     ) {
-        this.retType = retVal;
+        this.retType = retType;
         this.name = name;
         this.external = external;
         this.args = args;
@@ -43,5 +50,13 @@ public class FunType {
         }
 
         return this.retType.name() + " <- " + argsTypes;
+    }
+
+    public boolean isMain() {
+        return _isMain;
+    }
+
+    public void setAsMain() {
+        _isMain = true;
     }
 }

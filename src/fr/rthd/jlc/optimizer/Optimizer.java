@@ -120,13 +120,28 @@ public class Optimizer {
                 topDef.add(def.accept(new TopDefVisitor(), env));
             }
 
-            return new Program(topDef);
+            ListTopDef usedTopDef = new ListTopDef();
+
+            for (TopDef def : topDef) {
+                if (def instanceof FnDef) {
+                    FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
+                    if (func.isUsed()) {
+                        usedTopDef.add(def);
+                    }
+                }
+            }
+
+            return new Program(usedTopDef);
         }
     }
 
     public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvOptimizer> {
         public FnDef visit(FnDef f, EnvOptimizer env) {
-            FunType func = env.lookupFun(f.ident_);
+            FunTypeOptimizer func = env.lookupFun(f.ident_);
+
+            if (func.isMain()) {
+                func.setAsUsed();
+            }
 
             env.enterScope();
 
@@ -349,11 +364,15 @@ public class Optimizer {
         }
 
         public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {
-            FunType funcType = env.lookupFun(e.ident_);
+            FunTypeOptimizer funcType = env.lookupFun(e.ident_);
+            funcType.setAsUsed();
 
             ListExpr exps = new ListExpr();
             for (int i = 0; i < funcType.args.size(); ++i) {
-                AnnotatedExpr<?> exp = e.listexpr_.get(i).accept(new ExprVisitor(), env);
+                AnnotatedExpr<?> exp = e.listexpr_.get(i).accept(
+                    new ExprVisitor(),
+                    env
+                );
                 exps.add(exp);
             }
 
