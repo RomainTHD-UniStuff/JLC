@@ -280,8 +280,8 @@ public class Compiler {
         }
 
         public OperationItem visit(EAnd p, EnvCompiler env) {
-            Variable res = env.createTempVar(TypeCode.CBool, "and");
-            env.emit(instructionBuilder.declare(res));
+            Variable var = env.createTempVar(TypeCode.CBool, "and_ptr", true);
+            env.emit(instructionBuilder.declare(var));
 
             String trueLabel = env.getNewLabel("and_true");
             String falseLabel = env.getNewLabel("and_false");
@@ -302,7 +302,7 @@ public class Compiler {
             env.enterScope();
             env.emit(instructionBuilder.comment("and true"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 p.expr_2.accept(new ExprVisitor(), env)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -311,7 +311,7 @@ public class Compiler {
             env.emit(instructionBuilder.label(falseLabel));
             env.emit(instructionBuilder.comment("and false"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 new Literal(TypeCode.CBool, false)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -321,12 +321,14 @@ public class Compiler {
             env.emit(instructionBuilder.comment("endand"));
             env.emit(instructionBuilder.newLine());
 
-            return res;
+            Variable tmp = env.createTempVar(var.type, "and");
+            env.emit(instructionBuilder.load(tmp, var));
+            return tmp;
         }
 
         public OperationItem visit(EOr p, EnvCompiler env) {
-            Variable res = env.createTempVar(TypeCode.CBool, "or");
-            env.emit(instructionBuilder.declare(res));
+            Variable var = env.createTempVar(TypeCode.CBool, "or_ptr", true);
+            env.emit(instructionBuilder.declare(var));
 
             String trueLabel = env.getNewLabel("or_true");
             String falseLabel = env.getNewLabel("or_false");
@@ -346,7 +348,7 @@ public class Compiler {
             env.emit(instructionBuilder.label(trueLabel));
             env.emit(instructionBuilder.comment("or true"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 new Literal(TypeCode.CBool, true)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -355,7 +357,7 @@ public class Compiler {
             env.enterScope();
             env.emit(instructionBuilder.comment("or false"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 p.expr_2.accept(new ExprVisitor(), env)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -366,7 +368,9 @@ public class Compiler {
             env.emit(instructionBuilder.comment("endor"));
             env.emit(instructionBuilder.newLine());
 
-            return res;
+            Variable tmp = env.createTempVar(var.type, "or");
+            env.emit(instructionBuilder.load(tmp, var));
+            return tmp;
         }
     }
 
