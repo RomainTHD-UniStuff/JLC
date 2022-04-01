@@ -37,7 +37,6 @@ import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
-import javalette.Absyn.ListItem;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
@@ -143,6 +142,16 @@ public class Compiler {
 
             env.emit(instructionBuilder.functionDeclarationStart(func));
             env.emit(instructionBuilder.label("entry"));
+
+            func.args.forEach(arg -> {
+                new Init(
+                    arg.name,
+                    new EVar(arg.name)
+                ).accept(new ItemVisitor(
+                    arg.type,
+                    true
+                ), env);
+            });
 
             p.blk_.accept(new BlkVisitor(), env);
 
@@ -417,18 +426,10 @@ public class Compiler {
             Variable dst = env.lookupVar(p.ident_);
 
             if (!dst.isPointer()) {
-                // Might happen for function arguments
-                // If this happens, we need to create a new pointer variable
-                // with the value of the original, non-pointer variable
-                ListItem items = new ListItem();
-                items.add(new Init(
-                    p.ident_,
-                    new EVar(p.ident_)
-                ));
-                new Decl(
-                    javaletteTypeFromTypecode(dst.type),
-                    items
-                ).accept(new StmtVisitor(), env);
+                // We shouldn't be in this state
+                throw new IllegalStateException(
+                    "Assignment to non-pointer variable"
+                );
             }
 
             env.emit(instructionBuilder.store(
@@ -586,9 +587,15 @@ public class Compiler {
 
     public static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         private final TypeCode type;
+        private final boolean override;
 
         public ItemVisitor(TypeCode type) {
+            this(type, false);
+        }
+
+        public ItemVisitor(TypeCode type, boolean override) {
             this.type = type;
+            this.override = override;
         }
 
         public Void visit(NoInit p, EnvCompiler env) {
@@ -611,7 +618,11 @@ public class Compiler {
                 var,
                 p.expr_.accept(new ExprVisitor(), env)
             ));
-            env.insertVar(p.ident_, var);
+            if (this.override) {
+                env.updateVar(p.ident_, var);
+            } else {
+                env.insertVar(p.ident_, var);
+            }
             env.emit(instructionBuilder.newLine());
             return null;
         }
