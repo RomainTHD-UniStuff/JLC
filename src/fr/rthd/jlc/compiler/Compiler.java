@@ -37,6 +37,7 @@ import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
+import javalette.Absyn.ListItem;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
@@ -53,6 +54,7 @@ import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -79,6 +81,26 @@ public class Compiler {
             case CVoid:
             default:
                 throw new UnsupportedOperationException("Unhandled type: " + type);
+        }
+    }
+
+    private static Type javaletteTypeFromTypecode(TypeCode type) {
+        switch (type) {
+            case CInt:
+                return new javalette.Absyn.Int();
+
+            case CDouble:
+                return new javalette.Absyn.Doub();
+
+            case CBool:
+                return new javalette.Absyn.Bool();
+
+            case CVoid:
+                return new javalette.Absyn.Void();
+
+            case CString:
+            default:
+                throw new UnsupportedOperationException("Unsupported type: " + type);
         }
     }
 
@@ -372,6 +394,7 @@ public class Compiler {
 
         public Void visit(BStmt p, EnvCompiler env) {
             p.blk_.accept(new BlkVisitor(), env);
+            env.emit(instructionBuilder.newLine());
             return null;
         }
 
@@ -384,6 +407,23 @@ public class Compiler {
         }
 
         public Void visit(Ass p, EnvCompiler env) {
+            Variable dst = env.lookupVar(p.ident_);
+
+            if (!dst.isPointer()) {
+                // Might happen for function arguments
+                // If this happens, we need to create a new pointer variable
+                // with the value of the original, non-pointer variable
+                ListItem items = new ListItem();
+                items.add(new Init(
+                    p.ident_,
+                    new EVar(p.ident_)
+                ));
+                new Decl(
+                    javaletteTypeFromTypecode(dst.type),
+                    items
+                ).accept(new StmtVisitor(), env);
+            }
+
             env.emit(instructionBuilder.store(
                 env.lookupVar(p.ident_),
                 p.expr_.accept(new ExprVisitor(), env)
