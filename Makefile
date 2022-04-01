@@ -11,7 +11,7 @@ PARSEROBJ = $(PARSERSRC:.java=.class)
 LABOBJ    = $(LABSRC:.java=.class)
 
 # Name of generated .cup file for bnfc ≥ 2.8.1
-CUPFILE = src/javalette/javalette.cup
+CUPFILE = src/javalette/_cup.cup
 
 JAVAC       = javac
 JAVAC_FLAGS = -sourcepath ./src -d ./build
@@ -44,6 +44,8 @@ build/fr/rthd/jlc/Main.class: src/fr/rthd/jlc/Main.java build/javalette/Test.cla
 # Create parser source via bnfc
 build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: src/javalette.cf
 	bnfc --java -o src $<
+	# Backward compatibility for bnfc < 2.8.1
+	cp src/javalette/javalette.cup $(CUPFILE) || true
 
 # Create parser and move it to the correct location
 src/javalette/parser.java src/javalette/sym.java: $(CUPFILE)
