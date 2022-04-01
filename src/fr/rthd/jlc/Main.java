@@ -5,7 +5,6 @@ import fr.rthd.jlc.compiler.llvm.LLVMInstructionBuilder;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
-import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
 import javalette.Absyn.Prog;
@@ -28,7 +27,7 @@ public class Main {
      */
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("Usage: fr.rthd.jlc.jlc --backend <Backend>");
+            System.err.println("Usage: fr.rthd.jlc.Main --backend <Backend>");
             System.exit(1);
         }
 
@@ -53,9 +52,13 @@ public class Main {
             // tree = new Optimizer().optimize(tree, env);
             System.out.println(new Compiler(new LLVMInstructionBuilder()).compile(tree, env));
             System.err.println("OK");
-        } catch (TypeException | EnvException e) {
+        } catch (TypeException e) {
             System.err.println("ERROR");
             System.err.println("Type error: " + e.getMessage());
+            System.exit(1);
+        } catch (EnvException e) {
+            System.err.println("ERROR");
+            System.err.println("Environment error: " + e.getMessage());
             System.exit(1);
         } catch (RuntimeException | StackOverflowError e) {
             e.printStackTrace();

@@ -97,14 +97,22 @@ class EnvCompiler extends Env<Variable, FunType> {
     }
 
     public Variable createTempVar(TypeCode type, String ctx) {
-        Variable var = new Variable(type, String.format(
-            ".temp%c%s%c%s",
+        return createTempVar(type, ctx, false);
+    }
+
+    public Variable createTempVar(
+        TypeCode type,
+        String ctx,
+        boolean isPointer
+    ) {
+        return new Variable(type, String.format(
+            ".temp%s%c%s%c%s",
+            isPointer ? "_ptr" : "",
             SEP,
             ctx,
             SEP,
             getVariableUID(ctx)
-        ), false);
-        return var;
+        ), isPointer);
     }
 
     public Variable createVar(TypeCode type, String name, boolean isPointer) {

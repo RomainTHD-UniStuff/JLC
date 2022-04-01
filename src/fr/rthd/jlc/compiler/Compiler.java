@@ -53,6 +53,7 @@ import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -66,7 +67,7 @@ public class Compiler {
         instructionBuilder = builder;
     }
 
-    public static Expr getDefaultValue(TypeCode type) {
+    private static Expr getDefaultValue(TypeCode type) {
         switch (type) {
             case CInt:
                 return new ELitInt(0);
@@ -82,6 +83,26 @@ public class Compiler {
         }
     }
 
+    private static Type javaletteTypeFromTypecode(TypeCode type) {
+        switch (type) {
+            case CInt:
+                return new javalette.Absyn.Int();
+
+            case CDouble:
+                return new javalette.Absyn.Doub();
+
+            case CBool:
+                return new javalette.Absyn.Bool();
+
+            case CVoid:
+                return new javalette.Absyn.Void();
+
+            case CString:
+            default:
+                throw new UnsupportedOperationException("Unsupported type: " + type);
+        }
+    }
+
     public String compile(Prog p, Env<?, FunType> parent) {
         EnvCompiler env = new EnvCompiler(parent);
         p.accept(new ProgVisitor(), env);
@@ -90,11 +111,15 @@ public class Compiler {
 
     public static class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
         public Void visit(Program p, EnvCompiler env) {
+            env.emit(instructionBuilder.newLine());
+
             for (FunType fun : env.getAllFun()) {
                 if (fun.external) {
                     env.emit(instructionBuilder.declareExternalFunction(fun));
                 }
             }
+
+            env.emit(instructionBuilder.newLine());
 
             for (TopDef topdef : p.listtopdef_) {
                 topdef.accept(new TopDefVisitor(), env);
@@ -118,6 +143,16 @@ public class Compiler {
             env.emit(instructionBuilder.functionDeclarationStart(func));
             env.emit(instructionBuilder.label("entry"));
 
+            func.args.forEach(arg -> {
+                new Init(
+                    arg.name,
+                    new EVar(arg.name)
+                ).accept(new ItemVisitor(
+                    arg.type,
+                    true
+                ), env);
+            });
+
             p.blk_.accept(new BlkVisitor(), env);
 
             if (func.retType == TypeCode.CVoid) {
@@ -130,6 +165,7 @@ public class Compiler {
             }
 
             env.emit(instructionBuilder.functionDeclarationEnd());
+            env.emit(instructionBuilder.newLine());
 
             return null;
         }
@@ -253,8 +289,8 @@ public class Compiler {
         }
 
         public OperationItem visit(EAnd p, EnvCompiler env) {
-            Variable res = env.createTempVar(TypeCode.CBool, "and");
-            env.emit(instructionBuilder.declare(res));
+            Variable var = env.createTempVar(TypeCode.CBool, "and_ptr", true);
+            env.emit(instructionBuilder.declare(var));
 
             String trueLabel = env.getNewLabel("and_true");
             String falseLabel = env.getNewLabel("and_false");
@@ -275,7 +311,7 @@ public class Compiler {
             env.enterScope();
             env.emit(instructionBuilder.comment("and true"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 p.expr_2.accept(new ExprVisitor(), env)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -284,7 +320,7 @@ public class Compiler {
             env.emit(instructionBuilder.label(falseLabel));
             env.emit(instructionBuilder.comment("and false"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 new Literal(TypeCode.CBool, false)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -294,12 +330,14 @@ public class Compiler {
             env.emit(instructionBuilder.comment("endand"));
             env.emit(instructionBuilder.newLine());
 
-            return res;
+            Variable tmp = env.createTempVar(var.type, "and");
+            env.emit(instructionBuilder.load(tmp, var));
+            return tmp;
         }
 
         public OperationItem visit(EOr p, EnvCompiler env) {
-            Variable res = env.createTempVar(TypeCode.CBool, "or");
-            env.emit(instructionBuilder.declare(res));
+            Variable var = env.createTempVar(TypeCode.CBool, "or_ptr", true);
+            env.emit(instructionBuilder.declare(var));
 
             String trueLabel = env.getNewLabel("or_true");
             String falseLabel = env.getNewLabel("or_false");
@@ -319,7 +357,7 @@ public class Compiler {
             env.emit(instructionBuilder.label(trueLabel));
             env.emit(instructionBuilder.comment("or true"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 new Literal(TypeCode.CBool, true)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -328,7 +366,7 @@ public class Compiler {
             env.enterScope();
             env.emit(instructionBuilder.comment("or false"));
             env.emit(instructionBuilder.store(
-                res,
+                var,
                 p.expr_2.accept(new ExprVisitor(), env)
             ));
             env.emit(instructionBuilder.jump(endLabel));
@@ -339,14 +377,15 @@ public class Compiler {
             env.emit(instructionBuilder.comment("endor"));
             env.emit(instructionBuilder.newLine());
 
-            return res;
+            Variable tmp = env.createTempVar(var.type, "or");
+            env.emit(instructionBuilder.load(tmp, var));
+            return tmp;
         }
     }
 
     public static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
         public Void visit(Block p, EnvCompiler env) {
             env.emit(instructionBuilder.comment("start block"));
-            env.emit(instructionBuilder.newLine());
             env.indent();
 
             env.enterScope();
@@ -357,7 +396,6 @@ public class Compiler {
 
             env.unindent();
             env.emit(instructionBuilder.comment("end block"));
-            env.emit(instructionBuilder.newLine());
             return null;
         }
     }
@@ -372,6 +410,7 @@ public class Compiler {
 
         public Void visit(BStmt p, EnvCompiler env) {
             p.blk_.accept(new BlkVisitor(), env);
+            env.emit(instructionBuilder.newLine());
             return null;
         }
 
@@ -384,6 +423,15 @@ public class Compiler {
         }
 
         public Void visit(Ass p, EnvCompiler env) {
+            Variable dst = env.lookupVar(p.ident_);
+
+            if (!dst.isPointer()) {
+                // We shouldn't be in this state
+                throw new IllegalStateException(
+                    "Assignment to non-pointer variable"
+                );
+            }
+
             env.emit(instructionBuilder.store(
                 env.lookupVar(p.ident_),
                 p.expr_.accept(new ExprVisitor(), env)
@@ -539,9 +587,15 @@ public class Compiler {
 
     public static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         private final TypeCode type;
+        private final boolean override;
 
         public ItemVisitor(TypeCode type) {
+            this(type, false);
+        }
+
+        public ItemVisitor(TypeCode type, boolean override) {
             this.type = type;
+            this.override = override;
         }
 
         public Void visit(NoInit p, EnvCompiler env) {
@@ -564,7 +618,11 @@ public class Compiler {
                 var,
                 p.expr_.accept(new ExprVisitor(), env)
             ));
-            env.insertVar(p.ident_, var);
+            if (this.override) {
+                env.updateVar(p.ident_, var);
+            } else {
+                env.insertVar(p.ident_, var);
+            }
             env.emit(instructionBuilder.newLine());
             return null;
         }
@@ -630,37 +688,37 @@ public class Compiler {
         }
 
         public OperationItem visit(LTH p, EnvCompiler env) {
-            Variable var = env.createTempVar(left.type, "lt");
+            Variable var = env.createTempVar(TypeCode.CBool, "lt");
             env.emit(instructionBuilder.compare(var, left, ComparisonOperator.LT, right));
             return var;
         }
 
         public OperationItem visit(LE p, EnvCompiler env) {
-            Variable var = env.createTempVar(left.type, "le");
+            Variable var = env.createTempVar(TypeCode.CBool, "le");
             env.emit(instructionBuilder.compare(var, left, ComparisonOperator.LE, right));
             return var;
         }
 
         public OperationItem visit(GTH p, EnvCompiler env) {
-            Variable var = env.createTempVar(left.type, "gt");
+            Variable var = env.createTempVar(TypeCode.CBool, "gt");
             env.emit(instructionBuilder.compare(var, left, ComparisonOperator.GT, right));
             return var;
         }
 
         public OperationItem visit(GE p, EnvCompiler env) {
-            Variable var = env.createTempVar(left.type, "ge");
+            Variable var = env.createTempVar(TypeCode.CBool, "ge");
             env.emit(instructionBuilder.compare(var, left, ComparisonOperator.GE, right));
             return var;
         }
 
         public OperationItem visit(EQU p, EnvCompiler env) {
-            Variable var = env.createTempVar(left.type, "eq");
+            Variable var = env.createTempVar(TypeCode.CBool, "eq");
             env.emit(instructionBuilder.compare(var, left, ComparisonOperator.EQ, right));
             return var;
         }
 
         public OperationItem visit(NE p, EnvCompiler env) {
-            Variable var = env.createTempVar(left.type, "ne");
+            Variable var = env.createTempVar(TypeCode.CBool, "ne");
             env.emit(instructionBuilder.compare(var, left, ComparisonOperator.NE, right));
             return var;
         }
