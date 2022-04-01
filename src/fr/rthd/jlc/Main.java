@@ -28,7 +28,7 @@ public class Main {
      */
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("Usage: fr.rthd.jlc.jlc --backend <Backend>");
+            System.err.println("Usage: fr.rthd.jlc.Main --backend <Backend>");
             System.exit(1);
         }
 
