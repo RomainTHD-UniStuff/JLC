@@ -21,7 +21,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
 
     @Override
     public Instruction noop() {
-        return new Instruction("nop");
+        throw new UnsupportedOperationException("Noop is not supported by LLVM");
     }
 
     @Override
@@ -71,6 +71,20 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     @Override
     public Instruction functionDeclarationEnd() {
         return new Instruction("}");
+    }
+
+    @Override
+    public Instruction declareExternalFunction(FunType func) {
+        return new Instruction(String.format(
+            "declare %s @%s(%s)",
+            func.retType,
+            func.name,
+            func.args
+                .stream()
+                .map(arg -> String.format("%s %%%s", arg.type, arg.getGeneratedName()))
+                .reduce((a, b) -> String.format("%s, %s", a, b))
+                .orElse("")
+        ));
     }
 
     @Override
@@ -299,7 +313,7 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
     @Override
     public Instruction neg(
         Variable dst,
-        OperationItem src
+        Variable src
     ) {
         if (src.type == TypeCode.CDouble) {
             return new Instruction(String.format(

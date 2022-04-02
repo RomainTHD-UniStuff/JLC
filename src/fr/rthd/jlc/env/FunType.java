@@ -8,15 +8,27 @@ import java.util.List;
 public class FunType {
     public final TypeCode retType;
     public final String name;
+    public final boolean external;
     public final List<FunArg> args;
 
-    public FunType(TypeCode retVal, String name, FunArg... args) {
-        this(retVal, name, Arrays.asList(args));
+    public FunType(
+        TypeCode retVal,
+        String name,
+        boolean external,
+        FunArg... args
+    ) {
+        this(retVal, name, external, Arrays.asList(args));
     }
 
-    public FunType(TypeCode retVal, String name, List<FunArg> args) {
+    public FunType(
+        TypeCode retVal,
+        String name,
+        boolean external,
+        List<FunArg> args
+    ) {
         this.retType = retVal;
         this.name = name;
+        this.external = external;
         this.args = args;
     }
 

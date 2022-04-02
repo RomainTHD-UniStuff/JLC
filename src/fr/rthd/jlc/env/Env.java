@@ -6,6 +6,7 @@ import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class Env<Value, Func extends FunType> {
@@ -60,6 +61,10 @@ public class Env<Value, Func extends FunType> {
         return _signature.get(id);
     }
 
+    public List<Func> getAllFun() {
+        return new LinkedList<>(_signature.values());
+    }
+
     public void insertVar(String id, Value value) throws EnvException {
         assert value != null;
         Map<String, Value> env = _contexts.peek();
@@ -100,5 +105,9 @@ public class Env<Value, Func extends FunType> {
     public void resetScope() {
         _contexts.clear();
         _contexts.push(new HashMap<>());
+    }
+
+    public int getScopeDepth() {
+        return _contexts.size() - 1;
     }
 }
