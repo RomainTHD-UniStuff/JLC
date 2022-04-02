@@ -71,11 +71,13 @@ public class Optimizer {
         OperatorAction<Boolean> onBool,
         OperatorAction<Expr> onDefault
     ) {
-        if (left.parentExp instanceof ELitInt && right.parentExp instanceof ELitInt) {
+        if (left.parentExp instanceof ELitInt &&
+            right.parentExp instanceof ELitInt) {
             int lvalue = ((ELitInt) left.parentExp).integer_;
             int rvalue = ((ELitInt) right.parentExp).integer_;
             return onInt.execute(lvalue, rvalue);
-        } else if (left.parentExp instanceof ELitDoub && right.parentExp instanceof ELitDoub) {
+        } else if (left.parentExp instanceof ELitDoub &&
+                   right.parentExp instanceof ELitDoub) {
             double lvalue = ((ELitDoub) left.parentExp).double_;
             double rvalue = ((ELitDoub) right.parentExp).double_;
             return onDouble.execute(lvalue, rvalue);
@@ -125,7 +127,7 @@ public class Optimizer {
             for (TopDef def : topDef) {
                 if (def instanceof FnDef) {
                     FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
-                    if (func.isUsed()) {
+                    if (func.isMain() || func.isUsedByMain()) {
                         usedTopDef.add(def);
                     }
                 }
@@ -138,15 +140,15 @@ public class Optimizer {
     public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvOptimizer> {
         public FnDef visit(FnDef f, EnvOptimizer env) {
             FunTypeOptimizer func = env.lookupFun(f.ident_);
-
-            if (func.isMain()) {
-                func.setAsUsed();
-            }
+            env.setCurrentFunction(func);
 
             env.enterScope();
 
             for (FunArg arg : func.args) {
-                env.insertVar(arg.name, new AnnotatedExpr<>(arg.type, new EVar(arg.name)));
+                env.insertVar(
+                    arg.name,
+                    new AnnotatedExpr<>(arg.type, new EVar(arg.name))
+                );
             }
 
             Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
@@ -382,7 +384,7 @@ public class Optimizer {
 
         public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {
             FunTypeOptimizer funcType = env.lookupFun(e.ident_);
-            funcType.setAsUsed();
+            funcType.addUsageIn(env.getCurrentFunction());
 
             ListExpr exps = new ListExpr();
             for (int i = 0; i < funcType.args.size(); ++i) {
@@ -393,7 +395,10 @@ public class Optimizer {
                 exps.add(exp);
             }
 
-            return new AnnotatedExpr<>(funcType.retType, new EApp(e.ident_, exps));
+            return new AnnotatedExpr<>(
+                funcType.retType,
+                new EApp(e.ident_, exps)
+            );
         }
 
         public AnnotatedExpr<EString> visit(EString e, EnvOptimizer env) {
