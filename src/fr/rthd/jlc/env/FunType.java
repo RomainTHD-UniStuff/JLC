@@ -1,5 +1,6 @@
 package fr.rthd.jlc.env;
 
+import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.TypeCode;
 
 import java.util.Arrays;
@@ -12,7 +13,7 @@ public class FunType {
 
     private boolean _isExternal;
     private boolean _isMain = false;
-    private boolean _isPure = true;
+    private Choice _isPure = Choice.UNDEFINED;
 
     public FunType(FunType other) {
         this(other.retType, other.name, other.args);
@@ -43,15 +44,15 @@ public class FunType {
 
     @Override
     public String toString() {
-        StringBuilder argsTypes = new StringBuilder();
-        for (FunArg typeArg : args) {
-            argsTypes.append(typeArg.name)
-                     .append(":")
-                     .append(typeArg.type)
-                     .append(" ");
-        }
-
-        return this.retType.name() + " <- " + argsTypes;
+        return String.format(
+            "%s %s(%s)",
+            retType.toString(),
+            name,
+            args.stream()
+                .map(FunArg::toString)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("")
+        );
     }
 
     public boolean isMain() {
@@ -62,11 +63,11 @@ public class FunType {
         _isMain = true;
     }
 
-    public boolean isPure() {
+    public Choice isPure() {
         return _isPure;
     }
 
-    public FunType setPure(boolean isPure) {
+    public FunType setPure(Choice isPure) {
         _isPure = isPure;
         return this;
     }

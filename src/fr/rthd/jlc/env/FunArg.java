@@ -20,4 +20,9 @@ public class FunArg {
     public void setGeneratedName(String name) {
         this._generatedName = name;
     }
+
+    @Override
+    public String toString() {
+        return type + " " + name;
+    }
 }
