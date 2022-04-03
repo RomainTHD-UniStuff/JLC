@@ -32,11 +32,12 @@ class EnvCompiler extends Env<Variable, FunType> {
         this._depthAccessCount.put(getScopeDepth(), 0);
         this._indentLevel = 0;
 
+        MessageDigest md = null;
         try {
-            this._hashAlgorithm = MessageDigest.getInstance("MD5");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            md = MessageDigest.getInstance("MD5");
+        } catch (Exception ignored) {
         }
+        this._hashAlgorithm = md;
     }
 
     public String toAssembly() {
@@ -181,9 +182,13 @@ class EnvCompiler extends Env<Variable, FunType> {
     }
 
     private String getHash(String content) {
-        _hashAlgorithm.update(content.getBytes());
-        byte[] bytes = _hashAlgorithm.digest();
-        BigInteger bi = new BigInteger(1, bytes);
-        return String.format("%0" + (bytes.length << 1) + "X", bi);
+        if (_hashAlgorithm == null) {
+            return String.format("%x", content.hashCode());
+        } else {
+            _hashAlgorithm.update(content.getBytes());
+            byte[] bytes = _hashAlgorithm.digest();
+            BigInteger bi = new BigInteger(1, bytes);
+            return String.format("%0" + (bytes.length << 1) + "X", bi);
+        }
     }
 }
