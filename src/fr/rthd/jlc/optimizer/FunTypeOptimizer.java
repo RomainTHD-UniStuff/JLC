@@ -17,21 +17,28 @@ public class FunTypeOptimizer extends FunType {
     private final Set<FunTypeOptimizer> _usedBy;
 
     /**
+     * Set of all functions used, implicitly or not, by this
+     */
+    private final Set<FunTypeOptimizer> _purityDependencies;
+
+    /**
      * Constructor
      * @param funType Base function
      */
     public FunTypeOptimizer(FunType funType) {
         super(funType);
         this._usedBy = new HashSet<>();
+        this._purityDependencies = new HashSet<>();
     }
 
     /**
      * Add a function using this. For example, if `f` is a function that call
      * `g`, then `f` is added to `g`'s usage set.
-     * @param user Function using this
+     * @param caller Function using this
      */
-    public void addUsageIn(FunTypeOptimizer user) {
-        this._usedBy.add(user);
+    public void addUsageIn(FunTypeOptimizer caller) {
+        this._usedBy.add(caller);
+        caller._purityDependencies.add(this);
     }
 
     /**
@@ -52,5 +59,22 @@ public class FunTypeOptimizer extends FunType {
             }
         }
         return false;
+    }
+
+    public void updatePurity() {
+        Queue<FunTypeOptimizer> queue = new LinkedList<>();
+        Set<FunType> visited = new HashSet<>();
+        queue.add(this);
+        while (!queue.isEmpty()) {
+            FunTypeOptimizer funType = queue.poll();
+            if (!funType.isPure()) {
+                this.setPure(false);
+                return;
+            } else if (!visited.contains(funType)) {
+                visited.add(funType);
+                queue.addAll(funType._usedBy);
+            }
+        }
+        this.setPure(true);
     }
 }

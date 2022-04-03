@@ -93,23 +93,26 @@ public class TypeChecker {
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printInt",
-                true,
                 new FunArg(TypeCode.CInt, "i")
-            ));
+            ).setExternal().setPure(false));
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printDouble",
-                true,
                 new FunArg(TypeCode.CDouble, "d")
-            ));
+            ).setExternal().setPure(false));
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printString",
-                true,
                 new FunArg(TypeCode.CString, "s")
-            ));
-            env.insertFun(new FunType(TypeCode.CInt, "readInt", true));
-            env.insertFun(new FunType(TypeCode.CDouble, "readDouble", true));
+            ).setExternal().setPure(false));
+            env.insertFun(new FunType(
+                TypeCode.CInt,
+                "readInt"
+            ).setExternal().setPure(false));
+            env.insertFun(new FunType(
+                TypeCode.CDouble,
+                "readDouble"
+            ).setExternal().setPure(false));
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {
@@ -188,7 +191,7 @@ public class TypeChecker {
             }
 
             TypeCode retType = p.type_.accept(new TypeVisitor(), null);
-            env.insertFun(new FunType(retType, p.ident_, false, argsType));
+            env.insertFun(new FunType(retType, p.ident_, argsType));
 
             return null;
         }
@@ -474,7 +477,13 @@ public class TypeChecker {
             ListExpr exps = new ListExpr();
             for (int i = 0; i < funcType.args.size(); ++i) {
                 FunArg expected = funcType.args.get(i);
-                AnnotatedExpr<?> exp = e.listexpr_.get(i).accept(new ExprVisitor(), env);
+                AnnotatedExpr<?> exp = e
+                    .listexpr_
+                    .get(i)
+                    .accept(
+                        new ExprVisitor(),
+                        env
+                    );
                 if (exp.type != expected.type) {
                     throw new InvalidAssignmentTypeException(
                         expected.name,
@@ -486,7 +495,10 @@ public class TypeChecker {
                 exps.add(exp);
             }
 
-            return new AnnotatedExpr<>(funcType.retType, new EApp(e.ident_, exps));
+            return new AnnotatedExpr<>(
+                funcType.retType,
+                new EApp(e.ident_, exps)
+            );
         }
 
         public AnnotatedExpr<EString> visit(EString e, EnvTypecheck env) {
@@ -720,13 +732,23 @@ public class TypeChecker {
         }
 
         public String visit(EQU p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble, TypeCode.CBool)
+            return bothTypes(
+                types,
+                TypeCode.CInt,
+                TypeCode.CDouble,
+                TypeCode.CBool
+            )
                    ? null
                    : "equality";
         }
 
         public String visit(NE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble, TypeCode.CBool)
+            return bothTypes(
+                types,
+                TypeCode.CInt,
+                TypeCode.CDouble,
+                TypeCode.CBool
+            )
                    ? null
                    : "difference";
         }

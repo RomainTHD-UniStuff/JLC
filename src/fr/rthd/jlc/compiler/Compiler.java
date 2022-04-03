@@ -114,7 +114,7 @@ public class Compiler {
             env.emit(instructionBuilder.newLine());
 
             for (FunType fun : env.getAllFun()) {
-                if (fun.external) {
+                if (fun.isExternal()) {
                     env.emit(instructionBuilder.declareExternalFunction(fun));
                 }
             }

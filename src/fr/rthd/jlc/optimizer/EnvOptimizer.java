@@ -3,6 +3,7 @@ package fr.rthd.jlc.optimizer;
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.env.exception.EnvException;
 
 /**
  * Environment for the optimizer
@@ -12,6 +13,8 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
      * Current function
      */
     private FunTypeOptimizer _currentFunction;
+
+    private int _pass = 0;
 
     /**
      * Constructor
@@ -39,5 +42,13 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
      */
     public void setCurrentFunction(FunTypeOptimizer funType) {
         _currentFunction = funType;
+    }
+
+    public void newPass() {
+        ++_pass;
+    }
+
+    public int getPassCount() {
+        return _pass;
     }
 }

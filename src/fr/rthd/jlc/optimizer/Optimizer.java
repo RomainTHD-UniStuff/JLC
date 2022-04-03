@@ -107,6 +107,10 @@ public class Optimizer {
 
     public Prog optimize(Prog p, Env<?, FunType> parentEnv) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
+        // First pass will mark functions as pure or impure
+        p = p.accept(new ProgVisitor(), env);
+        env.newPass();
+        // Second pass will optimize expressions based on functions purity
         return p.accept(new ProgVisitor(), env);
     }
 
@@ -127,8 +131,11 @@ public class Optimizer {
             for (TopDef def : topDef) {
                 if (def instanceof FnDef) {
                     FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
-                    if (func.isMain() || func.isUsedByMain()) {
+                    if (env.getPassCount() != 0 || func.isUsedByMain()) {
                         usedTopDef.add(def);
+                    }
+                    if (env.getPassCount() == 0) {
+                        func.updatePurity();
                     }
                 }
             }
