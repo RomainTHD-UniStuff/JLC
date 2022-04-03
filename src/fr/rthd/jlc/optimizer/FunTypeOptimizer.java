@@ -3,6 +3,8 @@ package fr.rthd.jlc.optimizer;
 import fr.rthd.jlc.env.FunType;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -12,7 +14,7 @@ public class FunTypeOptimizer extends FunType {
     /**
      * Set of all functions using this
      */
-    private final Set<FunType> _usedBy;
+    private final Set<FunTypeOptimizer> _usedBy;
 
     /**
      * Constructor
@@ -30,9 +32,6 @@ public class FunTypeOptimizer extends FunType {
      */
     public void addUsageIn(FunTypeOptimizer user) {
         this._usedBy.add(user);
-        // To avoid infinite recursion or deep transversal, we increase space
-        //  complexity by merging sets.
-        this._usedBy.addAll(user._usedBy);
     }
 
     /**
@@ -40,6 +39,18 @@ public class FunTypeOptimizer extends FunType {
      * @return If this function is used by the main function
      */
     public boolean isUsedByMain() {
-        return this._usedBy.stream().anyMatch(FunType::isMain);
+        Queue<FunTypeOptimizer> queue = new LinkedList<>();
+        Set<FunType> visited = new HashSet<>();
+        queue.add(this);
+        while (!queue.isEmpty()) {
+            FunTypeOptimizer funType = queue.poll();
+            if (funType.isMain()) {
+                return true;
+            } else if (!visited.contains(funType)) {
+                visited.add(funType);
+                queue.addAll(funType._usedBy);
+            }
+        }
+        return false;
     }
 }
