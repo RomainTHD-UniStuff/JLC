@@ -58,8 +58,6 @@ Bool.      Type ::= "boolean" ;
 
 Void.      Type ::= "void" ;
 
-internal   Fun. Type ::= Type "(" [Type] ")" ;
-
 separator  Type "," ;
 
 -- Expressions ---------------------------------------------
@@ -127,4 +125,3 @@ comment    "#" ;
 comment    "//" ;
 
 comment    "/*" "*/" ;
-
