@@ -344,9 +344,8 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         Variable global,
         String content
     ) {
-        // "%s = private unnamed_addr constant [%d x i8] c\"%s\\00\", align 1",
         return new Instruction(String.format(
-            "%s = internal constant [%d x i8] c\"%s\\00\"",
+            "%s = private unnamed_addr constant [%d x i8] c\"%s\\00\", align 1",
             global,
             content.length() + 1,
             content.replace("\n", "\\0A")
@@ -358,17 +357,8 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         Variable dst,
         Variable global
     ) {
-        /*
         return new Instruction(String.format(
-            "%s = load i8*, i8** %s",
-            dst,
-            global
-        ));
-         */
-
-        // "%s = getelementptr inbounds [%d x i8], [%d x i8]* %s, i32 0, i32 0",
-        return new Instruction(String.format(
-            "%s = getelementptr [%d x i8], [%d x i8]* %s, i32 0, i32 0",
+            "%s = getelementptr inbounds [%d x i8], [%d x i8]* %s, i32 0, i32 0",
             dst,
             global.getSize(),
             global.getSize(),
