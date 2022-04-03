@@ -2,6 +2,7 @@ package fr.rthd.jlc.env;
 
 import fr.rthd.jlc.env.exception.EnvException;
 import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
+import fr.rthd.jlc.env.exception.SymbolNotFoundException;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -109,5 +110,13 @@ public class Env<Value, Func extends FunType> {
 
     public int getScopeDepth() {
         return _contexts.size() - 1;
+    }
+
+    public void removeFun(String name) throws EnvException {
+        if (lookupFun(name) == null) {
+            throw new SymbolNotFoundException(name);
+        } else {
+            _signature.remove(name);
+        }
     }
 }

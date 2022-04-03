@@ -1,6 +1,7 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
@@ -94,25 +95,25 @@ public class TypeChecker {
                 TypeCode.CVoid,
                 "printInt",
                 new FunArg(TypeCode.CInt, "i")
-            ).setExternal().setPure(false));
+            ).setExternal().setPure(Choice.FALSE));
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printDouble",
                 new FunArg(TypeCode.CDouble, "d")
-            ).setExternal().setPure(false));
+            ).setExternal().setPure(Choice.FALSE));
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printString",
                 new FunArg(TypeCode.CString, "s")
-            ).setExternal().setPure(false));
+            ).setExternal().setPure(Choice.FALSE));
             env.insertFun(new FunType(
                 TypeCode.CInt,
                 "readInt"
-            ).setExternal().setPure(false));
+            ).setExternal().setPure(Choice.FALSE));
             env.insertFun(new FunType(
                 TypeCode.CDouble,
                 "readDouble"
-            ).setExternal().setPure(false));
+            ).setExternal().setPure(Choice.FALSE));
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {

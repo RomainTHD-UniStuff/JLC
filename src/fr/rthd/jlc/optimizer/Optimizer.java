@@ -1,6 +1,7 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
@@ -129,15 +130,18 @@ public class Optimizer {
             ListTopDef usedTopDef = new ListTopDef();
 
             for (TopDef def : topDef) {
-                if (def instanceof FnDef) {
-                    FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
-                    if (env.getPassCount() != 0 || func.isUsedByMain()) {
-                        usedTopDef.add(def);
-                    }
-                    if (env.getPassCount() == 0) {
-                        func.updatePurity();
-                    }
+                FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
+                if (func.isUsedByMain()) {
+                    func.updatePurity();
+                    usedTopDef.add(def);
+                } else {
+                    env.removeFun(func.name);
                 }
+            }
+
+            for (TopDef def : usedTopDef) {
+                FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
+                func.clearUsage();
             }
 
             return new Program(usedTopDef);
@@ -320,6 +324,13 @@ public class Optimizer {
                 Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
                 env.leaveScope();
 
+                if (exp.parentExp instanceof ELitTrue) {
+                    // Functions with infinite loops cannot safely be marked
+                    //  as pure for the sake of optimization, so we can simply
+                    //  remove functions calls that are known to be pure
+                    env.getCurrentFunction().setPure(Choice.FALSE);
+                }
+
                 return new AnnotatedStmt<>(
                     new While(exp, stmt),
                     exp.parentExp instanceof ELitTrue
@@ -327,8 +338,17 @@ public class Optimizer {
             }
         }
 
-        public AnnotatedStmt<SExp> visit(SExp s, EnvOptimizer env) {
-            AnnotatedExpr<?> expr = s.expr_.accept(
+        public AnnotatedStmt<?> visit(SExp s, EnvOptimizer env) {
+            AnnotatedExpr<?> expr = (AnnotatedExpr<?>) s.expr_;
+            if (expr.parentExp instanceof EApp) {
+                FunTypeOptimizer funType = env.lookupFun(
+                    ((EApp) expr.parentExp).ident_
+                );
+                if (funType.isPure() == Choice.TRUE) {
+                    return new AnnotatedStmt<>(new Empty());
+                }
+            }
+            expr = s.expr_.accept(
                 new ExprVisitor(),
                 env
             );

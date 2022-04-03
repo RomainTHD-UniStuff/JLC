@@ -1,5 +1,6 @@
 package fr.rthd.jlc.optimizer;
 
+import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.env.FunType;
 
 import java.util.HashSet;
@@ -67,14 +68,18 @@ public class FunTypeOptimizer extends FunType {
         queue.add(this);
         while (!queue.isEmpty()) {
             FunTypeOptimizer funType = queue.poll();
-            if (!funType.isPure()) {
-                this.setPure(false);
+            if (funType.isPure() == Choice.FALSE) {
+                this.setPure(Choice.FALSE);
                 return;
             } else if (!visited.contains(funType)) {
                 visited.add(funType);
-                queue.addAll(funType._usedBy);
+                queue.addAll(funType._purityDependencies);
             }
         }
-        this.setPure(true);
+        this.setPure(Choice.TRUE);
+    }
+
+    public void clearUsage() {
+        this._usedBy.clear();
     }
 }
