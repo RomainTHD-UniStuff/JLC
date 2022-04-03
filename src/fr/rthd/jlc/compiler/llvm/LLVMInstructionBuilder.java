@@ -62,7 +62,11 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
             func.retType,
             func.name,
             func.args.stream()
-                     .map(arg -> String.format("%s %%%s", arg.type, arg.getGeneratedName()))
+                     .map(arg -> String.format(
+                         "%s %%%s",
+                         arg.type,
+                         arg.getGeneratedName()
+                     ))
                      .reduce((a, b) -> String.format("%s, %s", a, b))
                      .orElse("")
         ));
@@ -81,7 +85,11 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
             func.name,
             func.args
                 .stream()
-                .map(arg -> String.format("%s %%%s", arg.type, arg.getGeneratedName()))
+                .map(arg -> String.format(
+                    "%s %%%s",
+                    arg.type,
+                    arg.getGeneratedName()
+                ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
                 .orElse("")
         ));

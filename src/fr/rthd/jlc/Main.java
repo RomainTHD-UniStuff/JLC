@@ -51,7 +51,9 @@ public class Main {
             Env<?, FunType> env = new Env<>();
             tree = new TypeChecker().typecheck(tree, env);
             tree = new Optimizer().optimize(tree, env);
-            System.out.println(new Compiler(new LLVMInstructionBuilder()).compile(tree, env));
+            System.out.println(new Compiler(
+                new LLVMInstructionBuilder()
+            ).compile(tree, env));
             System.err.println("OK");
         } catch (TypeException e) {
             System.err.println("ERROR");
