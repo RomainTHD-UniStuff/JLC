@@ -1,5 +1,6 @@
 package fr.rthd.jlc.compiler;
 
+import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
@@ -67,24 +68,6 @@ public class Compiler {
         instructionBuilder = builder;
     }
 
-    private static Expr getDefaultValue(TypeCode type) {
-        switch (type) {
-            case CInt:
-                return new ELitInt(0);
-            case CDouble:
-                return new ELitDoub(0.0);
-            case CBool:
-                return new ELitFalse();
-            case CString:
-                return new EString("");
-            case CVoid:
-            default:
-                throw new UnsupportedOperationException(
-                    "Unhandled type: " +
-                    type
-                );
-        }
-    }
 
     private static Type javaletteTypeFromTypecode(TypeCode type) {
         switch (type) {
@@ -614,7 +597,8 @@ public class Compiler {
             ));
             env.emit(instructionBuilder.store(
                 env.lookupVar(p.ident_),
-                getDefaultValue(type).accept(new ExprVisitor(), env)
+                AnnotatedExpr.getDefaultValue(type)
+                             .accept(new ExprVisitor(), env)
             ));
             env.emit(instructionBuilder.newLine());
             return null;
