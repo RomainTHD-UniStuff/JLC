@@ -8,9 +8,6 @@ llc -filetype=obj lib/runtime.ll -o tmp/runtime.o || exit;
 cd tmp;
 llc -filetype=obj $fileName.ll -o $fileName.o || exit;
 clang $fileName.o runtime.o -o $fileName || exit;
-timeout 1 ./$fileName;
-if [ `$? != 0 ]; then
-    >&2 echo Failure or interrupt.
-fi
+timeout 3 ./$fileName || >&2 echo Failure or interrupt.
 "
 Write-Host "Done." -ForegroundColor Green
