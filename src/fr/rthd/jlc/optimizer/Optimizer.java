@@ -395,9 +395,12 @@ public class Optimizer {
             if (exp.parentExp instanceof ELitFalse) {
                 return new AnnotatedStmt<>(new Empty());
             } else {
+                // FIXME: Constant propagation in while body must be fixed
+                env.setConstantPropagation(false);
                 env.enterScope();
                 Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
                 env.leaveScope();
+                env.setConstantPropagation(true);
 
                 if (exp.parentExp instanceof ELitTrue) {
                     // Functions with infinite loops cannot safely be marked
