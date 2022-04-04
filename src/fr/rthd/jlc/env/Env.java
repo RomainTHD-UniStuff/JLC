@@ -77,6 +77,12 @@ public class Env<Value, Func extends FunType> {
         }
     }
 
+    public boolean isTopLevel(Value value) {
+        Map<String, Value> env = _contexts.peek();
+        assert env != null;
+        return env.containsValue(value);
+    }
+
     public void updateVar(String id, Value value) {
         for (Map<String, Value> env : _contexts) {
             Value v = env.get(id);

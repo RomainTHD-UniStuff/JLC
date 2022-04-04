@@ -106,6 +106,48 @@ public class Optimizer {
         }
     }
 
+    private static boolean isLiteral(AnnotatedExpr<?> exp) {
+        return exp.parentExp instanceof ELitInt
+               || exp.parentExp instanceof ELitDoub
+               || exp.parentExp instanceof EString
+               || exp.parentExp instanceof ELitTrue
+               || exp.parentExp instanceof ELitFalse;
+    }
+
+    public static <T extends Stmt> AnnotatedStmt<T> visitIncrDecr(
+        T base,
+        String ident,
+        AddOp op,
+        EnvOptimizer env
+    ) {
+        AnnotatedExpr<?> exp = env.lookupVar(ident);
+        if (isLiteral(exp)) {
+            // We can reduce this to something like `x = n + 1`
+            AnnotatedExpr<?> newExp = new EAdd(
+                exp,
+                op,
+                new AnnotatedExpr<>(
+                    exp.type,
+                    new ELitInt(1)
+                )
+            ).accept(new ExprVisitor(), env);
+
+            if (env.isTopLevel(exp)) {
+                // We're in the same block, we can just update the value
+                env.updateVar(ident, newExp);
+            } else {
+                // Different block, we need to repudiate the old value, but
+                //  still insert the new value for future use in this block
+                env.updateVar(ident, new AnnotatedExpr<>(
+                    exp.type,
+                    new EVar(ident)
+                ));
+                env.insertVar(ident, newExp);
+            }
+        }
+        return new AnnotatedStmt<>(base);
+    }
+
     public Prog optimize(Prog p, Env<?, FunType> parentEnv) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
         // First pass will mark functions as pure or impure
@@ -233,18 +275,38 @@ public class Optimizer {
         }
 
         public AnnotatedStmt<Ass> visit(Ass s, EnvOptimizer env) {
-            return new AnnotatedStmt<>(new Ass(s.ident_, s.expr_.accept(
-                new ExprVisitor(),
-                env
-            )));
+            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
+            if (isLiteral(exp)) {
+                // We can reduce this to something like `x = n`
+                if (env.isTopLevel(env.lookupVar(s.ident_))) {
+                    // We're in the same block, we can just update the value
+                    env.updateVar(s.ident_, exp);
+                } else {
+                    // Different block, we need to repudiate the old value, but
+                    //  still insert the new value for future use in this block
+                    env.updateVar(s.ident_, new AnnotatedExpr<>(
+                        exp.type,
+                        new EVar(s.ident_)
+                    ));
+                    env.insertVar(s.ident_, exp);
+                }
+            } else {
+                // Not a literal, we lose the ability to optimize this variable
+                env.updateVar(s.ident_, new AnnotatedExpr<>(
+                    exp.type,
+                    new EVar(s.ident_)
+                ));
+            }
+
+            return new AnnotatedStmt<>(new Ass(s.ident_, exp));
         }
 
         public AnnotatedStmt<Incr> visit(Incr s, EnvOptimizer env) {
-            return new AnnotatedStmt<>(new Incr(s.ident_));
+            return visitIncrDecr(s, s.ident_, new Plus(), env);
         }
 
         public AnnotatedStmt<Decr> visit(Decr s, EnvOptimizer env) {
-            return new AnnotatedStmt<>(new Decr(s.ident_));
+            return visitIncrDecr(s, s.ident_, new Minus(), env);
         }
 
         public AnnotatedStmt<Ret> visit(Ret s, EnvOptimizer env) {
@@ -366,21 +428,27 @@ public class Optimizer {
         public NoInit visit(NoInit s, EnvOptimizer env) {
             env.insertVar(
                 s.ident_,
-                new AnnotatedExpr<>(varType, new EVar(s.ident_))
+                AnnotatedExpr.getDefaultValue(varType)
             );
             return new NoInit(s.ident_);
         }
 
         public Init visit(Init s, EnvOptimizer env) {
-            // FIXME: Should it be evaluated before or after inserting var?
-            // env.insertVar(s.ident_, null);
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            // TODO: Keep track of const variables
-            // env.insertVar(s.ident_, exp);
-            env.insertVar(
-                s.ident_,
-                new AnnotatedExpr<>(exp.type, new EVar(s.ident_))
-            );
+            if (isLiteral(exp)) {
+                env.insertVar(
+                    s.ident_,
+                    exp
+                );
+            } else {
+                env.insertVar(
+                    s.ident_,
+                    new AnnotatedExpr<>(
+                        exp.type,
+                        new EVar(s.ident_)
+                    )
+                );
+            }
 
             return new Init(s.ident_, exp);
         }
