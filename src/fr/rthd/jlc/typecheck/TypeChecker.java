@@ -281,8 +281,7 @@ public class TypeChecker {
                 throw new InvalidOperationException(
                     "increment",
                     varType,
-                    TypeCode.CInt,
-                    TypeCode.CDouble
+                    TypeCode.CInt
                 );
             }
 
@@ -300,8 +299,7 @@ public class TypeChecker {
                 throw new InvalidOperationException(
                     "decrement",
                     varType,
-                    TypeCode.CInt,
-                    TypeCode.CDouble
+                    TypeCode.CInt
                 );
             }
 
