@@ -372,10 +372,23 @@ public class Optimizer {
         }
 
         public AnnotatedStmt<?> visit(While s, EnvOptimizer env) {
+            // We need to disable constant propagation for the condition,
+            //  otherwise something like `while (x != 0) x--;` will never be
+            //  executed. On the other hand, we cannot evaluate the body before
+            //  the condition, because the condition might evaluate to false
+            //  and the body will prevent some possible optimizations about
+            //  purity, unused functions etc. This solution is a good compromise
+            //  even though we might be able to optimize the condition more,
+            //  especially if the body never updates the variable used in the
+            //  condition.
+            //  TODO: We might be able to optimize the condition more
+
+            env.setConstantPropagation(false);
             AnnotatedExpr<?> exp = s.expr_.accept(
                 new ExprVisitor(),
                 env
             );
+            env.setConstantPropagation(true);
 
             // TODO: Optimize infinite loop
 
@@ -458,7 +471,14 @@ public class Optimizer {
         public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
             AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
             assert expr != null;
-            return expr;
+            if (env.constantPropagationEnabled()) {
+                return expr;
+            } else {
+                return new AnnotatedExpr<>(
+                    expr.type,
+                    new EVar(e.ident_)
+                );
+            }
         }
 
         public AnnotatedExpr<ELitInt> visit(ELitInt e, EnvOptimizer env) {

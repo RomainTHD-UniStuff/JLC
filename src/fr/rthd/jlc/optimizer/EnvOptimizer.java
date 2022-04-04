@@ -13,7 +13,15 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
      */
     private FunTypeOptimizer _currentFunction;
 
+    /**
+     * Number of passes
+     */
     private int _pass = 0;
+
+    /**
+     * Constant propagation status
+     */
+    private boolean _constantPropagationEnabled = true;
 
     /**
      * Constructor
@@ -43,11 +51,32 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
         _currentFunction = funType;
     }
 
+    /**
+     * Increment the pass count
+     */
     public void newPass() {
         ++_pass;
     }
 
+    /**
+     * @return Pass count
+     */
     public int getPassCount() {
         return _pass;
+    }
+
+    /**
+     * Enable or disable constant propagation, for while conditions
+     * @param enabled Enable or disable
+     */
+    public void setConstantPropagation(boolean enabled) {
+        _constantPropagationEnabled = enabled;
+    }
+
+    /**
+     * @return Constant propagation status
+     */
+    public boolean constantPropagationEnabled() {
+        return _constantPropagationEnabled;
     }
 }
