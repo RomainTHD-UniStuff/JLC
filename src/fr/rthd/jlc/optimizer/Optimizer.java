@@ -442,9 +442,19 @@ public class Optimizer {
         }
 
         public NoInit visit(NoInit s, EnvOptimizer env) {
+            // We need to force the insertion because of the following edge case:
+            //  ```c
+            //  int x = 0;
+            //  if (unknown) {
+            //      x++; // A new value for x is inserted
+            //      int x = 1; // Double insert, will throw an exception
+            //  }
+            //  ```
+
             env.insertVar(
                 s.ident_,
-                AnnotatedExpr.getDefaultValue(varType)
+                AnnotatedExpr.getDefaultValue(varType),
+                true
             );
             return new NoInit(s.ident_);
         }
@@ -454,7 +464,8 @@ public class Optimizer {
             if (isLiteral(exp)) {
                 env.insertVar(
                     s.ident_,
-                    exp
+                    exp,
+                    true
                 );
             } else {
                 env.insertVar(
@@ -462,7 +473,8 @@ public class Optimizer {
                     new AnnotatedExpr<>(
                         exp.type,
                         new EVar(s.ident_)
-                    )
+                    ),
+                    true
                 );
             }
 

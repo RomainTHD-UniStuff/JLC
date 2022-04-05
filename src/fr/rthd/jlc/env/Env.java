@@ -67,10 +67,18 @@ public class Env<Value, Func extends FunType> {
     }
 
     public void insertVar(String id, Value value) throws EnvException {
+        insertVar(id, value, false);
+    }
+
+    public void insertVar(
+        String id,
+        Value value,
+        boolean force
+    ) throws EnvException {
         assert value != null;
         Map<String, Value> env = _contexts.peek();
         assert env != null;
-        if (env.get(id) == null) {
+        if (force || env.get(id) == null) {
             env.put(id, value);
         } else {
             throw new SymbolAlreadyDefinedException(id);
