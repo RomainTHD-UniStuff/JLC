@@ -508,6 +508,7 @@ def run_tests(path, backends, prefix, exts):
             print("---------- !!! " + name + ".jl failed !!! ----------\n")
             print(indent_with(4, msg))
             print()
+    return success
 
 ##
 ## Do some initialization (parse arguments, etc) and
@@ -564,7 +565,7 @@ def main():
                                           # executables were produced.
 
         # Run tests.
-        run_tests(path, backends, ns.s, ns.x)
+        failure = not run_tests(path, backends, ns.s, ns.x)
 
     except TestingException as exc:
         failure = True
