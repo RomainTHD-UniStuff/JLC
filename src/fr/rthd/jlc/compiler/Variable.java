@@ -2,13 +2,38 @@ package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
 
+/**
+ * Variable
+ * @author RomainTHD
+ * @see OperationItem
+ */
 public class Variable extends OperationItem {
+    /**
+     * Variable name
+     */
     public final String name;
 
+    /**
+     * Global or not
+     */
     private boolean _isGlobal;
+
+    /**
+     * Pointer or not
+     */
     private boolean _isPointer;
+
+    /**
+     * Variable size. Only used for strings for now
+     */
     private int _size;
 
+    /**
+     * Constructor
+     * @param type Variable type
+     * @param name Variable name
+     * @param isPointer Is a pointer or not
+     */
     public Variable(TypeCode type, String name, boolean isPointer) {
         super(type);
         this.name = name;

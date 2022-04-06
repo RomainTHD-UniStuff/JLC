@@ -2,6 +2,10 @@ package fr.rthd.jlc.typecheck.exception;
 
 import fr.rthd.jlc.TypeCode;
 
+/**
+ * Invalid assignment type
+ * @author RomainTHD
+ */
 public class InvalidAssignmentTypeException extends TypeException {
     public InvalidAssignmentTypeException(
         String varName,

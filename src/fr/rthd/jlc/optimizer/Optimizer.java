@@ -63,7 +63,30 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
+/**
+ * Optimizer
+ *
+ * - Unused functions removal, even with cycles or recursive calls
+ * - Constants propagation
+ * - Pure functions calls removal
+ * - Simplification of if and while according to their condition
+ * - Literals evaluation
+ * - Dead code elimination
+ * - Return checker
+ * @author RomainTHD
+ */
 public class Optimizer {
+    /**
+     * Generic action on an operator. The correct function will be called if
+     * both sides are literals. Otherwise, the default action will be called.
+     * @param left Left expression
+     * @param right Right expression
+     * @param onInt Function for integer operations
+     * @param onDouble Function for double operations
+     * @param onBool Function for boolean operations
+     * @param onDefault Default action if the expressions are not literals
+     * @return Result of the operation, according to the correct function call
+     */
     private static Expr operatorAction(
         AnnotatedExpr<?> left,
         AnnotatedExpr<?> right,
@@ -106,6 +129,10 @@ public class Optimizer {
         }
     }
 
+    /**
+     * @param exp Expression
+     * @return If the expression is a literal or not
+     */
     private static boolean isLiteral(AnnotatedExpr<?> exp) {
         return exp.parentExp instanceof ELitInt
                || exp.parentExp instanceof ELitDoub
@@ -114,6 +141,15 @@ public class Optimizer {
                || exp.parentExp instanceof ELitFalse;
     }
 
+    /**
+     * Visitor for increments and decrements
+     * @param base Base statement
+     * @param ident Identifier
+     * @param op Operator
+     * @param env Environment
+     * @param <T> Type of the expression
+     * @return Incremented or decremented expression
+     */
     public static <T extends Stmt> AnnotatedStmt<T> visitIncrDecr(
         T base,
         String ident,
@@ -148,6 +184,12 @@ public class Optimizer {
         return new AnnotatedStmt<>(base);
     }
 
+    /**
+     * Entry point
+     * @param p Program to optimize
+     * @param parentEnv Parent environment
+     * @return Optimized program
+     */
     public Prog optimize(Prog p, Env<?, FunType> parentEnv) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
         // First pass will mark functions as pure or impure
@@ -157,6 +199,10 @@ public class Optimizer {
         return p.accept(new ProgVisitor(), env);
     }
 
+    /**
+     * Interface for function pointers
+     * @param <T> Literal input type
+     */
     private interface OperatorAction<T> {
         Expr execute(T lvalue, T rvalue);
     }

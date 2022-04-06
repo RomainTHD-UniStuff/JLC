@@ -12,17 +12,60 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Environment of the compiler
+ * @author RomainTHD
+ * @see Env
+ * @see Variable
+ */
 class EnvCompiler extends Env<Variable, FunType> {
+    /**
+     * Indent character
+     */
     public static final String INDENT = "\t";
+
+    /**
+     * Separator for variable fields
+     */
     public static final char SEP = '$';
 
+    /**
+     * Instructions output
+     */
     private final List<String> _output;
+
+    /**
+     * Variable counter to avoid collisions, like ``` .temp$0 = ... .temp$1 =
+     * ... ```
+     */
     private final LinkedList<Map<String, Integer>> _varCount;
+
+    /**
+     * Label counter
+     * @see #_varCount
+     */
     private final LinkedList<Map<String, Integer>> _labelCount;
+
+    /**
+     * Depth access counter, to avoid collisions between blocks like ``` {
+     * .temp$0 = ... } { .temp$0 = ... ; Different block, but a collision } ```
+     */
     private final Map<Integer, Integer> _depthAccessCount;
+
+    /**
+     * Hashing algorithm to store strings
+     */
     private final MessageDigest _hashAlgorithm;
+
+    /**
+     * Indent level
+     */
     private int _indentLevel;
 
+    /**
+     * Constructor
+     * @param env Parent environment
+     */
     public EnvCompiler(Env<?, FunType> env) {
         super(env);
         this._output = new ArrayList<>();
@@ -36,10 +79,15 @@ class EnvCompiler extends Env<Variable, FunType> {
         try {
             md = MessageDigest.getInstance("MD5");
         } catch (Exception ignored) {
+            // MD5 not supported, use native `hashCode` instead
         }
         this._hashAlgorithm = md;
     }
 
+    /**
+     * Output the instructions to a single string
+     * @return Assembly string
+     */
     public String toAssembly() {
         StringBuilder res = new StringBuilder();
         for (String inst : _output) {
@@ -61,6 +109,10 @@ class EnvCompiler extends Env<Variable, FunType> {
         return INDENT.repeat(_indentLevel);
     }
 
+    /**
+     * Emit an instruction
+     * @param inst Instruction to emit
+     */
     public void emit(Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
@@ -73,6 +125,11 @@ class EnvCompiler extends Env<Variable, FunType> {
         }
     }
 
+    /**
+     * Emit an instruction at the beginning of the file. Mainly used for global
+     * string literals
+     * @param inst Instruction to emit
+     */
     public void emitAtBeginning(Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
@@ -83,6 +140,11 @@ class EnvCompiler extends Env<Variable, FunType> {
         }
     }
 
+    /**
+     * Get a variable unique ID
+     * @param name Variable name
+     * @return Variable ID
+     */
     private String getVariableUID(String name) {
         Map<String, Integer> scope = _varCount.peek();
         assert scope != null;
@@ -97,10 +159,24 @@ class EnvCompiler extends Env<Variable, FunType> {
         );
     }
 
+    /**
+     * Create a temporary variable
+     * @param type Variable type
+     * @param ctx Context, like "if", "while", etc
+     * @return Temporary variable
+     */
     public Variable createTempVar(TypeCode type, String ctx) {
         return createTempVar(type, ctx, false);
     }
 
+    /**
+     * Create a temporary variable that is a pointer
+     * @param type Variable type
+     * @param ctx Context, like "if", "while", etc. Only used here for `and`
+     *     and `or`
+     * @param isPointer Whether the variable is a pointer or not
+     * @return Temporary variable
+     */
     public Variable createTempVar(
         TypeCode type,
         String ctx,
@@ -116,6 +192,13 @@ class EnvCompiler extends Env<Variable, FunType> {
         ), isPointer);
     }
 
+    /**
+     * Create a variable
+     * @param type Variable type
+     * @param name Variable name
+     * @param isPointer Whether the variable is a pointer or not
+     * @return Variable
+     */
     public Variable createVar(TypeCode type, String name, boolean isPointer) {
         return new Variable(type, String.format(
             "%s%c%s",
@@ -125,6 +208,11 @@ class EnvCompiler extends Env<Variable, FunType> {
         ), isPointer);
     }
 
+    /**
+     * Create a global string literal
+     * @param content String content
+     * @return String literal address
+     */
     public Variable createGlobalStringLiteral(String content) {
         Variable var = new Variable(TypeCode.CString, String.format(
             ".string%c%s",
@@ -136,6 +224,11 @@ class EnvCompiler extends Env<Variable, FunType> {
         return var;
     }
 
+    /**
+     * Create a new label
+     * @param ctx Label context, like "if_true", "while_loop", etc
+     * @return Label
+     */
     public String getNewLabel(String ctx) {
         Map<String, Integer> scope = _labelCount.peek();
         assert scope != null;
@@ -181,6 +274,10 @@ class EnvCompiler extends Env<Variable, FunType> {
         _labelCount.push(new HashMap<>());
     }
 
+    /**
+     * @param content String
+     * @return Hash of the string
+     */
     private String getHash(String content) {
         if (_hashAlgorithm == null) {
             return String.format("%x", content.hashCode());

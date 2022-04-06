@@ -2,6 +2,10 @@ package fr.rthd.jlc.typecheck.exception;
 
 import fr.rthd.jlc.TypeCode;
 
+/**
+ * Invalid operation
+ * @author RomainTHD
+ */
 public class InvalidOperationException extends TypeException {
     private final String message;
 

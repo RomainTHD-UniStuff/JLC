@@ -10,15 +10,35 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Environment
+ * @param <Value> Variable type
+ * @param <Func> Function type
+ * @author RomainTHD
+ */
 public class Env<Value, Func extends FunType> {
+    /**
+     * Function map
+     */
     private final Map<String, Func> _signature;
+
+    /**
+     * Variable contexts
+     */
     private final LinkedList<Map<String, Value>> _contexts;
 
+    /**
+     * Empty constructor
+     */
     public Env() {
         this._signature = new HashMap<>();
         this._contexts = new LinkedList<>();
     }
 
+    /**
+     * Copy constructor, will copy the function signatures
+     * @param baseEnv Parent environment
+     */
     public Env(Env<?, Func> baseEnv) {
         this._signature = baseEnv._signature;
         this._contexts = new LinkedList<>();
@@ -48,6 +68,11 @@ public class Env<Value, Func extends FunType> {
         return s.toString();
     }
 
+    /**
+     * Lookup a variable
+     * @param id Variable name
+     * @return Variable or null if not found
+     */
     public Value lookupVar(String id) {
         for (Map<String, Value> env : _contexts) {
             Value v = env.get(id);
@@ -58,18 +83,41 @@ public class Env<Value, Func extends FunType> {
         return null;
     }
 
+    /**
+     * Lookup a function
+     * @param id Function name
+     * @return Function or null if not found
+     */
     public Func lookupFun(String id) {
         return _signature.get(id);
     }
 
+    /**
+     * @return All functions
+     */
     public List<Func> getAllFun() {
         return new LinkedList<>(_signature.values());
     }
 
+    /**
+     * Insert a variable
+     * @param id Variable name
+     * @param value Variable
+     * @throws EnvException If the variable is already set in the top-level
+     *     context
+     */
     public void insertVar(String id, Value value) throws EnvException {
         insertVar(id, value, false);
     }
 
+    /**
+     * Insert a variable
+     * @param id Variable name
+     * @param value Variable
+     * @param force Force insert or not
+     * @throws EnvException If the variable is already set in the top-level
+     *     context and `force` is false
+     */
     public void insertVar(
         String id,
         Value value,
@@ -85,12 +133,21 @@ public class Env<Value, Func extends FunType> {
         }
     }
 
+    /**
+     * @param value Variable
+     * @return Whether a variable is in the top-level context or not
+     */
     public boolean isTopLevel(Value value) {
         Map<String, Value> env = _contexts.peek();
         assert env != null;
         return env.containsValue(value);
     }
 
+    /**
+     * Update a variable
+     * @param id Variable name
+     * @param value Variable
+     */
     public void updateVar(String id, Value value) {
         for (Map<String, Value> env : _contexts) {
             Value v = env.get(id);
@@ -101,6 +158,11 @@ public class Env<Value, Func extends FunType> {
         }
     }
 
+    /**
+     * Insert a function
+     * @param func Function
+     * @throws EnvException If the function is already defined
+     */
     public void insertFun(Func func) throws EnvException {
         if (lookupFun(func.name) == null) {
             _signature.put(func.name, func);
@@ -109,23 +171,40 @@ public class Env<Value, Func extends FunType> {
         }
     }
 
+    /**
+     * Enter a new scope
+     */
     public void enterScope() {
         _contexts.push(new HashMap<>());
     }
 
+    /**
+     * Leave the scope
+     */
     public void leaveScope() {
         _contexts.pop();
     }
 
+    /**
+     * Reset scope
+     */
     public void resetScope() {
         _contexts.clear();
         _contexts.push(new HashMap<>());
     }
 
+    /**
+     * @return Scope depth
+     */
     public int getScopeDepth() {
         return _contexts.size() - 1;
     }
 
+    /**
+     * Remove a function
+     * @param name Function name
+     * @throws EnvException If the function doesn't exist
+     */
     public void removeFun(String name) throws EnvException {
         if (lookupFun(name) == null) {
             throw new SymbolNotFoundException(name);

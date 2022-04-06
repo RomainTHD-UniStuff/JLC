@@ -11,6 +11,11 @@ import fr.rthd.jlc.env.FunType;
 
 import java.util.List;
 
+/**
+ * Instruction builder for LLVM.
+ * @author RomainTHD
+ * @see InstructionBuilder
+ */
 public class LLVMInstructionBuilder extends InstructionBuilder {
     @Override
     public Instruction comment(String comment) {

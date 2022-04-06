@@ -5,6 +5,10 @@ import javalette.Absyn.Doub;
 import javalette.Absyn.Int;
 import javalette.Absyn.Type;
 
+/**
+ * Type visitor to transform a Javalette type to a TypeCode
+ * @author RomainTHD
+ */
 public class TypeVisitor implements Type.Visitor<TypeCode, Void> {
     public TypeCode visit(Bool t, Void ignored) {
         return TypeCode.CBool;

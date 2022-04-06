@@ -61,15 +61,32 @@ import javalette.Absyn.While;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Compiler
+ * @author RomainTHD
+ */
 public class Compiler {
+    /**
+     * Instruction builder
+     */
     private static InstructionBuilder instructionBuilder;
 
+    /**
+     * Constructor
+     * @param builder Instruction builder
+     */
     public Compiler(InstructionBuilder builder) {
         instructionBuilder = builder;
     }
 
-
-    private static Type javaletteTypeFromTypecode(TypeCode type) {
+    /**
+     * Javalette type from TypeCode
+     * @param type TypeCode type
+     * @return Javalette type
+     * @throws IllegalArgumentException If type is not supported
+     * @see TypeCode
+     */
+    private static Type javaletteTypeFromTypecode(TypeCode type) throws IllegalArgumentException {
         switch (type) {
             case CInt:
                 return new javalette.Absyn.Int();
@@ -85,13 +102,19 @@ public class Compiler {
 
             case CString:
             default:
-                throw new UnsupportedOperationException(
+                throw new IllegalArgumentException(
                     "Unsupported type: " +
                     type
                 );
         }
     }
 
+    /**
+     * Entry point
+     * @param p Program
+     * @param parent Parent environment
+     * @return Compiled program as a string
+     */
     public String compile(Prog p, Env<?, FunType> parent) {
         EnvCompiler env = new EnvCompiler(parent);
         p.accept(new ProgVisitor(), env);

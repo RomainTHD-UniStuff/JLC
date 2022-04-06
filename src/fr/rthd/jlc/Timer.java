@@ -1,5 +1,9 @@
 package fr.rthd.jlc;
 
+/**
+ * Timer, used for debug purpose
+ * @author RomainTHD
+ */
 public class Timer {
     private long start;
     private long end;

@@ -1,5 +1,9 @@
 package fr.rthd.jlc;
 
+/**
+ * Type code
+ * @author RomainTHD
+ */
 public enum TypeCode {
     CInt("i32", 0, 1),
     CDouble("double", 0.0, 2),
@@ -7,8 +11,19 @@ public enum TypeCode {
     CVoid("void", null, 0),
     CString("i8*", "", 0);
 
+    /**
+     * Type name
+     */
     private final String _typename;
+
+    /**
+     * Default value
+     */
     private final Object _defaultValue;
+
+    /**
+     * Size
+     */
     private final int _size;
 
     TypeCode(String typename, Object defaultValue, int size) {

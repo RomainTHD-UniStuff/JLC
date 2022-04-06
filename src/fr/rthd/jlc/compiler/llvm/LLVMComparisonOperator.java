@@ -3,8 +3,23 @@ package fr.rthd.jlc.compiler.llvm;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.compiler.ComparisonOperator;
 
+/**
+ * LLVM comparison operator. For example, "==" with integers would be translated
+ * to "seq".
+ * @author RomainTHD
+ * @see ComparisonOperator
+ */
 class LLVMComparisonOperator {
-    public static String getOperand(ComparisonOperator op, TypeCode type) {
+    /**
+     * @param op Operator
+     * @param type Value type
+     * @return Operand
+     * @throws IllegalArgumentException If the operator is not supported
+     */
+    public static String getOperand(
+        ComparisonOperator op,
+        TypeCode type
+    ) throws IllegalArgumentException {
         String prefix = "";
 
         if (type == TypeCode.CInt || type == TypeCode.CBool) {
@@ -12,9 +27,11 @@ class LLVMComparisonOperator {
                 op == ComparisonOperator.LE ||
                 op == ComparisonOperator.GT ||
                 op == ComparisonOperator.GE) {
+                // Signed operation
                 prefix = "s";
             }
         } else if (type == TypeCode.CDouble) {
+            // Floating point operation, ignore NaN
             prefix = "o";
         }
 
@@ -38,7 +55,7 @@ class LLVMComparisonOperator {
                 return prefix + "ge";
 
             default:
-                throw new RuntimeException("Unknown comparison operator");
+                throw new IllegalArgumentException("Unknown comparison operator");
         }
     }
 }

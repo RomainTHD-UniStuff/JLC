@@ -1,5 +1,9 @@
 package fr.rthd.jlc.typecheck.exception;
 
+/**
+ * Invalid argument count
+ * @author RomainTHD
+ */
 public class InvalidArgumentCountException extends TypeException {
     public InvalidArgumentCountException(
         String funcName,

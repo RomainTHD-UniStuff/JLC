@@ -18,13 +18,13 @@ import java.io.StringReader;
 import java.util.Scanner;
 
 /**
- * Main class of the Javalette compiler.
+ * Main class of the compiler
+ * @author RomainTHD
  */
 public class Main {
     /**
      * Main method
-     * @param args Command line arguments. Here, `--backend <Backend>
-     *     <SourceFile>`
+     * @param args Command line arguments. Here, `--backend <Backend>`
      */
     public static void main(String[] args) {
         if (args.length != 2) {

@@ -6,10 +6,32 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.EString;
 import javalette.Absyn.Expr;
 
+/**
+ * Annotated expression
+ * @param <T> Parent expression type
+ * @author RomainTHD
+ */
 public class AnnotatedExpr<T extends Expr> extends Expr {
+    /**
+     * Parent expression
+     */
     public final T parentExp;
+
+    /**
+     * Expression type
+     */
     public TypeCode type;
 
+    public AnnotatedExpr(TypeCode expType, T parentExp) {
+        this.type = expType;
+        this.parentExp = parentExp;
+    }
+
+    /**
+     * Get the default value for the expression type
+     * @param type Expression type
+     * @return Default expression
+     */
     public static AnnotatedExpr<Expr> getDefaultValue(TypeCode type) {
         switch (type) {
             case CInt:
@@ -22,21 +44,16 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
                 return new AnnotatedExpr<>(type, new EString(""));
             case CVoid:
             default:
-                throw new UnsupportedOperationException(
+                throw new IllegalArgumentException(
                     "Unhandled type: " +
                     type
                 );
         }
     }
 
-
-    public AnnotatedExpr(TypeCode expType, T parentExp) {
-        this.type = expType;
-        this.parentExp = parentExp;
-    }
-
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
+        // Call the parent accept method
         return parentExp.accept(v, arg);
     }
 }

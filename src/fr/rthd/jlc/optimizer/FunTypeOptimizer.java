@@ -10,6 +10,8 @@ import java.util.Set;
 
 /**
  * Functions optimizer
+ * @author RomainTHD
+ * @see FunType
  */
 public class FunTypeOptimizer extends FunType {
     /**
@@ -62,6 +64,11 @@ public class FunTypeOptimizer extends FunType {
         return false;
     }
 
+    /**
+     * Update the purity of this function. A function is pure only if all its
+     * steps are pure. Currently, the only impure steps are only function calls
+     * to impure functions
+     */
     public void updatePurity() {
         Queue<FunTypeOptimizer> queue = new LinkedList<>();
         Set<FunType> visited = new HashSet<>();

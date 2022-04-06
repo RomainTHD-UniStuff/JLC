@@ -78,7 +78,17 @@ import javalette.Absyn.While;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+/**
+ * Type checker
+ * @author RomainTHD
+ */
 public class TypeChecker {
+    /**
+     * Entry point
+     * @param p Program to type check
+     * @param parentEnv Parent environment
+     * @return Type-checked program
+     */
     public Prog typecheck(Prog p, Env<?, FunType> parentEnv) {
         EnvTypecheck env = new EnvTypecheck(parentEnv);
         p.accept(new ProgSignatureVisitor(), env);

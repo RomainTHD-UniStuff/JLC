@@ -6,6 +6,10 @@ import fr.rthd.jlc.env.FunType;
 
 /**
  * Environment for the optimizer
+ * @author RomainTHD
+ * @see Env
+ * @see AnnotatedExpr
+ * @see FunTypeOptimizer
  */
 class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
     /**

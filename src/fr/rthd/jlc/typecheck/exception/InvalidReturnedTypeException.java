@@ -2,6 +2,10 @@ package fr.rthd.jlc.typecheck.exception;
 
 import fr.rthd.jlc.TypeCode;
 
+/**
+ * Invalid returned type
+ * @author RomainTHD
+ */
 public class InvalidReturnedTypeException extends TypeException {
     public InvalidReturnedTypeException(TypeCode expected, TypeCode actual) {
         super(String.format(

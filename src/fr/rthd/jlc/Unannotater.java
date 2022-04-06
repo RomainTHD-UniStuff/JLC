@@ -44,9 +44,15 @@ import javalette.Absyn.While;
 
 /**
  * Debug class to recreate an AST as expected by PrettyPrinter, without our
- * custom type annotations.
+ * custom type annotations
+ * @author RomainTHD
  */
 public class Unannotater {
+    /**
+     * Entry point
+     * @param p Program to unannotate
+     * @return Unannotated program
+     */
     public Prog unannotate(Prog p) {
         return p.accept(new ProgVisitor(), null);
     }
