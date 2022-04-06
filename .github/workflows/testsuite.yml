@@ -1,0 +1,22 @@
+name: Testsuite
+
+on:
+    push:
+        branches:
+            - master
+            - dev/*
+
+jobs:
+    tests:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Install required packages
+                run: sudo apt-get install -y make python3 clang bnfc default-jdk nasm llvm llvm-dev
+
+            -   name: Run testsuite script
+                run: |
+                    chmod +x ./.github/scripts/testsuite.sh
+                    .github/scripts/testsuite.sh
+                shell: sh
