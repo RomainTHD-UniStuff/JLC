@@ -18,5 +18,6 @@ jobs:
             -   name: Run testsuite script
                 run: |
                     chmod +x ./.github/scripts/testsuite.sh
+                    chmod +x ./jlc*
                     .github/scripts/testsuite.sh
                 shell: sh
