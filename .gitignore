@@ -24,13 +24,12 @@ hs_err_pid*
 
 src/javalette/*
 !src/javalette/.gitkeep
-build/*
-!build/.gitkeep
+build
 *.class
 out
 *.iml
 .idea
 !lib/*
 tmp
-doc/*.md
+doc
 tester/Docker

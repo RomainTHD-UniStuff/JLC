@@ -104,18 +104,13 @@ submission.tar.gz: Makefile
 
 # Clean all output files
 clean:
-	-rm -r build
-	mkdir build
-	touch build/.gitkeep
+	-rm -rf build
 
 # Clean all generated files
 vclean: clean
 	-rm -rf $(LABSRCOUT)
 	-mkdir $(LABSRCOUT)
 	touch $(LABSRCOUT)/.gitkeep
-	-rm -rf build
-	-mkdir build
-	touch build/.gitkeep
 
 # Clean everything
 distclean: vclean
