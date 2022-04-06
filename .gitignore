@@ -32,3 +32,5 @@ out
 .idea
 !lib/*
 tmp
+doc/*.md
+tester/Docker
