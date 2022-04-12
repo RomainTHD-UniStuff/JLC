@@ -6,6 +6,6 @@ make all || exit;
 mv submission.tar.gz $filename;
 cd ./tester;
 export CLASSPATH=.:./lib/JLex.jar:./lib/cup.jar:../lib/JLex.jar:../lib/cup.jar;
-python3 ./testing.py ../$filename --llvm;
+python3 ./testing.py ../$filename --llvm -x objects1;
 "
 Write-Host "Done." -ForegroundColor Green
