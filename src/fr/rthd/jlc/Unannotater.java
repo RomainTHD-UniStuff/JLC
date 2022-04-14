@@ -185,7 +185,15 @@ public class Unannotater {
         }
 
         public EDot visit(EDot p, Void ignored) {
-            return p;
+            ListExpr exprs = new ListExpr();
+            for (Expr e : p.listexpr_) {
+                exprs.add(e.accept(new ExprVisitor(), null));
+            }
+            return new EDot(
+                p.expr_.accept(new ExprVisitor(), null),
+                p.ident_,
+                exprs
+            );
         }
 
         public EIndex visit(EIndex p, Void ignored) {

@@ -104,7 +104,9 @@ EApp.      Expr6 ::= Ident "(" [Expr] ")" ;
 
 EString.   Expr6 ::= String ;
 
-EDot.      Expr6 ::= Expr6 "." Ident ;
+-- Works because we don't allow raw access to class attributes, only function
+--  calls are allowed
+EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
 
 EIndex.    Expr6 ::= Expr6 Index ;
 
