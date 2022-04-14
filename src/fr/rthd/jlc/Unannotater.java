@@ -1,36 +1,51 @@
 package fr.rthd.jlc;
 
+import javalette.Absyn.ArrayCon;
 import javalette.Absyn.Ass;
+import javalette.Absyn.AttrMember;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
+import javalette.Absyn.ClassDef;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
+import javalette.Absyn.Constructor;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
+import javalette.Absyn.ENew;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
+import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
+import javalette.Absyn.Extend;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.FnMember;
+import javalette.Absyn.For;
+import javalette.Absyn.FuncDef;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListItem;
+import javalette.Absyn.ListMember;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.ListTopDef;
+import javalette.Absyn.Member;
 import javalette.Absyn.Neg;
+import javalette.Absyn.NoExtend;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Not;
 import javalette.Absyn.Prog;
@@ -38,7 +53,10 @@ import javalette.Absyn.Program;
 import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
+import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.TopFnDef;
+import javalette.Absyn.TypeCon;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -68,6 +86,20 @@ public class Unannotater {
     }
 
     public static class TopDefVisitor implements TopDef.Visitor<TopDef, Void> {
+        public TopFnDef visit(TopFnDef p, Void ignored) {
+            return new TopFnDef(
+                p.funcdef_.accept(new FuncDefVisitor(), null)
+            );
+        }
+
+        public TopClsDef visit(TopClsDef p, Void ignored) {
+            return new TopClsDef(
+                p.classdef_.accept(new ClassDefVisitor(), null)
+            );
+        }
+    }
+
+    public static class FuncDefVisitor implements FuncDef.Visitor<FnDef, Void> {
         public FnDef visit(FnDef p, Void ignored) {
             return new FnDef(
                 p.type_,
@@ -75,6 +107,43 @@ public class Unannotater {
                 p.listarg_,
                 p.blk_.accept(new BlkVisitor(), null)
             );
+        }
+    }
+
+    public static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, Void> {
+        public NoExtend visit(NoExtend p, Void ignored) {
+            ListMember members = new ListMember();
+            for (Member m : p.listmember_) {
+                members.add(m.accept(new MemberVisitor(), null));
+            }
+            return new NoExtend(
+                p.ident_,
+                members
+            );
+        }
+
+        public Extend visit(Extend p, Void ignored) {
+            ListMember members = new ListMember();
+            for (Member m : p.listmember_) {
+                members.add(m.accept(new MemberVisitor(), null));
+            }
+            return new Extend(
+                p.ident_1,
+                p.ident_2,
+                members
+            );
+        }
+    }
+
+    public static class MemberVisitor implements Member.Visitor<Member, Void> {
+        public FnMember visit(FnMember p, Void ignored) {
+            return new FnMember(
+                p.funcdef_.accept(new FuncDefVisitor(), null)
+            );
+        }
+
+        public AttrMember visit(AttrMember p, Void ignored) {
+            return p;
         }
     }
 
@@ -99,6 +168,10 @@ public class Unannotater {
             return p;
         }
 
+        public ESelf visit(ESelf p, Void ignored) {
+            return p;
+        }
+
         public EApp visit(EApp p, Void ignored) {
             ListExpr expr = new ListExpr();
             for (Expr x : p.listexpr_) {
@@ -109,6 +182,20 @@ public class Unannotater {
 
         public EString visit(EString p, Void ignored) {
             return p;
+        }
+
+        public EDot visit(EDot p, Void ignored) {
+            return p;
+        }
+
+        public EIndex visit(EIndex p, Void ignored) {
+            return p;
+        }
+
+        public ENew visit(ENew p, Void ignored) {
+            return new ENew(
+                p.constructor_.accept(new ConstructorVisitor(), null)
+            );
         }
 
         public Neg visit(Neg p, Void ignored) {
@@ -154,6 +241,19 @@ public class Unannotater {
             return new EOr(
                 p.expr_1.accept(new ExprVisitor(), null),
                 p.expr_2.accept(new ExprVisitor(), null)
+            );
+        }
+    }
+
+    public static class ConstructorVisitor implements Constructor.Visitor<Constructor, Void> {
+        public TypeCon visit(TypeCon p, Void ignored) {
+            return p;
+        }
+
+        public ArrayCon visit(ArrayCon p, Void ignored) {
+            return new ArrayCon(
+                p.constructor_.accept(new ConstructorVisitor(), null),
+                p.expr_.accept(new ExprVisitor(), null)
             );
         }
     }
@@ -226,6 +326,15 @@ public class Unannotater {
 
         public While visit(While p, Void ignored) {
             return new While(
+                p.expr_.accept(new ExprVisitor(), null),
+                p.stmt_.accept(new StmtVisitor(), null)
+            );
+        }
+
+        public For visit(For p, Void ignored) {
+            return new For(
+                p.type_,
+                p.ident_,
                 p.expr_.accept(new ExprVisitor(), null),
                 p.stmt_.accept(new StmtVisitor(), null)
             );

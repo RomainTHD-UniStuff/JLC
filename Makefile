@@ -49,8 +49,8 @@ build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: src/javalette.cf
 
 # Create parser and move it to the correct location
 src/javalette/parser.java src/javalette/sym.java: $(CUPFILE)
-	# FIXME: The BNFC grammar contains a conflict, which is not resolved.
-	$(java) java_cup.Main -expect 1 -package javalette $<
+	# FIXME: The BNFC grammar contains an unresolved conflict near Constructor
+	$(java) java_cup.Main -expect 2 -package javalette $<
 	mv parser.java sym.java src/javalette/
 
 # Create lexer

@@ -2,6 +2,7 @@ package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.Choice;
+import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
@@ -20,19 +21,25 @@ import javalette.Absyn.Div;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
+import javalette.Absyn.ENew;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
+import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.For;
+import javalette.Absyn.FuncDef;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
@@ -59,20 +66,19 @@ import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
+import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
 /**
  * Optimizer
  *
- * - Unused functions removal, even with cycles or recursive calls
- * - Constants propagation
- * - Pure functions calls removal
- * - Simplification of if and while according to their condition
- * - Literals evaluation
- * - Dead code elimination
- * - Return checker
+ * - Unused functions removal, even with cycles or recursive calls - Constants
+ * propagation - Pure functions calls removal - Simplification of if and while
+ * according to their condition - Literals evaluation - Dead code elimination -
+ * Return checker
  * @author RomainTHD
  */
 public class Optimizer {
@@ -218,18 +224,27 @@ public class Optimizer {
             ListTopDef usedTopDef = new ListTopDef();
 
             for (TopDef def : topDef) {
-                FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
-                if (func.isUsedByMain()) {
-                    func.updatePurity();
-                    usedTopDef.add(def);
+                if (def instanceof TopFnDef) {
+                    FuncDef fdef = ((TopFnDef) def).funcdef_;
+                    FunTypeOptimizer func = env.lookupFun(((FnDef) fdef).ident_);
+                    if (func.isUsedByMain()) {
+                        func.updatePurity();
+                        usedTopDef.add(def);
+                    } else {
+                        env.removeFun(func.name);
+                    }
                 } else {
-                    env.removeFun(func.name);
+                    // Class def, not implemented yet
+                    usedTopDef.add(def);
                 }
             }
 
             for (TopDef def : usedTopDef) {
-                FunTypeOptimizer func = env.lookupFun(((FnDef) def).ident_);
-                func.clearUsage();
+                if (def instanceof TopFnDef) {
+                    FuncDef fdef = ((TopFnDef) def).funcdef_;
+                    FunTypeOptimizer func = env.lookupFun(((FnDef) fdef).ident_);
+                    func.clearUsage();
+                }
             }
 
             return new Program(usedTopDef);
@@ -237,7 +252,8 @@ public class Optimizer {
     }
 
     public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvOptimizer> {
-        public FnDef visit(FnDef f, EnvOptimizer env) {
+        public TopFnDef visit(TopFnDef topF, EnvOptimizer env) {
+            FnDef f = (FnDef) topF.funcdef_;
             FunTypeOptimizer func = env.lookupFun(f.ident_);
             env.setCurrentFunction(func);
 
@@ -254,12 +270,16 @@ public class Optimizer {
 
             env.leaveScope();
 
-            return new FnDef(
+            return new TopFnDef(new FnDef(
                 f.type_,
                 f.ident_,
                 f.listarg_,
                 nBlock
-            );
+            ));
+        }
+
+        public TopClsDef visit(TopClsDef p, EnvOptimizer env) {
+            throw new NotImplementedException();
         }
     }
 
@@ -462,6 +482,10 @@ public class Optimizer {
             }
         }
 
+        public AnnotatedStmt<?> visit(For p, EnvOptimizer env) {
+            throw new NotImplementedException();
+        }
+
         public AnnotatedStmt<?> visit(SExp s, EnvOptimizer env) {
             AnnotatedExpr<?> expr = (AnnotatedExpr<?>) s.expr_;
             if (expr.parentExp instanceof EApp) {
@@ -558,6 +582,10 @@ public class Optimizer {
             return new AnnotatedExpr<>(TypeCode.CBool, e);
         }
 
+        public AnnotatedExpr<?> visit(ESelf p, EnvOptimizer env) {
+            throw new NotImplementedException();
+        }
+
         public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {
             FunTypeOptimizer funcType = env.lookupFun(e.ident_);
             funcType.addUsageIn(env.getCurrentFunction());
@@ -579,6 +607,18 @@ public class Optimizer {
 
         public AnnotatedExpr<EString> visit(EString e, EnvOptimizer env) {
             return new AnnotatedExpr<>(TypeCode.CString, e);
+        }
+
+        public AnnotatedExpr<? extends Expr> visit(EDot p, EnvOptimizer env) {
+            throw new NotImplementedException();
+        }
+
+        public AnnotatedExpr<? extends Expr> visit(EIndex p, EnvOptimizer env) {
+            throw new NotImplementedException();
+        }
+
+        public AnnotatedExpr<? extends Expr> visit(ENew p, EnvOptimizer env) {
+            throw new NotImplementedException();
         }
 
         public AnnotatedExpr<?> visit(Neg e, EnvOptimizer env) {

@@ -2,6 +2,7 @@ package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.Choice;
+import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
@@ -32,19 +33,25 @@ import javalette.Absyn.Div;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
+import javalette.Absyn.ENew;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
+import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.For;
+import javalette.Absyn.FuncDef;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
@@ -71,7 +78,9 @@ import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
+import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -166,6 +175,18 @@ public class TypeChecker {
     }
 
     public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvTypecheck> {
+        public TopFnDef visit(TopFnDef p, EnvTypecheck env) {
+            return new TopFnDef(
+                p.funcdef_.accept(new FuncDefVisitor(), env)
+            );
+        }
+
+        public TopClsDef visit(TopClsDef p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+    }
+
+    public static class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         public FnDef visit(FnDef f, EnvTypecheck env) {
             FunType func = env.lookupFun(f.ident_);
 
@@ -195,6 +216,16 @@ public class TypeChecker {
     }
 
     public static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(TopFnDef p, EnvTypecheck env) {
+            return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
+        }
+
+        public Void visit(TopClsDef p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+    }
+
+    public static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
         public Void visit(FnDef p, EnvTypecheck env) {
             LinkedList<FunArg> argsType = new LinkedList<>();
             for (Arg arg : p.listarg_) {
@@ -401,6 +432,10 @@ public class TypeChecker {
             return new While(exp, stmt);
         }
 
+        public For visit(For p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+
         public SExp visit(SExp s, EnvTypecheck env) {
             AnnotatedExpr<?> expr = s.expr_.accept(new ExprVisitor(), env);
 
@@ -469,6 +504,10 @@ public class TypeChecker {
             return new AnnotatedExpr<>(TypeCode.CBool, e);
         }
 
+        public AnnotatedExpr<ESelf> visit(ESelf p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+
         public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
             FunType funcType = env.lookupFun(e.ident_);
             if (funcType == null) {
@@ -512,6 +551,18 @@ public class TypeChecker {
 
         public AnnotatedExpr<EString> visit(EString e, EnvTypecheck env) {
             return new AnnotatedExpr<>(TypeCode.CString, e);
+        }
+
+        public AnnotatedExpr<EDot> visit(EDot p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+
+        public AnnotatedExpr<EIndex> visit(EIndex p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+
+        public AnnotatedExpr<ENew> visit(ENew p, EnvTypecheck env) {
+            throw new NotImplementedException();
         }
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {

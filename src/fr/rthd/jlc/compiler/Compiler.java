@@ -1,6 +1,7 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.Env;
@@ -18,19 +19,25 @@ import javalette.Absyn.Div;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
+import javalette.Absyn.ENew;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
+import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.For;
+import javalette.Absyn.FuncDef;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
@@ -53,7 +60,9 @@ import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.Times;
+import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.TopFnDef;
 import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
@@ -140,7 +149,7 @@ public class Compiler {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
+    public static class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         public Void visit(FnDef p, EnvCompiler env) {
             FunType func = env.lookupFun(p.ident_);
 
@@ -155,15 +164,13 @@ public class Compiler {
             env.emit(instructionBuilder.functionDeclarationStart(func));
             env.emit(instructionBuilder.label("entry"));
 
-            func.args.forEach(arg -> {
-                new Init(
-                    arg.name,
-                    new EVar(arg.name)
-                ).accept(new ItemVisitor(
-                    arg.type,
-                    true
-                ), env);
-            });
+            func.args.forEach(arg -> new Init(
+                arg.name,
+                new EVar(arg.name)
+            ).accept(new ItemVisitor(
+                arg.type,
+                true
+            ), env));
 
             p.blk_.accept(new BlkVisitor(), env);
 
@@ -180,6 +187,16 @@ public class Compiler {
             env.emit(instructionBuilder.newLine());
 
             return null;
+        }
+    }
+
+    public static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
+        public Void visit(TopFnDef p, EnvCompiler env) {
+            return p.funcdef_.accept(new FuncDefVisitor(), env);
+        }
+
+        public Void visit(TopClsDef p, EnvCompiler env) {
+            throw new NotImplementedException();
         }
     }
 
@@ -212,6 +229,10 @@ public class Compiler {
 
         public OperationItem visit(ELitFalse p, EnvCompiler env) {
             return new Literal(TypeCode.CBool, false);
+        }
+
+        public OperationItem visit(ESelf p, EnvCompiler env) {
+            throw new NotImplementedException();
         }
 
         public OperationItem visit(EApp p, EnvCompiler env) {
@@ -255,6 +276,18 @@ public class Compiler {
             );
             env.emit(instructionBuilder.loadStringLiteral(tmp, global));
             return tmp;
+        }
+
+        public OperationItem visit(EDot p, EnvCompiler env) {
+            throw new NotImplementedException();
+        }
+
+        public OperationItem visit(EIndex p, EnvCompiler env) {
+            throw new NotImplementedException();
+        }
+
+        public OperationItem visit(ENew p, EnvCompiler env) {
+            throw new NotImplementedException();
         }
 
         public OperationItem visit(Neg p, EnvCompiler env) {
@@ -592,6 +625,10 @@ public class Compiler {
 
             env.emit(instructionBuilder.newLine());
             return null;
+        }
+
+        public Void visit(For p, EnvCompiler env) {
+            throw new NotImplementedException();
         }
 
         public Void visit(SExp p, EnvCompiler env) {
