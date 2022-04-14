@@ -11,11 +11,13 @@ import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
+import javalette.Absyn.Bool;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.Div;
+import javalette.Absyn.Doub;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -42,6 +44,7 @@ import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
+import javalette.Absyn.Int;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
@@ -65,10 +68,16 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
+import javalette.Absyn.Void;
 import javalette.Absyn.While;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static fr.rthd.jlc.TypeCode.CBool;
+import static fr.rthd.jlc.TypeCode.CDouble;
+import static fr.rthd.jlc.TypeCode.CInt;
+import static fr.rthd.jlc.TypeCode.CVoid;
 
 /**
  * Compiler
@@ -96,25 +105,19 @@ public class Compiler {
      * @see TypeCode
      */
     private static Type javaletteTypeFromTypecode(TypeCode type) throws IllegalArgumentException {
-        switch (type) {
-            case CInt:
-                return new javalette.Absyn.Int();
-
-            case CDouble:
-                return new javalette.Absyn.Doub();
-
-            case CBool:
-                return new javalette.Absyn.Bool();
-
-            case CVoid:
-                return new javalette.Absyn.Void();
-
-            case CString:
-            default:
-                throw new IllegalArgumentException(
-                    "Unsupported type: " +
-                    type
-                );
+        if (CInt.equals(type)) {
+            return new Int();
+        } else if (CDouble.equals(type)) {
+            return new Doub();
+        } else if (CBool.equals(type)) {
+            return new Bool();
+        } else if (CVoid.equals(type)) {
+            return new Void();
+        } else {
+            throw new IllegalArgumentException(
+                "Unsupported type: " +
+                type
+            );
         }
     }
 
@@ -216,7 +219,7 @@ public class Compiler {
         }
 
         public OperationItem visit(ELitInt p, EnvCompiler env) {
-            return new Literal(TypeCode.CInt, p.integer_);
+            return new Literal(CInt, p.integer_);
         }
 
         public OperationItem visit(ELitDoub p, EnvCompiler env) {
@@ -294,8 +297,8 @@ public class Compiler {
             OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
             if (expr instanceof Literal) {
                 Literal lit = (Literal) expr;
-                if (lit.type == TypeCode.CInt) {
-                    return new Literal(TypeCode.CInt, -(int) lit.value);
+                if (lit.type == CInt) {
+                    return new Literal(CInt, -(int) lit.value);
                 } else if (lit.type == TypeCode.CDouble) {
                     return new Literal(TypeCode.CDouble, -(double) lit.value);
                 } else {
