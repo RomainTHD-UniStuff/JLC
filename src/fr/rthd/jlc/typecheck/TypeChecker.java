@@ -5,6 +5,7 @@ import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
@@ -98,7 +99,7 @@ public class TypeChecker {
      * @param parentEnv Parent environment
      * @return Type-checked program
      */
-    public Prog typecheck(Prog p, Env<?, FunType> parentEnv) {
+    public Prog typecheck(Prog p, Env<?, FunType, ClassType> parentEnv) {
         EnvTypecheck env = new EnvTypecheck(parentEnv);
         p.accept(new ProgSignatureVisitor(), env);
         return p.accept(new ProgVisitor(), env);

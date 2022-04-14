@@ -1,6 +1,7 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
@@ -11,7 +12,7 @@ import fr.rthd.jlc.env.FunType;
  * @see AnnotatedExpr
  * @see FunTypeOptimizer
  */
-class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
+class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassType> {
     /**
      * Current function
      */
@@ -31,7 +32,7 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
      * Constructor
      * @param env Parent environment
      */
-    public EnvOptimizer(Env<?, FunType> env) {
+    public EnvOptimizer(Env<?, FunType, ClassType> env) {
         super();
         for (FunType funType : env.getAllFun()) {
             // We receive `FunType` objects but need to store `FunTypeOptimizer`

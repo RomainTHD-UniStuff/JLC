@@ -5,6 +5,7 @@ import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
@@ -196,7 +197,7 @@ public class Optimizer {
      * @param parentEnv Parent environment
      * @return Optimized program
      */
-    public Prog optimize(Prog p, Env<?, FunType> parentEnv) {
+    public Prog optimize(Prog p, Env<?, FunType, ClassType> parentEnv) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
         // First pass will mark functions as pure or impure
         p = p.accept(new ProgVisitor(), env);

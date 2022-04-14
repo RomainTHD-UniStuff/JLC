@@ -4,6 +4,7 @@ import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.AddOp;
@@ -127,7 +128,7 @@ public class Compiler {
      * @param parent Parent environment
      * @return Compiled program as a string
      */
-    public String compile(Prog p, Env<?, FunType> parent) {
+    public String compile(Prog p, Env<?, FunType, ClassType> parent) {
         EnvCompiler env = new EnvCompiler(parent);
         p.accept(new ProgVisitor(), env);
         return env.toAssembly();

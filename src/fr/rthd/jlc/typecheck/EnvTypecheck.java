@@ -1,6 +1,7 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
@@ -9,7 +10,7 @@ import fr.rthd.jlc.env.FunType;
  * @see Env
  * @author RomainTHD
  */
-class EnvTypecheck extends Env<TypeCode, FunType> {
+class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
     /**
      * Current function type
      */
@@ -20,7 +21,7 @@ class EnvTypecheck extends Env<TypeCode, FunType> {
      */
     private boolean _doesReturn;
 
-    public EnvTypecheck(Env<?, FunType> parent) {
+    public EnvTypecheck(Env<?, FunType, ClassType> parent) {
         super(parent);
     }
 

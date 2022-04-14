@@ -1,6 +1,7 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
@@ -18,7 +19,7 @@ import java.util.Map;
  * @see Env
  * @see Variable
  */
-class EnvCompiler extends Env<Variable, FunType> {
+class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Indent character
      */
@@ -66,7 +67,7 @@ class EnvCompiler extends Env<Variable, FunType> {
      * Constructor
      * @param env Parent environment
      */
-    public EnvCompiler(Env<?, FunType> env) {
+    public EnvCompiler(Env<?, FunType, ClassType> env) {
         super(env);
         this._output = new ArrayList<>();
         this._varCount = new LinkedList<>();

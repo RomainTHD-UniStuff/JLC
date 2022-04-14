@@ -16,11 +16,16 @@ import java.util.Map;
  * @param <Func> Function type
  * @author RomainTHD
  */
-public class Env<Value, Func extends FunType> {
+public class Env<Value, Func extends FunType, Class extends ClassType> {
     /**
      * Function map
      */
-    private final Map<String, Func> _signature;
+    private final Map<String, Func> _funcSignatures;
+
+    /**
+     * Class map
+     */
+    private final Map<String, Class> _classSignatures;
 
     /**
      * Variable contexts
@@ -31,7 +36,8 @@ public class Env<Value, Func extends FunType> {
      * Empty constructor
      */
     public Env() {
-        this._signature = new HashMap<>();
+        this._funcSignatures = new HashMap<>();
+        this._classSignatures = new HashMap<>();
         this._contexts = new LinkedList<>();
     }
 
@@ -39,8 +45,9 @@ public class Env<Value, Func extends FunType> {
      * Copy constructor, will copy the function signatures
      * @param baseEnv Parent environment
      */
-    public Env(Env<?, Func> baseEnv) {
-        this._signature = baseEnv._signature;
+    public Env(Env<?, Func, Class> baseEnv) {
+        this._funcSignatures = baseEnv._funcSignatures;
+        this._classSignatures = baseEnv._classSignatures;
         this._contexts = new LinkedList<>();
         this._contexts.push(new HashMap<>());
     }
@@ -48,9 +55,15 @@ public class Env<Value, Func extends FunType> {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("\n");
-        for (String funcName : _signature.keySet()) {
+        for (String funcName : _funcSignatures.keySet()) {
             s.append(funcName).append(" ");
             s.append(lookupFun(funcName));
+            s.append("\n");
+        }
+
+        for (String className : _classSignatures.keySet()) {
+            s.append(className).append(" ");
+            s.append(lookupClass(className));
             s.append("\n");
         }
 
@@ -89,14 +102,30 @@ public class Env<Value, Func extends FunType> {
      * @return Function or null if not found
      */
     public Func lookupFun(String id) {
-        return _signature.get(id);
+        return _funcSignatures.get(id);
+    }
+
+    /**
+     * Lookup a class
+     * @param id Class name
+     * @return Class or null if not found
+     */
+    public Class lookupClass(String id) {
+        return _classSignatures.get(id);
     }
 
     /**
      * @return All functions
      */
     public List<Func> getAllFun() {
-        return new LinkedList<>(_signature.values());
+        return new LinkedList<>(_funcSignatures.values());
+    }
+
+    /**
+     * @return All class
+     */
+    public List<Class> getAllClass() {
+        return new LinkedList<>(_classSignatures.values());
     }
 
     /**
@@ -165,9 +194,22 @@ public class Env<Value, Func extends FunType> {
      */
     public void insertFun(Func func) throws EnvException {
         if (lookupFun(func.name) == null) {
-            _signature.put(func.name, func);
+            _funcSignatures.put(func.name, func);
         } else {
             throw new SymbolAlreadyDefinedException(func.name);
+        }
+    }
+
+    /**
+     * Insert a class
+     * @param cls Class
+     * @throws EnvException If the class is already defined
+     */
+    public void insertFun(Class cls) throws EnvException {
+        if (lookupFun(cls.name) == null) {
+            _classSignatures.put(cls.name, cls);
+        } else {
+            throw new SymbolAlreadyDefinedException(cls.name);
         }
     }
 
@@ -209,7 +251,20 @@ public class Env<Value, Func extends FunType> {
         if (lookupFun(name) == null) {
             throw new SymbolNotFoundException(name);
         } else {
-            _signature.remove(name);
+            _funcSignatures.remove(name);
+        }
+    }
+
+    /**
+     * Remove a class
+     * @param name Class name
+     * @throws EnvException If the class doesn't exist
+     */
+    public void removeClass(String name) throws EnvException {
+        if (lookupClass(name) == null) {
+            throw new SymbolNotFoundException(name);
+        } else {
+            _classSignatures.remove(name);
         }
     }
 }
