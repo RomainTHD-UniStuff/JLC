@@ -28,7 +28,7 @@ public class ClassType {
     public final List<Attribute> attributes;
 
     /**
-     * Constructor
+     * Constructor for inheritance
      * @param name Class name
      * @param superclass Superclass or null
      * @param methods List of defined methods
@@ -44,6 +44,20 @@ public class ClassType {
         this.superclass = superclass;
         this.methods = methods;
         this.attributes = attributes;
+    }
+
+    /**
+     * Constructor without inheritance
+     * @param name Class name
+     * @param methods List of defined methods
+     * @param attributes List of defined fields
+     */
+    public ClassType(
+        String name,
+        List<FunType> methods,
+        List<Attribute> attributes
+    ) {
+        this(name, null, methods, attributes);
     }
 
     @Override
