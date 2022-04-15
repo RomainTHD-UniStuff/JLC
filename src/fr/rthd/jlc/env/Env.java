@@ -205,7 +205,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param cls Class
      * @throws EnvException If the class is already defined
      */
-    public void insertFun(Class cls) throws EnvException {
+    public void insertClass(Class cls) throws EnvException {
         if (lookupFun(cls.name) == null) {
             _classSignatures.put(cls.name, cls);
         } else {
