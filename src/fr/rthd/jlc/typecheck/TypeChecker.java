@@ -23,9 +23,11 @@ import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
 import javalette.Absyn.Argument;
 import javalette.Absyn.Ass;
+import javalette.Absyn.AttrMember;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
+import javalette.Absyn.ClassDef;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
@@ -50,7 +52,9 @@ import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
+import javalette.Absyn.Extend;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.FnMember;
 import javalette.Absyn.For;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.GE;
@@ -62,13 +66,16 @@ import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListItem;
+import javalette.Absyn.ListMember;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.ListTopDef;
+import javalette.Absyn.Member;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
 import javalette.Absyn.NE;
 import javalette.Absyn.Neg;
+import javalette.Absyn.NoExtend;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Not;
 import javalette.Absyn.Plus;
@@ -163,6 +170,40 @@ public class TypeChecker {
         }
     }
 
+    public static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(TopFnDef p, EnvTypecheck env) {
+            return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
+        }
+
+        public Void visit(TopClsDef p, EnvTypecheck env) {
+            return p.classdef_.accept(new ClassDefSignatureVisitor(), env);
+        }
+    }
+
+    public static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(FnDef p, EnvTypecheck env) {
+            LinkedList<FunArg> argsType = new LinkedList<>();
+            for (Arg arg : p.listarg_) {
+                argsType.add(arg.accept(new ArgVisitor(), null));
+            }
+
+            TypeCode retType = p.type_.accept(new TypeVisitor(), null);
+            env.insertFun(new FunType(retType, p.ident_, argsType));
+
+            return null;
+        }
+    }
+
+    public static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(NoExtend p, EnvTypecheck env) {
+            return null;
+        }
+
+        public Void visit(Extend p, EnvTypecheck env) {
+            return null;
+        }
+    }
+
     public static class ProgVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
         public Program visit(Program p, EnvTypecheck env) {
             ListTopDef topDef = new ListTopDef();
@@ -183,7 +224,49 @@ public class TypeChecker {
         }
 
         public TopClsDef visit(TopClsDef p, EnvTypecheck env) {
-            throw new NotImplementedException();
+            return new TopClsDef(
+                p.classdef_.accept(new ClassDefVisitor(), env)
+            );
+        }
+    }
+
+    public static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
+        public NoExtend visit(NoExtend p, EnvTypecheck env) {
+            ListMember members = new ListMember();
+            for (Member m : p.listmember_) {
+                members.add(m.accept(new MemberVisitor(), env));
+            }
+            return new NoExtend(
+                p.ident_,
+                members
+            );
+        }
+
+        public Extend visit(Extend p, EnvTypecheck env) {
+            ListMember members = new ListMember();
+            for (Member m : p.listmember_) {
+                members.add(m.accept(new MemberVisitor(), env));
+            }
+            return new Extend(
+                p.ident_1,
+                p.ident_2,
+                members
+            );
+        }
+    }
+
+    public static class MemberVisitor implements Member.Visitor<Member, EnvTypecheck> {
+        public FnMember visit(FnMember p, EnvTypecheck env) {
+            return new FnMember(
+                p.funcdef_.accept(new FuncDefVisitor(), env)
+            );
+        }
+
+        public AttrMember visit(AttrMember p, EnvTypecheck env) {
+            return new AttrMember(
+                p.type_,
+                p.ident_
+            );
         }
     }
 
@@ -213,30 +296,6 @@ public class TypeChecker {
                 f.listarg_,
                 nBlock
             );
-        }
-    }
-
-    public static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(TopFnDef p, EnvTypecheck env) {
-            return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
-        }
-
-        public Void visit(TopClsDef p, EnvTypecheck env) {
-            throw new NotImplementedException();
-        }
-    }
-
-    public static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(FnDef p, EnvTypecheck env) {
-            LinkedList<FunArg> argsType = new LinkedList<>();
-            for (Arg arg : p.listarg_) {
-                argsType.add(arg.accept(new ArgVisitor(), null));
-            }
-
-            TypeCode retType = p.type_.accept(new TypeVisitor(), null);
-            env.insertFun(new FunType(retType, p.ident_, argsType));
-
-            return null;
         }
     }
 
