@@ -1,5 +1,8 @@
 package fr.rthd.jlc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Type code
  * @author RomainTHD
@@ -35,6 +38,14 @@ public class TypeCode {
         "string",
         "i8*"
     );
+
+    /**
+     * Type code pool, to avoid problems with class and array type comparison,
+     * like `Dog == Dog` or `Dog[] == Dog[]`, because they might be different
+     * instances.
+     */
+    private static final Map<String, TypeCode> _pool = new HashMap<>();
+
     /**
      * Real name in source code
      */
@@ -60,6 +71,9 @@ public class TypeCode {
      */
     private final boolean _isPrimitive;
 
+    /**
+     * Base type for arrays
+     */
     private final TypeCode _baseType;
 
     private TypeCode(
@@ -106,27 +120,39 @@ public class TypeCode {
         );
     }
 
-    public static TypeCode forClass(String typeName) {
-        return new TypeCode(
-            typeName,
-            "(TBD)",
-            null,
-            0,
-            false,
-            null
-        );
+    public static TypeCode forClass(String realName) {
+        TypeCode typeCode = _pool.get(realName);
+        if (typeCode == null) {
+            typeCode = new TypeCode(
+                realName,
+                "(TBD)",
+                null,
+                0,
+                false,
+                null
+            );
+            _pool.put(realName, typeCode);
+        }
+
+        return typeCode;
     }
 
     public static TypeCode forArray(TypeCode baseType) {
         String realName = baseType._realName + "[]";
-        return new TypeCode(
-            realName,
-            "(TBD)",
-            null,
-            0,
-            false,
-            baseType
-        );
+        TypeCode typeCode = _pool.get(realName);
+        if (typeCode == null) {
+            typeCode = new TypeCode(
+                realName,
+                "(TBD)",
+                null,
+                0,
+                false,
+                baseType
+            );
+            _pool.put(realName, typeCode);
+        }
+
+        return typeCode;
     }
 
     @Override
