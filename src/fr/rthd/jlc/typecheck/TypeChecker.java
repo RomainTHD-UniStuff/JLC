@@ -5,6 +5,7 @@ import fr.rthd.jlc.Choice;
 import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.env.Attribute;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
@@ -22,6 +23,7 @@ import fr.rthd.jlc.typecheck.exception.NoSuchVariableException;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
 import javalette.Absyn.Argument;
+import javalette.Absyn.ArrayCon;
 import javalette.Absyn.Ass;
 import javalette.Absyn.AttrMember;
 import javalette.Absyn.BStmt;
@@ -30,6 +32,7 @@ import javalette.Absyn.Block;
 import javalette.Absyn.ClassDef;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
+import javalette.Absyn.Constructor;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.Div;
@@ -89,11 +92,14 @@ import javalette.Absyn.Times;
 import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
+import javalette.Absyn.TypeCon;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Type checker
@@ -123,20 +129,24 @@ public class TypeChecker {
                 "printInt",
                 new FunArg(TypeCode.CInt, "i")
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printDouble",
                 new FunArg(TypeCode.CDouble, "d")
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printString",
                 new FunArg(TypeCode.CString, "s")
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CInt,
                 "readInt"
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CDouble,
                 "readDouble"
@@ -144,7 +154,6 @@ public class TypeChecker {
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {
-                // FIXME: Should it be there or in the compiler directly?
                 throw new NoSuchFunctionException("main");
             } else {
                 mainFunc.setAsMain();
@@ -182,7 +191,7 @@ public class TypeChecker {
 
     public static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
         public Void visit(FnDef p, EnvTypecheck env) {
-            LinkedList<FunArg> argsType = new LinkedList<>();
+            List<FunArg> argsType = new LinkedList<>();
             for (Arg arg : p.listarg_) {
                 argsType.add(arg.accept(new ArgVisitor(), null));
             }
@@ -195,12 +204,72 @@ public class TypeChecker {
     }
 
     public static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(NoExtend p, EnvTypecheck env) {
+        private Void visit(
+            String name,
+            String superclass,
+            ListMember members,
+            EnvTypecheck env
+        ) {
+            List<FunType> methods = new ArrayList<>();
+            List<Attribute> attributes = new ArrayList<>();
+
+            // FIXME: This will not work if a function header uses a class still
+            //  not reached. For example, `void f(A a) {} ... class A {}`
+            //  will throw an error, since A is still unknown while f is being
+            //  defined.
+
+            for (Member m : members) {
+                if (m instanceof FnMember) {
+                    FnDef f = (FnDef) ((FnMember) m).funcdef_;
+                    List<FunArg> args = new LinkedList<>();
+                    for (Arg arg : f.listarg_) {
+                        args.add(arg.accept(new ArgVisitor(), null));
+                    }
+                    methods.add(new FunType(
+                        f.type_.accept(new TypeVisitor(), null),
+                        f.ident_,
+                        args
+                    ));
+                } else if (m instanceof AttrMember) {
+                    AttrMember a = (AttrMember) m;
+                    attributes.add(new Attribute(
+                        a.type_.accept(new TypeVisitor(), null),
+                        a.ident_
+                    ));
+                } else {
+                    throw new IllegalArgumentException(
+                        "Unknown member type: " + m.getClass().getName()
+                    );
+                }
+            }
+
+            ClassType c;
+            if (superclass == null) {
+                c = new ClassType(name, methods, attributes);
+            } else {
+                c = new ClassType(name, superclass, methods, attributes);
+            }
+
+            env.insertClass(c);
             return null;
         }
 
+        public Void visit(NoExtend p, EnvTypecheck env) {
+            return visit(
+                p.ident_,
+                null,
+                p.listmember_,
+                env
+            );
+        }
+
         public Void visit(Extend p, EnvTypecheck env) {
-            return null;
+            return visit(
+                p.ident_1,
+                p.ident_2,
+                p.listmember_,
+                env
+            );
         }
     }
 
@@ -538,6 +607,21 @@ public class TypeChecker {
         }
     }
 
+    public static class ConstructorVisitor implements Constructor.Visitor<TypeCode, EnvTypecheck> {
+        public TypeCode visit(TypeCon p, EnvTypecheck env) {
+            TypeCode t = p.type_.accept(new TypeVisitor(), null);
+            if (env.lookupClass(t.getRealName()) == null) {
+                throw new InvalidDeclaredTypeException(t);
+            }
+
+            return t;
+        }
+
+        public TypeCode visit(ArrayCon p, EnvTypecheck env) {
+            throw new NotImplementedException();
+        }
+    }
+
     public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
             TypeCode varType = env.lookupVar(e.ident_);
@@ -622,7 +706,10 @@ public class TypeChecker {
         }
 
         public AnnotatedExpr<ENew> visit(ENew p, EnvTypecheck env) {
-            throw new NotImplementedException();
+            return new AnnotatedExpr<>(
+                p.constructor_.accept(new ConstructorVisitor(), env),
+                new ENew(p.constructor_)
+            );
         }
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
