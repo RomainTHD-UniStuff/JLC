@@ -1,9 +1,10 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.NotImplementedException;
+import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.Visitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
@@ -84,7 +85,7 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  * Compiler
  * @author RomainTHD
  */
-public class Compiler {
+public class Compiler implements Visitor {
     /**
      * Instruction builder
      */
@@ -128,13 +129,14 @@ public class Compiler {
      * @param parent Parent environment
      * @return Compiled program as a string
      */
-    public String compile(Prog p, Env<?, FunType, ClassType> parent) {
+    public Prog accept(Prog p, Env<?, FunType, ClassType> parent) {
         EnvCompiler env = new EnvCompiler(parent);
         p.accept(new ProgVisitor(), env);
-        return env.toAssembly();
+        System.out.println(env.toAssembly());
+        return p;
     }
 
-    public static class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
+    private static class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
         public Void visit(Program p, EnvCompiler env) {
             env.emit(instructionBuilder.newLine());
 
@@ -153,7 +155,7 @@ public class Compiler {
         }
     }
 
-    public static class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
+    private static class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         public Void visit(FnDef p, EnvCompiler env) {
             FunType func = env.lookupFun(p.ident_);
 
@@ -194,7 +196,7 @@ public class Compiler {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
+    private static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
         public Void visit(TopFnDef p, EnvCompiler env) {
             return p.funcdef_.accept(new FuncDefVisitor(), env);
         }
@@ -204,7 +206,7 @@ public class Compiler {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+    private static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         public OperationItem visit(EVar p, EnvCompiler env) {
             Variable var = env.lookupVar(p.ident_);
             if (var.isPointer()) {
@@ -435,7 +437,7 @@ public class Compiler {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
+    private static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
         public Void visit(Block p, EnvCompiler env) {
             env.emit(instructionBuilder.comment("start block"));
             env.indent();
@@ -452,7 +454,7 @@ public class Compiler {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
+    private static class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         public Void visit(Empty p, EnvCompiler env) {
             String label = env.getNewLabel("noop");
             env.emit(instructionBuilder.jump(label));
@@ -641,7 +643,7 @@ public class Compiler {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
+    private static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         private final TypeCode type;
         private final boolean override;
 
@@ -685,7 +687,7 @@ public class Compiler {
         }
     }
 
-    public static class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
+    private static class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
         private final OperationItem left;
         private final OperationItem right;
 
@@ -707,7 +709,7 @@ public class Compiler {
         }
     }
 
-    public static class MulOpVisitor implements MulOp.Visitor<OperationItem, EnvCompiler> {
+    private static class MulOpVisitor implements MulOp.Visitor<OperationItem, EnvCompiler> {
         private final OperationItem left;
         private final OperationItem right;
 
@@ -735,7 +737,7 @@ public class Compiler {
         }
     }
 
-    public static class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
+    private static class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         private final OperationItem left;
         private final OperationItem right;
 

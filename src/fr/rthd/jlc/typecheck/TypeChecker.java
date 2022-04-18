@@ -2,9 +2,10 @@ package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.Choice;
-import fr.rthd.jlc.NotImplementedException;
+import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.Visitor;
 import fr.rthd.jlc.env.Attribute;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
@@ -106,20 +107,15 @@ import java.util.List;
  * Type checker
  * @author RomainTHD
  */
-public class TypeChecker {
-    /**
-     * Entry point
-     * @param p Program to type check
-     * @param parentEnv Parent environment
-     * @return Type-checked program
-     */
-    public Prog typecheck(Prog p, Env<?, FunType, ClassType> parentEnv) {
+public class TypeChecker implements Visitor {
+    @Override
+    public Prog accept(Prog p, Env<?, FunType, ClassType> parentEnv) {
         EnvTypecheck env = new EnvTypecheck(parentEnv);
         p.accept(new ProgSignatureVisitor(), env);
         return p.accept(new ProgVisitor(), env);
     }
 
-    public static class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
+    private static class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
         public Void visit(Program p, EnvTypecheck env) {
             for (TopDef def : p.listtopdef_) {
                 def.accept(new TopDefSignatureVisitor(), env);
@@ -180,7 +176,7 @@ public class TypeChecker {
         }
     }
 
-    public static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
+    private static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
         public Void visit(TopFnDef p, EnvTypecheck env) {
             return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
         }
@@ -190,7 +186,7 @@ public class TypeChecker {
         }
     }
 
-    public static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
+    private static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
         public Void visit(FnDef p, EnvTypecheck env) {
             List<FunArg> argsType = new LinkedList<>();
             for (Arg arg : p.listarg_) {
@@ -204,7 +200,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
+    private static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         private Void visit(
             String name,
             String superclass,
@@ -274,7 +270,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ProgVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
+    private static class ProgVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
         public Program visit(Program p, EnvTypecheck env) {
             ListTopDef topDef = new ListTopDef();
 
@@ -286,7 +282,7 @@ public class TypeChecker {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvTypecheck> {
+    private static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvTypecheck> {
         public TopFnDef visit(TopFnDef p, EnvTypecheck env) {
             return new TopFnDef(
                 p.funcdef_.accept(new FuncDefVisitor(), env)
@@ -300,7 +296,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
+    private static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
         public NoExtend visit(NoExtend p, EnvTypecheck env) {
             ListMember members = new ListMember();
             for (Member m : p.listmember_) {
@@ -325,7 +321,7 @@ public class TypeChecker {
         }
     }
 
-    public static class MemberVisitor implements Member.Visitor<Member, EnvTypecheck> {
+    private static class MemberVisitor implements Member.Visitor<Member, EnvTypecheck> {
         public FnMember visit(FnMember p, EnvTypecheck env) {
             return new FnMember(
                 p.funcdef_.accept(new FuncDefVisitor(), env)
@@ -340,7 +336,7 @@ public class TypeChecker {
         }
     }
 
-    public static class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
+    private static class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         public FnDef visit(FnDef f, EnvTypecheck env) {
             FunType func = env.lookupFun(f.ident_);
 
@@ -369,7 +365,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ArgVisitor implements Arg.Visitor<FunArg, Void> {
+    private static class ArgVisitor implements Arg.Visitor<FunArg, Void> {
         public FunArg visit(Argument a, Void ignored) {
             TypeCode type = a.type_.accept(new TypeVisitor(), null);
 
@@ -381,7 +377,7 @@ public class TypeChecker {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Blk, EnvTypecheck> {
+    private static class BlkVisitor implements Blk.Visitor<Blk, EnvTypecheck> {
         public Block visit(Block p, EnvTypecheck env) {
             ListStmt statements = new ListStmt();
 
@@ -397,7 +393,7 @@ public class TypeChecker {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
+    private static class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         public Empty visit(Empty s, EnvTypecheck env) {
             return new Empty();
         }
@@ -580,7 +576,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, EnvTypecheck> {
+    private static class ItemVisitor implements Item.Visitor<Item, EnvTypecheck> {
         private final TypeCode varType;
 
         public ItemVisitor(TypeCode varType) {
@@ -608,7 +604,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ConstructorVisitor implements Constructor.Visitor<TypeCode, EnvTypecheck> {
+    private static class ConstructorVisitor implements Constructor.Visitor<TypeCode, EnvTypecheck> {
         public TypeCode visit(TypeCon p, EnvTypecheck env) {
             TypeCode t = p.type_.accept(new TypeVisitor(), null);
             if (env.lookupClass(t.getRealName()) == null) {
@@ -623,7 +619,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
+    private static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
             TypeCode varType = env.lookupVar(e.ident_);
             if (varType == null) {
@@ -889,7 +885,7 @@ public class TypeChecker {
         }
     }
 
-    public static class AddOpVisitor implements AddOp.Visitor<String, Void> {
+    private static class AddOpVisitor implements AddOp.Visitor<String, Void> {
         public String visit(Plus p, Void ignored) {
             return "addition";
         }
@@ -899,7 +895,7 @@ public class TypeChecker {
         }
     }
 
-    public static class MulOpVisitor implements MulOp.Visitor<String, Void> {
+    private static class MulOpVisitor implements MulOp.Visitor<String, Void> {
         public String visit(Times p, Void ignored) {
             return "multiplication";
         }
@@ -913,7 +909,7 @@ public class TypeChecker {
         }
     }
 
-    public static class RelOpVisitor implements RelOp.Visitor<String, TypeCode[]> {
+    private static class RelOpVisitor implements RelOp.Visitor<String, TypeCode[]> {
         private boolean bothTypes(TypeCode[] actual, TypeCode... expected) {
             TypeCode left = actual[0];
             TypeCode right = actual[1];
