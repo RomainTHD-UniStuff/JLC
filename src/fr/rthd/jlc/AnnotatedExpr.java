@@ -49,7 +49,7 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
         } else {
             throw new IllegalArgumentException(
                 "Unhandled type: " +
-                type
+                type.getRealName()
             );
         }
     }

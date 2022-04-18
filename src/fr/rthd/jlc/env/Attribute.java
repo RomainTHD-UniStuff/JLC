@@ -29,6 +29,10 @@ public class Attribute {
 
     @Override
     public String toString() {
-        return type + " " + name;
+        return String.format(
+            "%s %s",
+            type.getRealName(),
+            name
+        );
     }
 }

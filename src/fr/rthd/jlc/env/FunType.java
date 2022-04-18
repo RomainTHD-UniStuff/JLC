@@ -78,7 +78,7 @@ public class FunType {
     public String toString() {
         return String.format(
             "%s %s(%s)",
-            retType.toString(),
+            retType.getRealName(),
             name,
             args.stream()
                 .map(FunArg::toString)
