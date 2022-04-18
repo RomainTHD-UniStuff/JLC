@@ -1,4 +1,4 @@
-package fr.rthd.jlc;
+package fr.rthd.jlc.internal;
 
 /**
  * Timer, used for debug purpose

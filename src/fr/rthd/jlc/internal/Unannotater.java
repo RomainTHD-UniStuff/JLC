@@ -1,5 +1,9 @@
-package fr.rthd.jlc;
+package fr.rthd.jlc.internal;
 
+import fr.rthd.jlc.Visitor;
+import fr.rthd.jlc.env.ClassType;
+import fr.rthd.jlc.env.Env;
+import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.ArrayCon;
 import javalette.Absyn.Ass;
 import javalette.Absyn.AttrMember;
@@ -65,17 +69,13 @@ import javalette.Absyn.While;
  * custom type annotations
  * @author RomainTHD
  */
-public class Unannotater {
-    /**
-     * Entry point
-     * @param p Program to unannotate
-     * @return Unannotated program
-     */
-    public Prog unannotate(Prog p) {
+public class Unannotater implements Visitor {
+    @Override
+    public Prog accept(Prog p, Env<?, FunType, ClassType> ignored) {
         return p.accept(new ProgVisitor(), null);
     }
 
-    public static class ProgVisitor implements Prog.Visitor<Prog, Void> {
+    private static class ProgVisitor implements Prog.Visitor<Prog, Void> {
         public Program visit(Program p, Void ignored) {
             ListTopDef listtopdef = new ListTopDef();
             for (TopDef topdef : p.listtopdef_) {
@@ -85,7 +85,7 @@ public class Unannotater {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<TopDef, Void> {
+    private static class TopDefVisitor implements TopDef.Visitor<TopDef, Void> {
         public TopFnDef visit(TopFnDef p, Void ignored) {
             return new TopFnDef(
                 p.funcdef_.accept(new FuncDefVisitor(), null)
@@ -99,7 +99,7 @@ public class Unannotater {
         }
     }
 
-    public static class FuncDefVisitor implements FuncDef.Visitor<FnDef, Void> {
+    private static class FuncDefVisitor implements FuncDef.Visitor<FnDef, Void> {
         public FnDef visit(FnDef p, Void ignored) {
             return new FnDef(
                 p.type_,
@@ -110,7 +110,7 @@ public class Unannotater {
         }
     }
 
-    public static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, Void> {
+    private static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, Void> {
         public NoExtend visit(NoExtend p, Void ignored) {
             ListMember members = new ListMember();
             for (Member m : p.listmember_) {
@@ -135,7 +135,7 @@ public class Unannotater {
         }
     }
 
-    public static class MemberVisitor implements Member.Visitor<Member, Void> {
+    private static class MemberVisitor implements Member.Visitor<Member, Void> {
         public FnMember visit(FnMember p, Void ignored) {
             return new FnMember(
                 p.funcdef_.accept(new FuncDefVisitor(), null)
@@ -147,7 +147,7 @@ public class Unannotater {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<Expr, Void> {
+    private static class ExprVisitor implements Expr.Visitor<Expr, Void> {
         public EVar visit(EVar p, Void ignored) {
             return p;
         }
@@ -253,7 +253,7 @@ public class Unannotater {
         }
     }
 
-    public static class ConstructorVisitor implements Constructor.Visitor<Constructor, Void> {
+    private static class ConstructorVisitor implements Constructor.Visitor<Constructor, Void> {
         public TypeCon visit(TypeCon p, Void ignored) {
             return p;
         }
@@ -266,7 +266,7 @@ public class Unannotater {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Blk, Void> {
+    private static class BlkVisitor implements Blk.Visitor<Blk, Void> {
         public Block visit(Block p, Void ignored) {
             ListStmt stmt = new ListStmt();
             for (Stmt s : p.liststmt_) {
@@ -276,7 +276,7 @@ public class Unannotater {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<Stmt, Void> {
+    private static class StmtVisitor implements Stmt.Visitor<Stmt, Void> {
         public Empty visit(Empty p, Void ignored) {
             return p;
         }
@@ -353,7 +353,7 @@ public class Unannotater {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, Void> {
+    private static class ItemVisitor implements Item.Visitor<Item, Void> {
         public NoInit visit(NoInit p, Void ignored) {
             return p;
         }

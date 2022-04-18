@@ -1,4 +1,4 @@
-package fr.rthd.jlc;
+package fr.rthd.jlc.internal;
 
 public class NotImplementedException extends UnsupportedOperationException {
     public NotImplementedException() {
