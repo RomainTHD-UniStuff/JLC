@@ -15,6 +15,7 @@ import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidDeclaredTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidExpressionTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidOperationException;
 import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typecheck.exception.NoReturnException;
@@ -706,8 +707,13 @@ public class TypeChecker {
         }
 
         public AnnotatedExpr<ENew> visit(ENew p, EnvTypecheck env) {
+            TypeCode t = p.constructor_.accept(new ConstructorVisitor(), env);
+            if (t.isPrimitive()) {
+                throw new InvalidNewTypeException(t);
+            }
+
             return new AnnotatedExpr<>(
-                p.constructor_.accept(new ConstructorVisitor(), env),
+                t,
                 new ENew(p.constructor_)
             );
         }
