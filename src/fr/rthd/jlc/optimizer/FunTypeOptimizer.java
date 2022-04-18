@@ -1,6 +1,6 @@
 package fr.rthd.jlc.optimizer;
 
-import fr.rthd.jlc.Choice;
+import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.env.FunType;
 
 import java.util.HashSet;

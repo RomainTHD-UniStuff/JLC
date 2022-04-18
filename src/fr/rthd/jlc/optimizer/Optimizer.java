@@ -1,7 +1,7 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.Choice;
+import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;

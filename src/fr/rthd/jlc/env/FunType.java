@@ -1,6 +1,6 @@
 package fr.rthd.jlc.env;
 
-import fr.rthd.jlc.Choice;
+import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.TypeCode;
 
 import java.util.Arrays;
