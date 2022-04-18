@@ -1,8 +1,6 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.utils.Choice;
-import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.Visitor;
@@ -11,17 +9,21 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidDeclaredTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidExpressionTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidMethodCallException;
 import fr.rthd.jlc.typecheck.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidOperationException;
 import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typecheck.exception.NoReturnException;
 import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
 import fr.rthd.jlc.typecheck.exception.NoSuchVariableException;
+import fr.rthd.jlc.typecheck.exception.SelfOutOfClassException;
+import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
 import javalette.Absyn.Argument;
@@ -297,26 +299,32 @@ public class TypeChecker implements Visitor {
     }
 
     private static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
-        public NoExtend visit(NoExtend p, EnvTypecheck env) {
+        private ListMember visit(
+            String className,
+            ListMember listMember,
+            EnvTypecheck env
+        ) {
             ListMember members = new ListMember();
-            for (Member m : p.listmember_) {
+            env.setCurrentClass(env.lookupClass(className));
+            for (Member m : listMember) {
                 members.add(m.accept(new MemberVisitor(), env));
             }
+            env.clearCurrentClass();
+            return members;
+        }
+
+        public NoExtend visit(NoExtend p, EnvTypecheck env) {
             return new NoExtend(
                 p.ident_,
-                members
+                visit(p.ident_, p.listmember_, env)
             );
         }
 
         public Extend visit(Extend p, EnvTypecheck env) {
-            ListMember members = new ListMember();
-            for (Member m : p.listmember_) {
-                members.add(m.accept(new MemberVisitor(), env));
-            }
             return new Extend(
                 p.ident_1,
                 p.ident_2,
-                members
+                visit(p.ident_1, p.listmember_, env)
             );
         }
     }
@@ -347,7 +355,7 @@ public class TypeChecker implements Visitor {
                 env.insertVar(arg.name, arg.type);
             }
 
-            env.currentFunctionType = func.retType;
+            env.setCurrentFunction(func);
 
             Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
 
@@ -475,9 +483,9 @@ public class TypeChecker implements Visitor {
 
         public Ret visit(Ret s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (exp.type != env.currentFunctionType) {
+            if (exp.type != env.getCurrentFunction().retType) {
                 throw new InvalidReturnedTypeException(
-                    env.currentFunctionType,
+                    env.getCurrentFunction().retType,
                     exp.type
                 );
             }
@@ -487,9 +495,9 @@ public class TypeChecker implements Visitor {
         }
 
         public VRet visit(VRet s, EnvTypecheck env) {
-            if (env.currentFunctionType != TypeCode.CVoid) {
+            if (env.getCurrentFunction().retType != TypeCode.CVoid) {
                 throw new InvalidReturnedTypeException(
-                    env.currentFunctionType,
+                    env.getCurrentFunction().retType,
                     TypeCode.CVoid
                 );
             }
@@ -645,8 +653,18 @@ public class TypeChecker implements Visitor {
             return new AnnotatedExpr<>(TypeCode.CBool, e);
         }
 
-        public AnnotatedExpr<ESelf> visit(ESelf p, EnvTypecheck env) {
-            throw new NotImplementedException();
+        public AnnotatedExpr<ESelf> visit(ESelf e, EnvTypecheck env) {
+            ClassType c = env.getCurrentClass();
+            if (c == null) {
+                throw new SelfOutOfClassException();
+            }
+
+            return new AnnotatedExpr<>(
+                // FIXME: Error prone, we should probably store the typecode
+                //  of the class in the class itself
+                TypeCode.forClass(c.name),
+                e
+            );
         }
 
         public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
@@ -695,7 +713,31 @@ public class TypeChecker implements Visitor {
         }
 
         public AnnotatedExpr<EDot> visit(EDot p, EnvTypecheck env) {
-            throw new NotImplementedException();
+            AnnotatedExpr<?> expr = p.expr_.accept(
+                new ExprVisitor(),
+                env
+            );
+
+            if (!expr.type.isClass()) {
+                throw new InvalidMethodCallException(expr.type);
+            }
+
+            ClassType c = env.lookupClass(expr.type.getRealName());
+
+            // Method calls and function calls work the same way
+            AnnotatedExpr<?> app = new EApp(
+                p.ident_,
+                p.listexpr_
+            ).accept(new ExprVisitor(), env);
+
+            return new AnnotatedExpr<>(
+                null,
+                new EDot(
+                    expr,
+                    p.ident_,
+                    ((EApp) app.parentExp).listexpr_
+                )
+            );
         }
 
         public AnnotatedExpr<EIndex> visit(EIndex p, EnvTypecheck env) {
