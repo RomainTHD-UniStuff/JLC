@@ -18,9 +18,14 @@ import java.util.Map;
  */
 public class Env<Value, Func extends FunType, Class extends ClassType> {
     /**
-     * Function map
+     * Global functions map
      */
     private final Map<String, Func> _funcSignatures;
+
+    /**
+     * Class-wide function map
+     */
+    private final Map<String, Func> _tempFuncSignatures;
 
     /**
      * Class map
@@ -37,6 +42,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      */
     public Env() {
         this._funcSignatures = new HashMap<>();
+        this._tempFuncSignatures = new HashMap<>();
         this._classSignatures = new HashMap<>();
         this._contexts = new LinkedList<>();
     }
@@ -47,6 +53,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      */
     public Env(Env<?, Func, Class> baseEnv) {
         this._funcSignatures = baseEnv._funcSignatures;
+        this._tempFuncSignatures = baseEnv._tempFuncSignatures;
         this._classSignatures = baseEnv._classSignatures;
         this._contexts = new LinkedList<>();
         this._contexts.push(new HashMap<>());
@@ -64,6 +71,12 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         for (String className : _classSignatures.keySet()) {
             s.append(className).append(" ");
             s.append(lookupClass(className));
+            s.append("\n");
+        }
+
+        for (String funcName : _tempFuncSignatures.keySet()) {
+            s.append(funcName).append(" ");
+            s.append(lookupFun(funcName));
             s.append("\n");
         }
 
