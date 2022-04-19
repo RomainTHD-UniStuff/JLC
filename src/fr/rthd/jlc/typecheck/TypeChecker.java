@@ -102,8 +102,10 @@ import javalette.Absyn.While;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Type checker
@@ -304,11 +306,28 @@ public class TypeChecker implements Visitor {
             ListMember listMember,
             EnvTypecheck env
         ) {
+            ClassType c = env.lookupClass(className);
+
             ListMember members = new ListMember();
-            env.setCurrentClass(env.lookupClass(className));
+            env.setCurrentClass(c);
+
+            Map<String, FunType> classFunctions = new HashMap<>();
+            for (FunType f : c.methods) {
+                classFunctions.put(f.name, f);
+            }
+            env.setClassFunctions(classFunctions);
+            env.enterScope();
+
+            for (Attribute a : c.attributes) {
+                env.insertVar(a.name, a.type);
+            }
+
             for (Member m : listMember) {
                 members.add(m.accept(new MemberVisitor(), env));
             }
+
+            env.leaveScope();
+            env.setClassFunctions(null);
             env.clearCurrentClass();
             return members;
         }
@@ -723,6 +742,20 @@ public class TypeChecker implements Visitor {
             }
 
             ClassType c = env.lookupClass(expr.type.getRealName());
+            if (c == null) {
+                // It should be impossible to get here, since it would mean we
+                //  created a variable with a type that doesn't exist
+                throw new IllegalStateException("Class not found");
+            }
+
+            Map<String, FunType> oldClassFunctions = env.getClassFunctions();
+
+            Map<String, FunType> classFunctions = new HashMap<>();
+            for (FunType f : c.methods) {
+                classFunctions.put(f.name, f);
+            }
+
+            env.setClassFunctions(classFunctions);
 
             // Method calls and function calls work the same way
             AnnotatedExpr<?> app = new EApp(
@@ -730,8 +763,10 @@ public class TypeChecker implements Visitor {
                 p.listexpr_
             ).accept(new ExprVisitor(), env);
 
+            env.setClassFunctions(oldClassFunctions);
+
             return new AnnotatedExpr<>(
-                null,
+                app.type,
                 new EDot(
                     expr,
                     p.ident_,

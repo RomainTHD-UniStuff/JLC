@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Environment
@@ -23,11 +24,6 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     private final Map<String, Func> _funcSignatures;
 
     /**
-     * Class-wide function map
-     */
-    private final Map<String, Func> _tempFuncSignatures;
-
-    /**
      * Class map
      */
     private final Map<String, Class> _classSignatures;
@@ -38,11 +34,16 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     private final LinkedList<Map<String, Value>> _contexts;
 
     /**
+     * Class-wide function map
+     */
+    private Map<String, Func> _classFuncSignatures;
+
+    /**
      * Empty constructor
      */
     public Env() {
         this._funcSignatures = new HashMap<>();
-        this._tempFuncSignatures = new HashMap<>();
+        this._classFuncSignatures = new HashMap<>();
         this._classSignatures = new HashMap<>();
         this._contexts = new LinkedList<>();
     }
@@ -53,7 +54,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      */
     public Env(Env<?, Func, Class> baseEnv) {
         this._funcSignatures = baseEnv._funcSignatures;
-        this._tempFuncSignatures = baseEnv._tempFuncSignatures;
+        this._classFuncSignatures = baseEnv._classFuncSignatures;
         this._classSignatures = baseEnv._classSignatures;
         this._contexts = new LinkedList<>();
         this._contexts.push(new HashMap<>());
@@ -74,7 +75,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
             s.append("\n");
         }
 
-        for (String funcName : _tempFuncSignatures.keySet()) {
+        for (String funcName : _classFuncSignatures.keySet()) {
             s.append(funcName).append(" ");
             s.append(lookupFun(funcName));
             s.append("\n");
@@ -115,7 +116,11 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @return Function or null if not found
      */
     public Func lookupFun(String id) {
-        return _funcSignatures.get(id);
+        Func f = _classFuncSignatures.get(id);
+        if (f == null) {
+            f = _funcSignatures.get(id);
+        }
+        return f;
     }
 
     /**
@@ -198,6 +203,17 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
                 break;
             }
         }
+    }
+
+    public Map<String, Func> getClassFunctions() {
+        return _classFuncSignatures;
+    }
+
+    public void setClassFunctions(Map<String, Func> fns) {
+        this._classFuncSignatures = Objects.requireNonNullElseGet(
+            fns,
+            HashMap::new
+        );
     }
 
     /**
