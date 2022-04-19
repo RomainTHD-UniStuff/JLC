@@ -1,5 +1,6 @@
 package fr.rthd.jlc.env;
 
+import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.exception.EnvException;
 import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 import fr.rthd.jlc.env.exception.SymbolNotFoundException;
@@ -130,6 +131,15 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      */
     public Class lookupClass(String id) {
         return _classSignatures.get(id);
+    }
+
+    /**
+     * Lookup a class
+     * @param t Class type
+     * @return Class or null if not found
+     */
+    public Class lookupClass(TypeCode t) {
+        return lookupClass(t.getRealName());
     }
 
     /**
