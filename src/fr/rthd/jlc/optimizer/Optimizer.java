@@ -1,8 +1,6 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.utils.Choice;
-import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.Visitor;
@@ -10,6 +8,8 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
@@ -31,6 +31,7 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.ENew;
+import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
@@ -550,6 +551,10 @@ public class Optimizer implements Visitor {
     }
 
     private static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOptimizer> {
+        public AnnotatedExpr<?> visit(ENull e, EnvOptimizer env) {
+            throw new NotImplementedException();
+        }
+
         public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
             AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
             assert expr != null;

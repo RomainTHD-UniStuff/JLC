@@ -20,6 +20,7 @@ import fr.rthd.jlc.typecheck.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidOperationException;
 import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typecheck.exception.NoReturnException;
+import fr.rthd.jlc.typecheck.exception.NoSuchClassException;
 import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
 import fr.rthd.jlc.typecheck.exception.NoSuchVariableException;
 import fr.rthd.jlc.typecheck.exception.SelfOutOfClassException;
@@ -27,16 +28,15 @@ import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
 import javalette.Absyn.Argument;
-import javalette.Absyn.ArrayCon;
 import javalette.Absyn.Ass;
 import javalette.Absyn.AttrMember;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
 import javalette.Absyn.ClassDef;
+import javalette.Absyn.ClsDef;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
-import javalette.Absyn.Constructor;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.Div;
@@ -44,13 +44,13 @@ import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
-import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.ENew;
+import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
@@ -59,13 +59,14 @@ import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
-import javalette.Absyn.Extend;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FnMember;
 import javalette.Absyn.For;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
+import javalette.Absyn.HBase;
+import javalette.Absyn.HExtends;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
@@ -82,7 +83,6 @@ import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
 import javalette.Absyn.NE;
 import javalette.Absyn.Neg;
-import javalette.Absyn.NoExtend;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Not;
 import javalette.Absyn.Plus;
@@ -96,7 +96,6 @@ import javalette.Absyn.Times;
 import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
-import javalette.Absyn.TypeCon;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -205,12 +204,7 @@ public class TypeChecker implements Visitor {
     }
 
     private static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
-        private Void visit(
-            String name,
-            String superclass,
-            ListMember members,
-            EnvTypecheck env
-        ) {
+        public Void visit(ClsDef p, EnvTypecheck env) {
             List<FunType> methods = new ArrayList<>();
             List<Attribute> attributes = new ArrayList<>();
 
@@ -219,7 +213,7 @@ public class TypeChecker implements Visitor {
             //  will throw an error, since A is still unknown while f is being
             //  defined.
 
-            for (Member m : members) {
+            for (Member m : p.listmember_) {
                 if (m instanceof FnMember) {
                     FnDef f = (FnDef) ((FnMember) m).funcdef_;
                     List<FunArg> args = new LinkedList<>();
@@ -244,33 +238,26 @@ public class TypeChecker implements Visitor {
                 }
             }
 
-            ClassType c;
-            if (superclass == null) {
-                c = new ClassType(name, methods, attributes);
+            String superclass;
+            if (p.classinheritance_ instanceof HBase) {
+                superclass = null;
+            } else if (p.classinheritance_ instanceof HExtends) {
+                superclass = ((HExtends) p.classinheritance_).ident_;
             } else {
-                c = new ClassType(name, superclass, methods, attributes);
+                throw new IllegalArgumentException(String.format(
+                    "Unknown interhitance type: %s",
+                    p.classinheritance_.getClass().getName()
+                ));
             }
 
-            env.insertClass(c);
-            return null;
-        }
-
-        public Void visit(NoExtend p, EnvTypecheck env) {
-            return visit(
+            env.insertClass(new ClassType(
                 p.ident_,
-                null,
-                p.listmember_,
-                env
-            );
-        }
+                superclass,
+                methods,
+                attributes
+            ));
 
-        public Void visit(Extend p, EnvTypecheck env) {
-            return visit(
-                p.ident_1,
-                p.ident_2,
-                p.listmember_,
-                env
-            );
+            return null;
         }
     }
 
@@ -301,12 +288,8 @@ public class TypeChecker implements Visitor {
     }
 
     private static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
-        private ListMember visit(
-            String className,
-            ListMember listMember,
-            EnvTypecheck env
-        ) {
-            ClassType c = env.lookupClass(className);
+        public ClassDef visit(ClsDef p, EnvTypecheck env) {
+            ClassType c = env.lookupClass(p.ident_);
 
             ListMember members = new ListMember();
             env.setCurrentClass(c);
@@ -322,28 +305,17 @@ public class TypeChecker implements Visitor {
                 env.insertVar(a.name, a.type);
             }
 
-            for (Member m : listMember) {
+            for (Member m : p.listmember_) {
                 members.add(m.accept(new MemberVisitor(), env));
             }
 
             env.leaveScope();
             env.setClassFunctions(null);
             env.clearCurrentClass();
-            return members;
-        }
-
-        public NoExtend visit(NoExtend p, EnvTypecheck env) {
-            return new NoExtend(
+            return new ClsDef(
                 p.ident_,
-                visit(p.ident_, p.listmember_, env)
-            );
-        }
-
-        public Extend visit(Extend p, EnvTypecheck env) {
-            return new Extend(
-                p.ident_1,
-                p.ident_2,
-                visit(p.ident_1, p.listmember_, env)
+                p.classinheritance_,
+                members
             );
         }
     }
@@ -435,6 +407,10 @@ public class TypeChecker implements Visitor {
                 throw new InvalidDeclaredTypeException(
                     type
                 );
+            }
+
+            if (type.isClass() && env.lookupClass(type) == null) {
+                throw new NoSuchClassException(type);
             }
 
             ListItem items = new ListItem();
@@ -631,21 +607,6 @@ public class TypeChecker implements Visitor {
         }
     }
 
-    private static class ConstructorVisitor implements Constructor.Visitor<TypeCode, EnvTypecheck> {
-        public TypeCode visit(TypeCon p, EnvTypecheck env) {
-            TypeCode t = p.type_.accept(new TypeVisitor(), null);
-            if (env.lookupClass(t.getRealName()) == null) {
-                throw new InvalidDeclaredTypeException(t);
-            }
-
-            return t;
-        }
-
-        public TypeCode visit(ArrayCon p, EnvTypecheck env) {
-            throw new NotImplementedException();
-        }
-    }
-
     private static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
             TypeCode varType = env.lookupVar(e.ident_);
@@ -741,7 +702,7 @@ public class TypeChecker implements Visitor {
                 throw new InvalidMethodCallException(expr.type);
             }
 
-            ClassType c = env.lookupClass(expr.type.getRealName());
+            ClassType c = env.lookupClass(expr.type);
             if (c == null) {
                 // It should be impossible to get here, since it would mean we
                 //  created a variable with a type that doesn't exist
@@ -775,20 +736,21 @@ public class TypeChecker implements Visitor {
             );
         }
 
-        public AnnotatedExpr<EIndex> visit(EIndex p, EnvTypecheck env) {
+        public AnnotatedExpr<ENull> visit(ENull e, EnvTypecheck env) {
             throw new NotImplementedException();
         }
 
-        public AnnotatedExpr<ENew> visit(ENew p, EnvTypecheck env) {
-            TypeCode t = p.constructor_.accept(new ConstructorVisitor(), env);
+        public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {
+            TypeCode t = e.type_.accept(new TypeVisitor(), null);
             if (t.isPrimitive()) {
                 throw new InvalidNewTypeException(t);
             }
 
-            return new AnnotatedExpr<>(
-                t,
-                new ENew(p.constructor_)
-            );
+            if (env.lookupClass(t) == null) {
+                throw new NoSuchClassException(t);
+            }
+
+            return new AnnotatedExpr<>(t, e);
         }
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {

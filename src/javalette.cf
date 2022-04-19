@@ -10,15 +10,21 @@ TopClsDef. TopDef ::= ClassDef ;
 
 separator nonempty TopDef "" ;
 
-FnDef.     FuncDef ::= Type Ident "(" [Arg] ")" Blk ;
+-- classes -------------------------------------------------
 
-NoExtend.  ClassDef ::= "class" Ident "{" [Member] "}" ;
+ClsDef.    ClassDef ::= "class" Ident ClassInheritance "{" [Member] "}" ;
 
-Extend.    ClassDef ::= "class" Ident "extends" Ident "{" [Member] "}" ;
+HBase.     ClassInheritance ::= ;
+
+HExtends.  ClassInheritance ::= "extends" Ident ;
 
 FnMember.  Member ::= FuncDef ;
 
-AttrMember .Member ::= Type Ident ";" ;
+AttrMember. Member ::= Type Ident ";" ;
+
+-- functions -----------------------------------------------
+
+FnDef.     FuncDef ::= Type Ident "(" [Arg] ")" Blk ;
 
 separator nonempty Member "" ;
 
@@ -62,13 +68,7 @@ While.     Stmt ::= "while" "(" Expr ")" Stmt ;
 
 For.       Stmt ::= "for" "(" Type Ident ":" Expr ")" Stmt ;
 
-SExp.      Stmt ::= Expr  ";" ;
-
-TypeCon.   Constructor ::= Type ;
-
-ArrayCon.  Constructor ::= Constructor "[" Expr "]" ;
-
-SIndex.    Index ::= "[" Expr "]" ;
+SExp.      Stmt ::= Expr ";" ;
 
 -- Types ---------------------------------------------------
 
@@ -80,13 +80,15 @@ Bool.      Type ::= "boolean" ;
 
 Void.      Type ::= "void" ;
 
-Array.     Type ::= Type "[]" ;
+-- Array.     Type ::= Type [Dim] ;
 
 Class.     Type ::= Ident ;
 
-separator  Type "," ;
+-- separator  Type "," ;
 
 -- Expressions ---------------------------------------------
+
+ENull.     Expr7 ::= "(" Ident ")" "null" ;
 
 EVar.      Expr6 ::= Ident ;
 
@@ -108,9 +110,10 @@ EString.   Expr6 ::= String ;
 --  calls are allowed
 EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
 
-EIndex.    Expr6 ::= Expr6 Index ;
+-- EIndex.    Expr6 ::= Expr6 [Index] ;
 
-ENew.      Expr6 ::= "new" Constructor ;
+ENew.      Expr6 ::= "new" Type ;
+-- ENew.      Expr6 ::= "new" Type [Index] ;
 
 Neg.       Expr5 ::= "-" Expr6 ;
 
@@ -126,9 +129,19 @@ EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 
 EOr.       Expr ::= Expr1 "||" Expr ;
 
-coercions  Expr 6 ;
+coercions  Expr 7 ;
 
 separator  Expr "," ;
+
+-- dimensions ----------------------------------------------
+
+-- SIndex.    Index ::= "[" Expr "]" ;
+
+-- separator  Index "" ;
+
+-- SDim.      Dim ::= "[" "]" ;
+
+-- separator  Dim "" ;
 
 -- operators -----------------------------------------------
 

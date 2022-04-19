@@ -4,29 +4,28 @@ import fr.rthd.jlc.Visitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
-import javalette.Absyn.ArrayCon;
 import javalette.Absyn.Ass;
 import javalette.Absyn.AttrMember;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
 import javalette.Absyn.ClassDef;
+import javalette.Absyn.ClsDef;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
-import javalette.Absyn.Constructor;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
-import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.ENew;
+import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
 import javalette.Absyn.ESelf;
@@ -34,7 +33,6 @@ import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
-import javalette.Absyn.Extend;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FnMember;
 import javalette.Absyn.For;
@@ -49,7 +47,6 @@ import javalette.Absyn.ListStmt;
 import javalette.Absyn.ListTopDef;
 import javalette.Absyn.Member;
 import javalette.Absyn.Neg;
-import javalette.Absyn.NoExtend;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Not;
 import javalette.Absyn.Prog;
@@ -60,7 +57,6 @@ import javalette.Absyn.Stmt;
 import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
-import javalette.Absyn.TypeCon;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
@@ -111,25 +107,14 @@ public class Unannotater implements Visitor {
     }
 
     private static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, Void> {
-        public NoExtend visit(NoExtend p, Void ignored) {
+        public ClsDef visit(ClsDef p, Void ignored) {
             ListMember members = new ListMember();
             for (Member m : p.listmember_) {
                 members.add(m.accept(new MemberVisitor(), null));
             }
-            return new NoExtend(
+            return new ClsDef(
                 p.ident_,
-                members
-            );
-        }
-
-        public Extend visit(Extend p, Void ignored) {
-            ListMember members = new ListMember();
-            for (Member m : p.listmember_) {
-                members.add(m.accept(new MemberVisitor(), null));
-            }
-            return new Extend(
-                p.ident_1,
-                p.ident_2,
+                p.classinheritance_,
                 members
             );
         }
@@ -148,6 +133,10 @@ public class Unannotater implements Visitor {
     }
 
     private static class ExprVisitor implements Expr.Visitor<Expr, Void> {
+        public ENull visit(ENull p, Void ignored) {
+            return p;
+        }
+
         public EVar visit(EVar p, Void ignored) {
             return p;
         }
@@ -201,9 +190,7 @@ public class Unannotater implements Visitor {
         }
 
         public ENew visit(ENew p, Void ignored) {
-            return new ENew(
-                p.constructor_.accept(new ConstructorVisitor(), null)
-            );
+            return p;
         }
 
         public Neg visit(Neg p, Void ignored) {
