@@ -123,6 +123,14 @@ public class TypeChecker implements Visitor {
                 def.accept(new TopDefClassDefSignatureVisitor(), env);
             }
 
+            for (ClassType c : env.getAllClass()) {
+                if (c.superclassName == null) {
+                    c.updateSuperclass(null);
+                } else {
+                    c.updateSuperclass(env.lookupClass(c.superclassName));
+                }
+            }
+
             for (TopDef def : p.listtopdef_) {
                 def.accept(new TopDefSignatureVisitor(), env);
             }

@@ -12,33 +12,36 @@ public class ClassType {
      * Class name
      */
     public final String name;
-
     /**
-     * Superclass or null
+     * Superclass name or null
+     * @see #_superclass
      */
-    public final String superclass;
-
+    public final String superclassName;
     /**
      * List of defined methods
      */
     public final List<FunType> methods;
-
     /**
      * List of defined fields
      */
     public final List<Attribute> attributes;
+    /**
+     * Superclass or null. Will be definer later on, when all classes have been
+     * discovered
+     */
+    private ClassType _superclass = null;
 
     /**
      * Constructor for inheritance
      * @param name Class name
-     * @param superclass Superclass or null
+     * @param superclassName Superclass name or null
      */
     public ClassType(
         String name,
-        String superclass
+        String superclassName
     ) {
         this.name = name;
-        this.superclass = superclass;
+        this.superclassName = superclassName;
         this.methods = new ArrayList<>();
         this.attributes = new ArrayList<>();
     }
@@ -51,13 +54,21 @@ public class ClassType {
         this.attributes.add(a);
     }
 
+    public void updateSuperclass(ClassType c) {
+        this._superclass = c;
+    }
+
+    public ClassType getSuperclass() {
+        return _superclass;
+    }
+
     @Override
     public String toString() {
         return "ClassType{" +
                "name=" +
                name +
                ", superclass=" +
-               superclass +
+               superclassName +
                ", methods=" +
                methods +
                ", attributes=" +
