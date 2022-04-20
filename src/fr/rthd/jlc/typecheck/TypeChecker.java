@@ -9,6 +9,7 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typecheck.exception.CyclicInheritanceException;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
@@ -269,20 +270,25 @@ public class TypeChecker implements Visitor {
             ClassType c = env.lookupClass(p.ident_);
 
             for (Member m : p.listmember_) {
+                boolean added;
+                String name;
+
                 if (m instanceof FnMember) {
                     FnDef f = (FnDef) ((FnMember) m).funcdef_;
                     List<FunArg> args = new LinkedList<>();
                     for (Arg arg : f.listarg_) {
                         args.add(arg.accept(new ArgVisitor(), null));
                     }
-                    c.addMethod(new FunType(
+                    name = f.ident_;
+                    added = c.addMethod(new FunType(
                         f.type_.accept(new TypeVisitor(), null),
                         f.ident_,
                         args
                     ));
                 } else if (m instanceof AttrMember) {
                     AttrMember a = (AttrMember) m;
-                    c.addAttribute(new Attribute(
+                    name = a.ident_;
+                    added = c.addAttribute(new Attribute(
                         a.type_.accept(new TypeVisitor(), null),
                         a.ident_
                     ));
@@ -290,6 +296,10 @@ public class TypeChecker implements Visitor {
                     throw new IllegalArgumentException(
                         "Unknown member type: " + m.getClass().getName()
                     );
+                }
+
+                if (!added) {
+                    throw new SymbolAlreadyDefinedException(name);
                 }
             }
         }
@@ -344,13 +354,13 @@ public class TypeChecker implements Visitor {
             env.setCurrentClass(c);
 
             Map<String, FunType> classFunctions = new HashMap<>();
-            for (FunType f : c.methods) {
+            for (FunType f : c.getMethods()) {
                 classFunctions.put(f.name, f);
             }
             env.setClassFunctions(classFunctions);
             env.enterScope();
 
-            for (Attribute a : c.attributes) {
+            for (Attribute a : c.getAttributes()) {
                 env.insertVar(a.name, a.type);
             }
 
@@ -767,7 +777,7 @@ public class TypeChecker implements Visitor {
             Map<String, FunType> oldClassFunctions = env.getClassFunctions();
 
             Map<String, FunType> classFunctions = new HashMap<>();
-            for (FunType f : c.methods) {
+            for (FunType f : c.getMethods()) {
                 classFunctions.put(f.name, f);
             }
 

@@ -1,7 +1,8 @@
 package fr.rthd.jlc.env;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class representation
@@ -12,19 +13,23 @@ public class ClassType {
      * Class name
      */
     public final String name;
+
     /**
      * Superclass name or null
      * @see #_superclass
      */
     public final String superclassName;
+
     /**
      * List of defined methods
      */
-    public final List<FunType> methods;
+    private final Map<String, FunType> _methods;
+
     /**
      * List of defined fields
      */
-    public final List<Attribute> attributes;
+    private final Map<String, Attribute> _attributes;
+
     /**
      * Superclass or null. Will be definer later on, when all classes have been
      * discovered
@@ -42,16 +47,34 @@ public class ClassType {
     ) {
         this.name = name;
         this.superclassName = superclassName;
-        this.methods = new ArrayList<>();
-        this.attributes = new ArrayList<>();
+        this._methods = new HashMap<>();
+        this._attributes = new HashMap<>();
     }
 
-    public void addMethod(FunType f) {
-        this.methods.add(f);
+    public boolean addMethod(FunType f) {
+        if (this._methods.containsKey(f.name)) {
+            return false;
+        }
+
+        this._methods.put(f.name, f);
+        return true;
     }
 
-    public void addAttribute(Attribute a) {
-        this.attributes.add(a);
+    public Collection<FunType> getMethods() {
+        return this._methods.values();
+    }
+
+    public boolean addAttribute(Attribute a) {
+        if (this._attributes.containsKey(a.name)) {
+            return false;
+        }
+
+        this._attributes.put(a.name, a);
+        return true;
+    }
+
+    public Collection<Attribute> getAttributes() {
+        return this._attributes.values();
     }
 
     public void updateSuperclass(ClassType c) {
@@ -95,9 +118,9 @@ public class ClassType {
                ", superclass=" +
                superclassName +
                ", methods=" +
-               methods +
+               _methods +
                ", attributes=" +
-               attributes +
+               _attributes +
                "}";
     }
 }
