@@ -771,7 +771,11 @@ public class TypeChecker implements Visitor {
         }
 
         public AnnotatedExpr<ENull> visit(ENull e, EnvTypecheck env) {
-            throw new NotImplementedException();
+            ClassType c = env.lookupClass(e.ident_);
+            if (c == null) {
+                throw new NoSuchClassException(e.ident_);
+            }
+            return new AnnotatedExpr<>(TypeCode.forClass(c.name), e);
         }
 
         public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {
