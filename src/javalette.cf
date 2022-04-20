@@ -22,11 +22,11 @@ FnMember.  Member ::= FuncDef ;
 
 AttrMember. Member ::= Type Ident ";" ;
 
+separator Member "" ;
+
 -- functions -----------------------------------------------
 
 FnDef.     FuncDef ::= Type Ident "(" [Arg] ")" Blk ;
-
-separator nonempty Member "" ;
 
 Argument.  Arg ::= Type Ident;
 
