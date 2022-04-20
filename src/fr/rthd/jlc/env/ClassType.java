@@ -62,6 +62,17 @@ public class ClassType {
         return _superclass;
     }
 
+    public boolean isCastableTo(ClassType c) {
+        if (this.equals(c)) {
+            return true;
+        }
+        if (this.superclassName == null) {
+            return false;
+        }
+        ClassType superclass = this.getSuperclass();
+        return superclass.isCastableTo(c);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

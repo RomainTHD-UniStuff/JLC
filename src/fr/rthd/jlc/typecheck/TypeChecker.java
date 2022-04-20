@@ -25,6 +25,7 @@ import fr.rthd.jlc.typecheck.exception.NoSuchClassException;
 import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
 import fr.rthd.jlc.typecheck.exception.NoSuchVariableException;
 import fr.rthd.jlc.typecheck.exception.SelfOutOfClassException;
+import fr.rthd.jlc.typecheck.exception.TypeException;
 import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
@@ -477,12 +478,27 @@ public class TypeChecker implements Visitor {
             }
 
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (exp.type != expectedType) {
-                throw new InvalidAssignmentTypeException(
-                    s.ident_,
-                    expectedType,
-                    exp.type
-                );
+            TypeException e = new InvalidAssignmentTypeException(
+                s.ident_,
+                expectedType,
+                exp.type
+            );
+
+            if (exp.type.isClass()) {
+                if (!expectedType.isClass()) {
+                    // `int x = new A;`
+                    throw e;
+                }
+
+                ClassType expectedClass = env.lookupClass(expectedType);
+                ClassType actualClass = env.lookupClass(exp.type);
+                if (!actualClass.isCastableTo(expectedClass)) {
+                    // `B x = new A;`
+                    throw e;
+                }
+            } else if (exp.type != expectedType) {
+                // `int x = true;`
+                throw e;
             }
 
             return new Ass(s.ident_, exp);
@@ -639,19 +655,10 @@ public class TypeChecker implements Visitor {
             return new NoInit(p.ident_);
         }
 
-        public Init visit(Init s, EnvTypecheck env) {
-            env.insertVar(s.ident_, varType);
-            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-
-            if (exp.type != varType) {
-                throw new InvalidAssignmentTypeException(
-                    s.ident_,
-                    varType,
-                    exp.type
-                );
-            }
-
-            return new Init(s.ident_, exp);
+        public Init visit(Init p, EnvTypecheck env) {
+            env.insertVar(p.ident_, varType);
+            Stmt s = new Ass(p.ident_, p.expr_).accept(new StmtVisitor(), env);
+            return new Init(p.ident_, ((Ass) s).expr_);
         }
     }
 
