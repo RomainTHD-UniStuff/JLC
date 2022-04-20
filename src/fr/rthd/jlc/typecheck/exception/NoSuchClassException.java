@@ -12,6 +12,9 @@ public class NoSuchClassException extends TypeException {
     }
 
     public NoSuchClassException(String s) {
-        super("Class not found: " + s);
+        super(String.format(
+            "Class not found: `%s`",
+            s
+        ));
     }
 }

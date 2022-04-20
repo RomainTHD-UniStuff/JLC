@@ -130,7 +130,11 @@ public class TypeChecker implements Visitor {
                 if (c.superclassName == null) {
                     c.updateSuperclass(null);
                 } else {
-                    c.updateSuperclass(env.lookupClass(c.superclassName));
+                    ClassType superclass = env.lookupClass(c.superclassName);
+                    if (superclass == null) {
+                        throw new NoSuchClassException(c.superclassName);
+                    }
+                    c.updateSuperclass(superclass);
                 }
             }
 
