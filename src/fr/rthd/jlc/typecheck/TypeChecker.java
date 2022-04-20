@@ -897,8 +897,8 @@ public class TypeChecker implements Visitor {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
             String opName = e.relop_.accept(
-                new RelOpVisitor(),
-                new TypeCode[]{left.type, right.type}
+                new RelOpVisitor(left.type, right.type),
+                null
             );
 
             if (opName != null) {
@@ -986,40 +986,45 @@ public class TypeChecker implements Visitor {
         }
     }
 
-    private static class RelOpVisitor implements RelOp.Visitor<String, TypeCode[]> {
-        private boolean bothTypes(TypeCode[] actual, TypeCode... expected) {
-            TypeCode left = actual[0];
-            TypeCode right = actual[1];
-            return left == right && Arrays.asList(expected).contains(left);
+    private static class RelOpVisitor implements RelOp.Visitor<String, Void> {
+        private final TypeCode _left;
+        private final TypeCode _right;
+
+        public RelOpVisitor(TypeCode left, TypeCode right) {
+            this._left = left;
+            this._right = right;
         }
 
-        public String visit(LTH p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        private boolean bothTypes(TypeCode... expected) {
+            return _left == _right && Arrays.asList(expected).contains(_left);
+        }
+
+        public String visit(LTH p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "lower than";
         }
 
-        public String visit(LE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        public String visit(LE p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "lower or equal";
         }
 
-        public String visit(GTH p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        public String visit(GTH p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "greater than";
         }
 
-        public String visit(GE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        public String visit(GE p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "greater or equal";
         }
 
-        public String visit(EQU p, TypeCode[] types) {
+        public String visit(EQU p, Void ignored) {
             return bothTypes(
-                types,
                 TypeCode.CInt,
                 TypeCode.CDouble,
                 TypeCode.CBool
@@ -1028,9 +1033,8 @@ public class TypeChecker implements Visitor {
                    : "equality";
         }
 
-        public String visit(NE p, TypeCode[] types) {
+        public String visit(NE p, Void ignored) {
             return bothTypes(
-                types,
                 TypeCode.CInt,
                 TypeCode.CDouble,
                 TypeCode.CBool
