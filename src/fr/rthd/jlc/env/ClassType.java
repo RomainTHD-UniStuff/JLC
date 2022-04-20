@@ -63,6 +63,20 @@ public class ClassType {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        } else if (obj == this) {
+            return true;
+        } else if (!(obj instanceof ClassType)) {
+            return false;
+        } else {
+            ClassType c = (ClassType) obj;
+            return this.name.equals(c.name);
+        }
+    }
+
+    @Override
     public String toString() {
         return "ClassType{" +
                "name=" +

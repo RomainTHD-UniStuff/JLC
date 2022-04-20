@@ -10,6 +10,7 @@ import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.typecheck.exception.CyclicInheritanceException;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
@@ -129,6 +130,19 @@ public class TypeChecker implements Visitor {
                 } else {
                     c.updateSuperclass(env.lookupClass(c.superclassName));
                 }
+            }
+
+            for (ClassType c : env.getAllClass()) {
+                ClassType superclass = c;
+                do {
+                    if (c.equals(superclass.getSuperclass())) {
+                        throw new CyclicInheritanceException(
+                            superclass.name,
+                            c.name
+                        );
+                    }
+                    superclass = superclass.getSuperclass();
+                } while (superclass != null);
             }
 
             for (TopDef def : p.listtopdef_) {
@@ -1028,7 +1042,7 @@ public class TypeChecker implements Visitor {
                 TypeCode.CInt,
                 TypeCode.CDouble,
                 TypeCode.CBool
-            )
+            ) || (_left.isClass() && _left == _right)
                    ? null
                    : "equality";
         }
@@ -1038,7 +1052,7 @@ public class TypeChecker implements Visitor {
                 TypeCode.CInt,
                 TypeCode.CDouble,
                 TypeCode.CBool
-            )
+            ) || (_left.isClass() && _left == _right)
                    ? null
                    : "difference";
         }
