@@ -1,5 +1,6 @@
 package fr.rthd.jlc.env;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,33 +32,23 @@ public class ClassType {
      * Constructor for inheritance
      * @param name Class name
      * @param superclass Superclass or null
-     * @param methods List of defined methods
-     * @param attributes List of defined fields
      */
     public ClassType(
         String name,
-        String superclass,
-        List<FunType> methods,
-        List<Attribute> attributes
+        String superclass
     ) {
         this.name = name;
         this.superclass = superclass;
-        this.methods = methods;
-        this.attributes = attributes;
+        this.methods = new ArrayList<>();
+        this.attributes = new ArrayList<>();
     }
 
-    /**
-     * Constructor without inheritance
-     * @param name Class name
-     * @param methods List of defined methods
-     * @param attributes List of defined fields
-     */
-    public ClassType(
-        String name,
-        List<FunType> methods,
-        List<Attribute> attributes
-    ) {
-        this(name, null, methods, attributes);
+    public void addMethod(FunType f) {
+        this.methods.add(f);
+    }
+
+    public void addAttribute(Attribute a) {
+        this.attributes.add(a);
     }
 
     @Override

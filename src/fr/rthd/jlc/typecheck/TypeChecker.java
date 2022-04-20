@@ -99,7 +99,6 @@ import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -120,6 +119,10 @@ public class TypeChecker implements Visitor {
 
     private static class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
         public Void visit(Program p, EnvTypecheck env) {
+            for (TopDef def : p.listtopdef_) {
+                def.accept(new TopDefClassDefSignatureVisitor(), env);
+            }
+
             for (TopDef def : p.listtopdef_) {
                 def.accept(new TopDefSignatureVisitor(), env);
             }
@@ -179,13 +182,23 @@ public class TypeChecker implements Visitor {
         }
     }
 
+    private static class TopDefClassDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(TopFnDef p, EnvTypecheck env) {
+            return null;
+        }
+
+        public Void visit(TopClsDef p, EnvTypecheck env) {
+            return p.classdef_.accept(new ClassDefSignatureVisitor(false), env);
+        }
+    }
+
     private static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
         public Void visit(TopFnDef p, EnvTypecheck env) {
             return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
         }
 
         public Void visit(TopClsDef p, EnvTypecheck env) {
-            return p.classdef_.accept(new ClassDefSignatureVisitor(), env);
+            return p.classdef_.accept(new ClassDefSignatureVisitor(true), env);
         }
     }
 
@@ -204,40 +217,13 @@ public class TypeChecker implements Visitor {
     }
 
     private static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(ClsDef p, EnvTypecheck env) {
-            List<FunType> methods = new ArrayList<>();
-            List<Attribute> attributes = new ArrayList<>();
+        private final boolean _checkMethods;
 
-            // FIXME: This will not work if a function header uses a class still
-            //  not reached. For example, `void f(A a) {} ... class A {}`
-            //  will throw an error, since A is still unknown while f is being
-            //  defined.
+        public ClassDefSignatureVisitor(boolean checkMethods) {
+            this._checkMethods = checkMethods;
+        }
 
-            for (Member m : p.listmember_) {
-                if (m instanceof FnMember) {
-                    FnDef f = (FnDef) ((FnMember) m).funcdef_;
-                    List<FunArg> args = new LinkedList<>();
-                    for (Arg arg : f.listarg_) {
-                        args.add(arg.accept(new ArgVisitor(), null));
-                    }
-                    methods.add(new FunType(
-                        f.type_.accept(new TypeVisitor(), null),
-                        f.ident_,
-                        args
-                    ));
-                } else if (m instanceof AttrMember) {
-                    AttrMember a = (AttrMember) m;
-                    attributes.add(new Attribute(
-                        a.type_.accept(new TypeVisitor(), null),
-                        a.ident_
-                    ));
-                } else {
-                    throw new IllegalArgumentException(
-                        "Unknown member type: " + m.getClass().getName()
-                    );
-                }
-            }
-
+        private void defOnly(ClsDef p, EnvTypecheck env) {
             String superclass;
             if (p.classinheritance_ instanceof HBase) {
                 superclass = null;
@@ -252,10 +238,50 @@ public class TypeChecker implements Visitor {
 
             env.insertClass(new ClassType(
                 p.ident_,
-                superclass,
-                methods,
-                attributes
+                superclass
             ));
+        }
+
+        private void addMethods(ClsDef p, EnvTypecheck env) {
+            ClassType c = env.lookupClass(p.ident_);
+
+            for (Member m : p.listmember_) {
+                if (m instanceof FnMember) {
+                    FnDef f = (FnDef) ((FnMember) m).funcdef_;
+                    List<FunArg> args = new LinkedList<>();
+                    for (Arg arg : f.listarg_) {
+                        args.add(arg.accept(new ArgVisitor(), null));
+                    }
+                    c.addMethod(new FunType(
+                        f.type_.accept(new TypeVisitor(), null),
+                        f.ident_,
+                        args
+                    ));
+                } else if (m instanceof AttrMember) {
+                    AttrMember a = (AttrMember) m;
+                    c.addAttribute(new Attribute(
+                        a.type_.accept(new TypeVisitor(), null),
+                        a.ident_
+                    ));
+                } else {
+                    throw new IllegalArgumentException(
+                        "Unknown member type: " + m.getClass().getName()
+                    );
+                }
+            }
+        }
+
+        public Void visit(ClsDef p, EnvTypecheck env) {
+            // We need to visit the class definition twice: first we list all
+            //  the classes, then we fill them with their attributes and
+            //  methods. This is because a function returning an object could
+            //  see this object not recognized initially
+
+            if (_checkMethods) {
+                addMethods(p, env);
+            } else {
+                defOnly(p, env);
+            }
 
             return null;
         }
