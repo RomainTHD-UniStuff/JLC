@@ -1,5 +1,6 @@
 package fr.rthd.jlc.env;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,30 +52,66 @@ public class ClassType {
         this._attributes = new HashMap<>();
     }
 
-    public boolean addMethod(FunType f) {
-        if (this._methods.containsKey(f.name)) {
-            return false;
-        }
-
+    public void addMethod(FunType f) {
         this._methods.put(f.name, f);
-        return true;
     }
 
-    public Collection<FunType> getMethods() {
+    public Collection<FunType> getOwnMethods() {
         return this._methods.values();
     }
 
-    public boolean addAttribute(Attribute a) {
-        if (this._attributes.containsKey(a.name)) {
-            return false;
+    public Collection<FunType> getAllMethods() {
+        Collection<FunType> methods = new ArrayList<>(this.getOwnMethods());
+        if (this.superclassName != null) {
+            methods.addAll(this.getSuperclass().getAllMethods());
         }
-
-        this._attributes.put(a.name, a);
-        return true;
+        return methods;
     }
 
-    public Collection<Attribute> getAttributes() {
+    public FunType getMethod(String name) {
+        if (this._methods.containsKey(name)) {
+            return this._methods.get(name);
+        } else if (this.superclassName != null) {
+            return this.getSuperclass().getMethod(name);
+        } else {
+            return null;
+        }
+    }
+
+    public void addAttribute(Attribute a) {
+        this._attributes.put(a.name, a);
+    }
+
+    public Collection<Attribute> getOwnAttributes() {
         return this._attributes.values();
+    }
+
+    public Collection<Attribute> getAllAttributes() {
+        Collection<Attribute> attrs = new ArrayList<>(this.getOwnAttributes());
+        if (this.superclassName != null) {
+            attrs.addAll(this.getSuperclass().getAllAttributes());
+        }
+        return attrs;
+    }
+
+    public boolean hasAttribute(String name) {
+        if (this._attributes.containsKey(name)) {
+            return true;
+        } else if (this.superclassName != null) {
+            return this.getSuperclass().hasAttribute(name);
+        } else {
+            return false;
+        }
+    }
+
+    public boolean hasMethod(String name) {
+        if (this._methods.containsKey(name)) {
+            return true;
+        } else if (this.superclassName != null) {
+            return this.getSuperclass().hasMethod(name);
+        } else {
+            return false;
+        }
     }
 
     public void updateSuperclass(ClassType c) {
