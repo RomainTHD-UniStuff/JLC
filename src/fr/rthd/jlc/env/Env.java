@@ -40,6 +40,16 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     private Map<String, Func> _classFuncSignatures;
 
     /**
+     * Class we're currently in
+     */
+    private Class _currentClass = null;
+
+    /**
+     * Calling class for method calls
+     */
+    private Class _callerClass = null;
+
+    /**
      * Empty constructor
      */
     public Env() {
@@ -59,7 +69,10 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         this._classSignatures = baseEnv._classSignatures;
         this._contexts = new LinkedList<>();
         this._contexts.push(new HashMap<>());
+        this._currentClass = null;
+        this._callerClass = null;
     }
+
 
     @Override
     public String toString() {
@@ -94,6 +107,22 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         }
 
         return s.toString();
+    }
+
+    public Class getCurrentClass() {
+        return _currentClass;
+    }
+
+    public void setCurrentClass(Class c) {
+        this._currentClass = c;
+    }
+
+    public Class getCaller() {
+        return _callerClass;
+    }
+
+    public void setCaller(Class c) {
+        this._callerClass = c;
     }
 
     /**

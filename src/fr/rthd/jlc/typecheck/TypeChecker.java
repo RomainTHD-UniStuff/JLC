@@ -9,9 +9,9 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
-import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typecheck.exception.CyclicInheritanceException;
+import fr.rthd.jlc.typecheck.exception.DuplicateFieldException;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
@@ -274,25 +274,34 @@ public class TypeChecker implements Visitor {
             ClassType c = env.lookupClass(p.ident_);
 
             for (Member m : p.listmember_) {
-                boolean added;
-                String name;
-
                 if (m instanceof FnMember) {
                     FnDef f = (FnDef) ((FnMember) m).funcdef_;
                     List<FunArg> args = new LinkedList<>();
                     for (Arg arg : f.listarg_) {
                         args.add(arg.accept(new ArgVisitor(), null));
                     }
-                    name = f.ident_;
-                    added = c.addMethod(new FunType(
+                    if (c.hasMethod(f.ident_)) {
+                        throw new DuplicateFieldException(
+                            f.ident_,
+                            c.name,
+                            "method"
+                        );
+                    }
+                    c.addMethod(new FunType(
                         f.type_.accept(new TypeVisitor(), null),
                         f.ident_,
                         args
                     ));
                 } else if (m instanceof AttrMember) {
                     AttrMember a = (AttrMember) m;
-                    name = a.ident_;
-                    added = c.addAttribute(new Attribute(
+                    if (c.hasAttribute(a.ident_)) {
+                        throw new DuplicateFieldException(
+                            a.ident_,
+                            c.name,
+                            "attribute"
+                        );
+                    }
+                    c.addAttribute(new Attribute(
                         a.type_.accept(new TypeVisitor(), null),
                         a.ident_
                     ));
@@ -300,10 +309,6 @@ public class TypeChecker implements Visitor {
                     throw new IllegalArgumentException(
                         "Unknown member type: " + m.getClass().getName()
                     );
-                }
-
-                if (!added) {
-                    throw new SymbolAlreadyDefinedException(name);
                 }
             }
         }
@@ -355,16 +360,16 @@ public class TypeChecker implements Visitor {
             ClassType c = env.lookupClass(p.ident_);
 
             ListMember members = new ListMember();
-            env.setCurrentClass(c);
 
             Map<String, FunType> classFunctions = new HashMap<>();
-            for (FunType f : c.getMethods()) {
+            for (FunType f : c.getAllMethods()) {
                 classFunctions.put(f.name, f);
             }
             env.setClassFunctions(classFunctions);
+            env.setCurrentClass(c);
             env.enterScope();
 
-            for (Attribute a : c.getAttributes()) {
+            for (Attribute a : c.getAllAttributes()) {
                 env.insertVar(a.name, a.type);
             }
 
@@ -373,8 +378,8 @@ public class TypeChecker implements Visitor {
             }
 
             env.leaveScope();
+            env.setCurrentClass(null);
             env.setClassFunctions(null);
-            env.clearCurrentClass();
             return new ClsDef(
                 p.ident_,
                 p.classinheritance_,
@@ -719,6 +724,14 @@ public class TypeChecker implements Visitor {
         public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
             FunType funcType = env.lookupFun(e.ident_);
             if (funcType == null) {
+                // Might happen for class methods
+                ClassType c = env.getCaller();
+                if (c != null) {
+                    funcType = c.getMethod(e.ident_);
+                }
+            }
+
+            if (funcType == null) {
                 throw new NoSuchFunctionException(e.ident_);
             }
 
@@ -778,14 +791,7 @@ public class TypeChecker implements Visitor {
                 throw new IllegalStateException("Class not found");
             }
 
-            Map<String, FunType> oldClassFunctions = env.getClassFunctions();
-
-            Map<String, FunType> classFunctions = new HashMap<>();
-            for (FunType f : c.getMethods()) {
-                classFunctions.put(f.name, f);
-            }
-
-            env.setClassFunctions(classFunctions);
+            env.setCaller(c);
 
             // Method calls and function calls work the same way
             AnnotatedExpr<?> app = new EApp(
@@ -793,7 +799,7 @@ public class TypeChecker implements Visitor {
                 p.listexpr_
             ).accept(new ExprVisitor(), env);
 
-            env.setClassFunctions(oldClassFunctions);
+            env.setCaller(null);
 
             return new AnnotatedExpr<>(
                 app.type,

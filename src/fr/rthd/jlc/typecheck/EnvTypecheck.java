@@ -16,8 +16,6 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
      */
     private FunType _currentFunction = null;
 
-    private ClassType _currentClass = null;
-
     /**
      * The function does return or not
      */
@@ -41,17 +39,5 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
 
     public void setCurrentFunction(FunType currentFunction) {
         this._currentFunction = currentFunction;
-    }
-
-    public ClassType getCurrentClass() {
-        return _currentClass;
-    }
-
-    public void setCurrentClass(ClassType currentClass) {
-        this._currentClass = currentClass;
-    }
-
-    public void clearCurrentClass() {
-        this._currentClass = null;
     }
 }
