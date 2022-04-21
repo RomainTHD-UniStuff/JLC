@@ -1,6 +1,5 @@
 package fr.rthd.jlc;
 
-import javalette.Absyn.Array;
 import javalette.Absyn.Bool;
 import javalette.Absyn.Class;
 import javalette.Absyn.Doub;
@@ -28,11 +27,12 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void> {
         return TypeCode.CVoid;
     }
 
+    /*
     public TypeCode visit(Array t, Void ignored) {
-        throw new NotImplementedException();
-    }
+        return TypeCode.forArray(t.type_.accept(this, null));
+    }*/
 
     public TypeCode visit(Class t, Void ignored) {
-        throw new NotImplementedException();
+        return TypeCode.forClass(t.ident_);
     }
 }

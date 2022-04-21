@@ -1,11 +1,9 @@
 package fr.rthd.jlc;
 
-import fr.rthd.jlc.compiler.Compiler;
-import fr.rthd.jlc.compiler.llvm.LLVMInstructionBuilder;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
-import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
 import javalette.Absyn.Prog;
@@ -48,12 +46,14 @@ public class Main {
             Prog tree = p.pProg();
 
             // Type check
-            Env<?, FunType> env = new Env<>();
-            tree = new TypeChecker().typecheck(tree, env);
-            tree = new Optimizer().optimize(tree, env);
-            System.out.println(new Compiler(
+            Env<?, FunType, ClassType> env = new Env<>();
+            tree = new TypeChecker().accept(tree, env);
+            /*
+            tree = new Optimizer().accept(tree, env);
+            tree = new Compiler(
                 new LLVMInstructionBuilder()
-            ).compile(tree, env));
+            ).accept(tree, env);
+             */
             System.err.println("OK");
         } catch (TypeException e) {
             System.err.println("ERROR");

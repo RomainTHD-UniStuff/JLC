@@ -1,6 +1,6 @@
 package fr.rthd.jlc.env;
 
-import fr.rthd.jlc.Choice;
+import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.TypeCode;
 
 import java.util.Arrays;
@@ -78,7 +78,7 @@ public class FunType {
     public String toString() {
         return String.format(
             "%s %s(%s)",
-            retType.toString(),
+            retType.getRealName(),
             name,
             args.stream()
                 .map(FunArg::toString)

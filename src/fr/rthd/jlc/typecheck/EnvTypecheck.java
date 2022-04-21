@@ -1,26 +1,27 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 
 /**
  * Environment for typechecker
- * @see Env
  * @author RomainTHD
+ * @see Env
  */
-class EnvTypecheck extends Env<TypeCode, FunType> {
+class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
     /**
      * Current function type
      */
-    public TypeCode currentFunctionType = null;
+    private FunType _currentFunction = null;
 
     /**
      * The function does return or not
      */
     private boolean _doesReturn;
 
-    public EnvTypecheck(Env<?, FunType> parent) {
+    public EnvTypecheck(Env<?, FunType, ClassType> parent) {
         super(parent);
     }
 
@@ -30,5 +31,13 @@ class EnvTypecheck extends Env<TypeCode, FunType> {
 
     public void setReturn(boolean doesReturn) {
         this._doesReturn = doesReturn;
+    }
+
+    public FunType getCurrentFunction() {
+        return _currentFunction;
+    }
+
+    public void setCurrentFunction(FunType currentFunction) {
+        this._currentFunction = currentFunction;
     }
 }

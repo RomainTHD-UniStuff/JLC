@@ -1,32 +1,36 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.Visitor;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
+import javalette.Absyn.Bool;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.Div;
+import javalette.Absyn.Doub;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
-import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.ENew;
+import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
@@ -42,6 +46,7 @@ import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
+import javalette.Absyn.Int;
 import javalette.Absyn.Item;
 import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
@@ -65,16 +70,22 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 import javalette.Absyn.Type;
 import javalette.Absyn.VRet;
+import javalette.Absyn.Void;
 import javalette.Absyn.While;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static fr.rthd.jlc.TypeCode.CBool;
+import static fr.rthd.jlc.TypeCode.CDouble;
+import static fr.rthd.jlc.TypeCode.CInt;
+import static fr.rthd.jlc.TypeCode.CVoid;
+
 /**
  * Compiler
  * @author RomainTHD
  */
-public class Compiler {
+public class Compiler implements Visitor {
     /**
      * Instruction builder
      */
@@ -96,25 +107,19 @@ public class Compiler {
      * @see TypeCode
      */
     private static Type javaletteTypeFromTypecode(TypeCode type) throws IllegalArgumentException {
-        switch (type) {
-            case CInt:
-                return new javalette.Absyn.Int();
-
-            case CDouble:
-                return new javalette.Absyn.Doub();
-
-            case CBool:
-                return new javalette.Absyn.Bool();
-
-            case CVoid:
-                return new javalette.Absyn.Void();
-
-            case CString:
-            default:
-                throw new IllegalArgumentException(
-                    "Unsupported type: " +
-                    type
-                );
+        if (CInt.equals(type)) {
+            return new Int();
+        } else if (CDouble.equals(type)) {
+            return new Doub();
+        } else if (CBool.equals(type)) {
+            return new Bool();
+        } else if (CVoid.equals(type)) {
+            return new Void();
+        } else {
+            throw new IllegalArgumentException(
+                "Unsupported type: " +
+                type
+            );
         }
     }
 
@@ -124,13 +129,14 @@ public class Compiler {
      * @param parent Parent environment
      * @return Compiled program as a string
      */
-    public String compile(Prog p, Env<?, FunType> parent) {
+    public Prog accept(Prog p, Env<?, FunType, ClassType> parent) {
         EnvCompiler env = new EnvCompiler(parent);
         p.accept(new ProgVisitor(), env);
-        return env.toAssembly();
+        System.out.println(env.toAssembly());
+        return p;
     }
 
-    public static class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
+    private static class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
         public Void visit(Program p, EnvCompiler env) {
             env.emit(instructionBuilder.newLine());
 
@@ -149,7 +155,7 @@ public class Compiler {
         }
     }
 
-    public static class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
+    private static class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         public Void visit(FnDef p, EnvCompiler env) {
             FunType func = env.lookupFun(p.ident_);
 
@@ -190,7 +196,7 @@ public class Compiler {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
+    private static class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
         public Void visit(TopFnDef p, EnvCompiler env) {
             return p.funcdef_.accept(new FuncDefVisitor(), env);
         }
@@ -200,7 +206,11 @@ public class Compiler {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+    private static class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+        public OperationItem visit(ENull p, EnvCompiler env) {
+            throw new NotImplementedException();
+        }
+
         public OperationItem visit(EVar p, EnvCompiler env) {
             Variable var = env.lookupVar(p.ident_);
             if (var.isPointer()) {
@@ -216,7 +226,7 @@ public class Compiler {
         }
 
         public OperationItem visit(ELitInt p, EnvCompiler env) {
-            return new Literal(TypeCode.CInt, p.integer_);
+            return new Literal(CInt, p.integer_);
         }
 
         public OperationItem visit(ELitDoub p, EnvCompiler env) {
@@ -282,10 +292,6 @@ public class Compiler {
             throw new NotImplementedException();
         }
 
-        public OperationItem visit(EIndex p, EnvCompiler env) {
-            throw new NotImplementedException();
-        }
-
         public OperationItem visit(ENew p, EnvCompiler env) {
             throw new NotImplementedException();
         }
@@ -294,8 +300,8 @@ public class Compiler {
             OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
             if (expr instanceof Literal) {
                 Literal lit = (Literal) expr;
-                if (lit.type == TypeCode.CInt) {
-                    return new Literal(TypeCode.CInt, -(int) lit.value);
+                if (lit.type == CInt) {
+                    return new Literal(CInt, -(int) lit.value);
                 } else if (lit.type == TypeCode.CDouble) {
                     return new Literal(TypeCode.CDouble, -(double) lit.value);
                 } else {
@@ -431,7 +437,7 @@ public class Compiler {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
+    private static class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
         public Void visit(Block p, EnvCompiler env) {
             env.emit(instructionBuilder.comment("start block"));
             env.indent();
@@ -448,7 +454,7 @@ public class Compiler {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
+    private static class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         public Void visit(Empty p, EnvCompiler env) {
             String label = env.getNewLabel("noop");
             env.emit(instructionBuilder.jump(label));
@@ -637,7 +643,7 @@ public class Compiler {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
+    private static class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         private final TypeCode type;
         private final boolean override;
 
@@ -681,7 +687,7 @@ public class Compiler {
         }
     }
 
-    public static class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
+    private static class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
         private final OperationItem left;
         private final OperationItem right;
 
@@ -703,7 +709,7 @@ public class Compiler {
         }
     }
 
-    public static class MulOpVisitor implements MulOp.Visitor<OperationItem, EnvCompiler> {
+    private static class MulOpVisitor implements MulOp.Visitor<OperationItem, EnvCompiler> {
         private final OperationItem left;
         private final OperationItem right;
 
@@ -731,7 +737,7 @@ public class Compiler {
         }
     }
 
-    public static class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
+    private static class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         private final OperationItem left;
         private final OperationItem right;
 

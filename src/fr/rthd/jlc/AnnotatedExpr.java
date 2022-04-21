@@ -6,6 +6,11 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.EString;
 import javalette.Absyn.Expr;
 
+import static fr.rthd.jlc.TypeCode.CBool;
+import static fr.rthd.jlc.TypeCode.CDouble;
+import static fr.rthd.jlc.TypeCode.CInt;
+import static fr.rthd.jlc.TypeCode.CString;
+
 /**
  * Annotated expression
  * @param <T> Parent expression type
@@ -33,21 +38,19 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
      * @return Default expression
      */
     public static AnnotatedExpr<Expr> getDefaultValue(TypeCode type) {
-        switch (type) {
-            case CInt:
-                return new AnnotatedExpr<>(type, new ELitInt(0));
-            case CDouble:
-                return new AnnotatedExpr<>(type, new ELitDoub(0.0));
-            case CBool:
-                return new AnnotatedExpr<>(type, new ELitFalse());
-            case CString:
-                return new AnnotatedExpr<>(type, new EString(""));
-            case CVoid:
-            default:
-                throw new IllegalArgumentException(
-                    "Unhandled type: " +
-                    type
-                );
+        if (CInt.equals(type)) {
+            return new AnnotatedExpr<>(type, new ELitInt(0));
+        } else if (CDouble.equals(type)) {
+            return new AnnotatedExpr<>(type, new ELitDoub(0.0));
+        } else if (CBool.equals(type)) {
+            return new AnnotatedExpr<>(type, new ELitFalse());
+        } else if (CString.equals(type)) {
+            return new AnnotatedExpr<>(type, new EString(""));
+        } else {
+            throw new IllegalArgumentException(
+                "Unhandled type: " +
+                type.getRealName()
+            );
         }
     }
 

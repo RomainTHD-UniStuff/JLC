@@ -10,14 +10,14 @@ public class InvalidDeclaredTypeException extends TypeException {
     public InvalidDeclaredTypeException(TypeCode type) {
         super(String.format(
             "Invalid declared type received, found `%s`",
-            type
+            type.getRealName()
         ));
     }
 
     public InvalidDeclaredTypeException(TypeCode type, String varName) {
         super(String.format(
             "Invalid declared type received, found `%s` for variable `%s`",
-            type,
+            type.getRealName(),
             varName
         ));
     }

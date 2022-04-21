@@ -1,30 +1,43 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.Choice;
-import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.Visitor;
+import fr.rthd.jlc.env.Attribute;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.typecheck.exception.CyclicInheritanceException;
+import fr.rthd.jlc.typecheck.exception.DuplicateFieldException;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidDeclaredTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidExpressionTypeException;
+import fr.rthd.jlc.typecheck.exception.InvalidMethodCallException;
+import fr.rthd.jlc.typecheck.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidOperationException;
 import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typecheck.exception.NoReturnException;
+import fr.rthd.jlc.typecheck.exception.NoSuchClassException;
 import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
 import fr.rthd.jlc.typecheck.exception.NoSuchVariableException;
+import fr.rthd.jlc.typecheck.exception.SelfOutOfClassException;
+import fr.rthd.jlc.typecheck.exception.TypeException;
+import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Arg;
 import javalette.Absyn.Argument;
 import javalette.Absyn.Ass;
+import javalette.Absyn.AttrMember;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
+import javalette.Absyn.ClassDef;
+import javalette.Absyn.ClsDef;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
@@ -34,13 +47,13 @@ import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
-import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.ENew;
+import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
@@ -50,10 +63,13 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.FnMember;
 import javalette.Absyn.For;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;
+import javalette.Absyn.HBase;
+import javalette.Absyn.HExtends;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
@@ -61,8 +77,10 @@ import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListItem;
+import javalette.Absyn.ListMember;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.ListTopDef;
+import javalette.Absyn.Member;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
@@ -85,27 +103,54 @@ import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Type checker
  * @author RomainTHD
  */
-public class TypeChecker {
-    /**
-     * Entry point
-     * @param p Program to type check
-     * @param parentEnv Parent environment
-     * @return Type-checked program
-     */
-    public Prog typecheck(Prog p, Env<?, FunType> parentEnv) {
+public class TypeChecker implements Visitor {
+    @Override
+    public Prog accept(Prog p, Env<?, FunType, ClassType> parentEnv) {
         EnvTypecheck env = new EnvTypecheck(parentEnv);
         p.accept(new ProgSignatureVisitor(), env);
         return p.accept(new ProgVisitor(), env);
     }
 
-    public static class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
+    private static class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
         public Void visit(Program p, EnvTypecheck env) {
+            for (TopDef def : p.listtopdef_) {
+                def.accept(new TopDefClassDefSignatureVisitor(), env);
+            }
+
+            for (ClassType c : env.getAllClass()) {
+                if (c.superclassName == null) {
+                    c.updateSuperclass(null);
+                } else {
+                    ClassType superclass = env.lookupClass(c.superclassName);
+                    if (superclass == null) {
+                        throw new NoSuchClassException(c.superclassName);
+                    }
+                    c.updateSuperclass(superclass);
+                }
+            }
+
+            for (ClassType c : env.getAllClass()) {
+                ClassType superclass = c;
+                do {
+                    if (c.equals(superclass.getSuperclass())) {
+                        throw new CyclicInheritanceException(
+                            superclass.name,
+                            c.name
+                        );
+                    }
+                    superclass = superclass.getSuperclass();
+                } while (superclass != null);
+            }
+
             for (TopDef def : p.listtopdef_) {
                 def.accept(new TopDefSignatureVisitor(), env);
             }
@@ -115,20 +160,24 @@ public class TypeChecker {
                 "printInt",
                 new FunArg(TypeCode.CInt, "i")
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printDouble",
                 new FunArg(TypeCode.CDouble, "d")
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CVoid,
                 "printString",
                 new FunArg(TypeCode.CString, "s")
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CInt,
                 "readInt"
             ).setExternal().setPure(Choice.FALSE));
+
             env.insertFun(new FunType(
                 TypeCode.CDouble,
                 "readDouble"
@@ -136,7 +185,6 @@ public class TypeChecker {
 
             FunType mainFunc = env.lookupFun("main");
             if (mainFunc == null) {
-                // FIXME: Should it be there or in the compiler directly?
                 throw new NoSuchFunctionException("main");
             } else {
                 mainFunc.setAsMain();
@@ -162,7 +210,126 @@ public class TypeChecker {
         }
     }
 
-    public static class ProgVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
+    private static class TopDefClassDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(TopFnDef p, EnvTypecheck env) {
+            return null;
+        }
+
+        public Void visit(TopClsDef p, EnvTypecheck env) {
+            return p.classdef_.accept(new ClassDefSignatureVisitor(false), env);
+        }
+    }
+
+    private static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(TopFnDef p, EnvTypecheck env) {
+            return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
+        }
+
+        public Void visit(TopClsDef p, EnvTypecheck env) {
+            return p.classdef_.accept(new ClassDefSignatureVisitor(true), env);
+        }
+    }
+
+    private static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
+        public Void visit(FnDef p, EnvTypecheck env) {
+            List<FunArg> argsType = new LinkedList<>();
+            for (Arg arg : p.listarg_) {
+                argsType.add(arg.accept(new ArgVisitor(), null));
+            }
+
+            TypeCode retType = p.type_.accept(new TypeVisitor(), null);
+            env.insertFun(new FunType(retType, p.ident_, argsType));
+
+            return null;
+        }
+    }
+
+    private static class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
+        private final boolean _checkMethods;
+
+        public ClassDefSignatureVisitor(boolean checkMethods) {
+            this._checkMethods = checkMethods;
+        }
+
+        private void defOnly(ClsDef p, EnvTypecheck env) {
+            String superclass;
+            if (p.classinheritance_ instanceof HBase) {
+                superclass = null;
+            } else if (p.classinheritance_ instanceof HExtends) {
+                superclass = ((HExtends) p.classinheritance_).ident_;
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Unknown interhitance type: %s",
+                    p.classinheritance_.getClass().getName()
+                ));
+            }
+
+            env.insertClass(new ClassType(
+                p.ident_,
+                superclass
+            ));
+        }
+
+        private void addMethods(ClsDef p, EnvTypecheck env) {
+            ClassType c = env.lookupClass(p.ident_);
+
+            for (Member m : p.listmember_) {
+                if (m instanceof FnMember) {
+                    FnDef f = (FnDef) ((FnMember) m).funcdef_;
+                    List<FunArg> args = new LinkedList<>();
+                    for (Arg arg : f.listarg_) {
+                        args.add(arg.accept(new ArgVisitor(), null));
+                    }
+                    if (c.hasMethod(f.ident_)) {
+                        throw new DuplicateFieldException(
+                            f.ident_,
+                            c.name,
+                            "method"
+                        );
+                    }
+                    c.addMethod(new FunType(
+                        f.type_.accept(new TypeVisitor(), null),
+                        f.ident_,
+                        args
+                    ));
+                } else if (m instanceof AttrMember) {
+                    AttrMember a = (AttrMember) m;
+                    if (c.hasAttribute(a.ident_)) {
+                        throw new DuplicateFieldException(
+                            a.ident_,
+                            c.name,
+                            "attribute"
+                        );
+                    }
+                    c.addAttribute(new Attribute(
+                        a.type_.accept(new TypeVisitor(), null),
+                        a.ident_
+                    ));
+                } else {
+                    throw new IllegalArgumentException(
+                        "Unknown member type: " + m.getClass().getName()
+                    );
+                }
+            }
+        }
+
+        public Void visit(ClsDef p, EnvTypecheck env) {
+            // We need to visit the class definition twice: first we list all
+            //  the classes, then we fill them with their attributes and
+            //  methods. This is because a function returning an object could
+            //  see this object not recognized initially
+
+            if (_checkMethods) {
+                addMethods(p, env);
+            } else {
+                defOnly(p, env);
+            }
+
+            return null;
+        }
+    }
+
+    private static class ProgVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
         public Program visit(Program p, EnvTypecheck env) {
             ListTopDef topDef = new ListTopDef();
 
@@ -174,7 +341,7 @@ public class TypeChecker {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvTypecheck> {
+    private static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvTypecheck> {
         public TopFnDef visit(TopFnDef p, EnvTypecheck env) {
             return new TopFnDef(
                 p.funcdef_.accept(new FuncDefVisitor(), env)
@@ -182,11 +349,61 @@ public class TypeChecker {
         }
 
         public TopClsDef visit(TopClsDef p, EnvTypecheck env) {
-            throw new NotImplementedException();
+            return new TopClsDef(
+                p.classdef_.accept(new ClassDefVisitor(), env)
+            );
         }
     }
 
-    public static class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
+    private static class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
+        public ClassDef visit(ClsDef p, EnvTypecheck env) {
+            ClassType c = env.lookupClass(p.ident_);
+
+            ListMember members = new ListMember();
+
+            Map<String, FunType> classFunctions = new HashMap<>();
+            for (FunType f : c.getAllMethods()) {
+                classFunctions.put(f.name, f);
+            }
+            env.setClassFunctions(classFunctions);
+            env.setCurrentClass(c);
+            env.enterScope();
+
+            for (Attribute a : c.getAllAttributes()) {
+                env.insertVar(a.name, a.type);
+            }
+
+            for (Member m : p.listmember_) {
+                members.add(m.accept(new MemberVisitor(), env));
+            }
+
+            env.leaveScope();
+            env.setCurrentClass(null);
+            env.setClassFunctions(null);
+            return new ClsDef(
+                p.ident_,
+                p.classinheritance_,
+                members
+            );
+        }
+    }
+
+    private static class MemberVisitor implements Member.Visitor<Member, EnvTypecheck> {
+        public FnMember visit(FnMember p, EnvTypecheck env) {
+            return new FnMember(
+                p.funcdef_.accept(new FuncDefVisitor(), env)
+            );
+        }
+
+        public AttrMember visit(AttrMember p, EnvTypecheck env) {
+            return new AttrMember(
+                p.type_,
+                p.ident_
+            );
+        }
+    }
+
+    private static class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         public FnDef visit(FnDef f, EnvTypecheck env) {
             FunType func = env.lookupFun(f.ident_);
 
@@ -197,7 +414,7 @@ public class TypeChecker {
                 env.insertVar(arg.name, arg.type);
             }
 
-            env.currentFunctionType = func.retType;
+            env.setCurrentFunction(func);
 
             Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
 
@@ -215,31 +432,7 @@ public class TypeChecker {
         }
     }
 
-    public static class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(TopFnDef p, EnvTypecheck env) {
-            return p.funcdef_.accept(new FuncDefSignatureVisitor(), env);
-        }
-
-        public Void visit(TopClsDef p, EnvTypecheck env) {
-            throw new NotImplementedException();
-        }
-    }
-
-    public static class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
-        public Void visit(FnDef p, EnvTypecheck env) {
-            LinkedList<FunArg> argsType = new LinkedList<>();
-            for (Arg arg : p.listarg_) {
-                argsType.add(arg.accept(new ArgVisitor(), null));
-            }
-
-            TypeCode retType = p.type_.accept(new TypeVisitor(), null);
-            env.insertFun(new FunType(retType, p.ident_, argsType));
-
-            return null;
-        }
-    }
-
-    public static class ArgVisitor implements Arg.Visitor<FunArg, Void> {
+    private static class ArgVisitor implements Arg.Visitor<FunArg, Void> {
         public FunArg visit(Argument a, Void ignored) {
             TypeCode type = a.type_.accept(new TypeVisitor(), null);
 
@@ -251,7 +444,7 @@ public class TypeChecker {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Blk, EnvTypecheck> {
+    private static class BlkVisitor implements Blk.Visitor<Blk, EnvTypecheck> {
         public Block visit(Block p, EnvTypecheck env) {
             ListStmt statements = new ListStmt();
 
@@ -267,7 +460,7 @@ public class TypeChecker {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
+    private static class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         public Empty visit(Empty s, EnvTypecheck env) {
             return new Empty();
         }
@@ -282,6 +475,10 @@ public class TypeChecker {
                 throw new InvalidDeclaredTypeException(
                     type
                 );
+            }
+
+            if (type.isClass() && env.lookupClass(type) == null) {
+                throw new NoSuchClassException(type);
             }
 
             ListItem items = new ListItem();
@@ -300,12 +497,27 @@ public class TypeChecker {
             }
 
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (exp.type != expectedType) {
-                throw new InvalidAssignmentTypeException(
-                    s.ident_,
-                    expectedType,
-                    exp.type
-                );
+            TypeException e = new InvalidAssignmentTypeException(
+                s.ident_,
+                expectedType,
+                exp.type
+            );
+
+            if (exp.type.isClass()) {
+                if (!expectedType.isClass()) {
+                    // `int x = new A;`
+                    throw e;
+                }
+
+                ClassType expectedClass = env.lookupClass(expectedType);
+                ClassType actualClass = env.lookupClass(exp.type);
+                if (!actualClass.isCastableTo(expectedClass)) {
+                    // `B x = new A;`
+                    throw e;
+                }
+            } else if (exp.type != expectedType) {
+                // `int x = true;`
+                throw e;
             }
 
             return new Ass(s.ident_, exp);
@@ -349,9 +561,9 @@ public class TypeChecker {
 
         public Ret visit(Ret s, EnvTypecheck env) {
             AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-            if (exp.type != env.currentFunctionType) {
+            if (exp.type != env.getCurrentFunction().retType) {
                 throw new InvalidReturnedTypeException(
-                    env.currentFunctionType,
+                    env.getCurrentFunction().retType,
                     exp.type
                 );
             }
@@ -361,9 +573,9 @@ public class TypeChecker {
         }
 
         public VRet visit(VRet s, EnvTypecheck env) {
-            if (env.currentFunctionType != TypeCode.CVoid) {
+            if (env.getCurrentFunction().retType != TypeCode.CVoid) {
                 throw new InvalidReturnedTypeException(
-                    env.currentFunctionType,
+                    env.getCurrentFunction().retType,
                     TypeCode.CVoid
                 );
             }
@@ -450,7 +662,7 @@ public class TypeChecker {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, EnvTypecheck> {
+    private static class ItemVisitor implements Item.Visitor<Item, EnvTypecheck> {
         private final TypeCode varType;
 
         public ItemVisitor(TypeCode varType) {
@@ -462,23 +674,14 @@ public class TypeChecker {
             return new NoInit(p.ident_);
         }
 
-        public Init visit(Init s, EnvTypecheck env) {
-            env.insertVar(s.ident_, varType);
-            AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-
-            if (exp.type != varType) {
-                throw new InvalidAssignmentTypeException(
-                    s.ident_,
-                    varType,
-                    exp.type
-                );
-            }
-
-            return new Init(s.ident_, exp);
+        public Init visit(Init p, EnvTypecheck env) {
+            env.insertVar(p.ident_, varType);
+            Stmt s = new Ass(p.ident_, p.expr_).accept(new StmtVisitor(), env);
+            return new Init(p.ident_, ((Ass) s).expr_);
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
+    private static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
             TypeCode varType = env.lookupVar(e.ident_);
             if (varType == null) {
@@ -504,12 +707,30 @@ public class TypeChecker {
             return new AnnotatedExpr<>(TypeCode.CBool, e);
         }
 
-        public AnnotatedExpr<ESelf> visit(ESelf p, EnvTypecheck env) {
-            throw new NotImplementedException();
+        public AnnotatedExpr<ESelf> visit(ESelf e, EnvTypecheck env) {
+            ClassType c = env.getCurrentClass();
+            if (c == null) {
+                throw new SelfOutOfClassException();
+            }
+
+            return new AnnotatedExpr<>(
+                // FIXME: Error prone, we should probably store the typecode
+                //  of the class in the class itself
+                TypeCode.forClass(c.name),
+                e
+            );
         }
 
         public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
             FunType funcType = env.lookupFun(e.ident_);
+            if (funcType == null) {
+                // Might happen for class methods
+                ClassType c = env.getCaller();
+                if (c != null) {
+                    funcType = c.getMethod(e.ident_);
+                }
+            }
+
             if (funcType == null) {
                 throw new NoSuchFunctionException(e.ident_);
             }
@@ -554,15 +775,61 @@ public class TypeChecker {
         }
 
         public AnnotatedExpr<EDot> visit(EDot p, EnvTypecheck env) {
-            throw new NotImplementedException();
+            AnnotatedExpr<?> expr = p.expr_.accept(
+                new ExprVisitor(),
+                env
+            );
+
+            if (!expr.type.isClass()) {
+                throw new InvalidMethodCallException(expr.type);
+            }
+
+            ClassType c = env.lookupClass(expr.type);
+            if (c == null) {
+                // It should be impossible to get here, since it would mean we
+                //  created a variable with a type that doesn't exist
+                throw new IllegalStateException("Class not found");
+            }
+
+            env.setCaller(c);
+
+            // Method calls and function calls work the same way
+            AnnotatedExpr<?> app = new EApp(
+                p.ident_,
+                p.listexpr_
+            ).accept(new ExprVisitor(), env);
+
+            env.setCaller(null);
+
+            return new AnnotatedExpr<>(
+                app.type,
+                new EDot(
+                    expr,
+                    p.ident_,
+                    ((EApp) app.parentExp).listexpr_
+                )
+            );
         }
 
-        public AnnotatedExpr<EIndex> visit(EIndex p, EnvTypecheck env) {
-            throw new NotImplementedException();
+        public AnnotatedExpr<ENull> visit(ENull e, EnvTypecheck env) {
+            ClassType c = env.lookupClass(e.ident_);
+            if (c == null) {
+                throw new NoSuchClassException(e.ident_);
+            }
+            return new AnnotatedExpr<>(TypeCode.forClass(c.name), e);
         }
 
-        public AnnotatedExpr<ENew> visit(ENew p, EnvTypecheck env) {
-            throw new NotImplementedException();
+        public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {
+            TypeCode t = e.type_.accept(new TypeVisitor(), null);
+            if (t.isPrimitive()) {
+                throw new InvalidNewTypeException(t);
+            }
+
+            if (env.lookupClass(t) == null) {
+                throw new NoSuchClassException(t);
+            }
+
+            return new AnnotatedExpr<>(t, e);
         }
 
         public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
@@ -671,8 +938,8 @@ public class TypeChecker {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
             String opName = e.relop_.accept(
-                new RelOpVisitor(),
-                new TypeCode[]{left.type, right.type}
+                new RelOpVisitor(left.type, right.type),
+                null
             );
 
             if (opName != null) {
@@ -736,7 +1003,7 @@ public class TypeChecker {
         }
     }
 
-    public static class AddOpVisitor implements AddOp.Visitor<String, Void> {
+    private static class AddOpVisitor implements AddOp.Visitor<String, Void> {
         public String visit(Plus p, Void ignored) {
             return "addition";
         }
@@ -746,7 +1013,7 @@ public class TypeChecker {
         }
     }
 
-    public static class MulOpVisitor implements MulOp.Visitor<String, Void> {
+    private static class MulOpVisitor implements MulOp.Visitor<String, Void> {
         public String visit(Times p, Void ignored) {
             return "multiplication";
         }
@@ -760,55 +1027,59 @@ public class TypeChecker {
         }
     }
 
-    public static class RelOpVisitor implements RelOp.Visitor<String, TypeCode[]> {
-        private boolean bothTypes(TypeCode[] actual, TypeCode... expected) {
-            TypeCode left = actual[0];
-            TypeCode right = actual[1];
-            return left == right && Arrays.asList(expected).contains(left);
+    private static class RelOpVisitor implements RelOp.Visitor<String, Void> {
+        private final TypeCode _left;
+        private final TypeCode _right;
+
+        public RelOpVisitor(TypeCode left, TypeCode right) {
+            this._left = left;
+            this._right = right;
         }
 
-        public String visit(LTH p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        private boolean bothTypes(TypeCode... expected) {
+            return _left == _right && Arrays.asList(expected).contains(_left);
+        }
+
+        public String visit(LTH p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "lower than";
         }
 
-        public String visit(LE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        public String visit(LE p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "lower or equal";
         }
 
-        public String visit(GTH p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        public String visit(GTH p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "greater than";
         }
 
-        public String visit(GE p, TypeCode[] types) {
-            return bothTypes(types, TypeCode.CInt, TypeCode.CDouble)
+        public String visit(GE p, Void ignored) {
+            return bothTypes(TypeCode.CInt, TypeCode.CDouble)
                    ? null
                    : "greater or equal";
         }
 
-        public String visit(EQU p, TypeCode[] types) {
+        public String visit(EQU p, Void ignored) {
             return bothTypes(
-                types,
                 TypeCode.CInt,
                 TypeCode.CDouble,
                 TypeCode.CBool
-            )
+            ) || (_left.isClass() && _left == _right)
                    ? null
                    : "equality";
         }
 
-        public String visit(NE p, TypeCode[] types) {
+        public String visit(NE p, Void ignored) {
             return bothTypes(
-                types,
                 TypeCode.CInt,
                 TypeCode.CDouble,
                 TypeCode.CBool
-            )
+            ) || (_left.isClass() && _left == _right)
                    ? null
                    : "difference";
         }

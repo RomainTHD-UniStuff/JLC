@@ -1,13 +1,15 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.Choice;
-import fr.rthd.jlc.NotImplementedException;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.Visitor;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
@@ -29,6 +31,7 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
 import javalette.Absyn.ENew;
+import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.EQU;
 import javalette.Absyn.ERel;
@@ -81,7 +84,7 @@ import javalette.Absyn.While;
  * Return checker
  * @author RomainTHD
  */
-public class Optimizer {
+public class Optimizer implements Visitor {
     /**
      * Generic action on an operator. The correct function will be called if
      * both sides are literals. Otherwise, the default action will be called.
@@ -156,7 +159,7 @@ public class Optimizer {
      * @param <T> Type of the expression
      * @return Incremented or decremented expression
      */
-    public static <T extends Stmt> AnnotatedStmt<T> visitIncrDecr(
+    private static <T extends Stmt> AnnotatedStmt<T> visitIncrDecr(
         T base,
         String ident,
         AddOp op,
@@ -190,13 +193,8 @@ public class Optimizer {
         return new AnnotatedStmt<>(base);
     }
 
-    /**
-     * Entry point
-     * @param p Program to optimize
-     * @param parentEnv Parent environment
-     * @return Optimized program
-     */
-    public Prog optimize(Prog p, Env<?, FunType> parentEnv) {
+    @Override
+    public Prog accept(Prog p, Env<?, FunType, ClassType> parentEnv) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
         // First pass will mark functions as pure or impure
         p = p.accept(new ProgVisitor(), env);
@@ -213,7 +211,7 @@ public class Optimizer {
         Expr execute(T lvalue, T rvalue);
     }
 
-    public static class ProgVisitor implements Prog.Visitor<Prog, EnvOptimizer> {
+    private static class ProgVisitor implements Prog.Visitor<Prog, EnvOptimizer> {
         public Program visit(Program p, EnvOptimizer env) {
             ListTopDef topDef = new ListTopDef();
 
@@ -251,7 +249,7 @@ public class Optimizer {
         }
     }
 
-    public static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvOptimizer> {
+    private static class TopDefVisitor implements TopDef.Visitor<TopDef, EnvOptimizer> {
         public TopFnDef visit(TopFnDef topF, EnvOptimizer env) {
             FnDef f = (FnDef) topF.funcdef_;
             FunTypeOptimizer func = env.lookupFun(f.ident_);
@@ -283,7 +281,7 @@ public class Optimizer {
         }
     }
 
-    public static class BlkVisitor implements Blk.Visitor<Blk, EnvOptimizer> {
+    private static class BlkVisitor implements Blk.Visitor<Blk, EnvOptimizer> {
         public Block visit(Block p, EnvOptimizer env) {
             ListStmt statements = new ListStmt();
 
@@ -308,7 +306,7 @@ public class Optimizer {
         }
     }
 
-    public static class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOptimizer> {
+    private static class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOptimizer> {
         public AnnotatedStmt<Empty> visit(Empty s, EnvOptimizer env) {
             return new AnnotatedStmt<>(new Empty());
         }
@@ -504,7 +502,7 @@ public class Optimizer {
         }
     }
 
-    public static class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
+    private static class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
         private final TypeCode varType;
 
         public ItemVisitor(TypeCode varType) {
@@ -552,7 +550,11 @@ public class Optimizer {
         }
     }
 
-    public static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOptimizer> {
+    private static class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOptimizer> {
+        public AnnotatedExpr<?> visit(ENull e, EnvOptimizer env) {
+            throw new NotImplementedException();
+        }
+
         public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
             AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
             assert expr != null;
@@ -732,7 +734,7 @@ public class Optimizer {
         }
     }
 
-    public static class AddOpVisitor implements AddOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
+    private static class AddOpVisitor implements AddOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
         private final AnnotatedExpr<?> left;
         private final AnnotatedExpr<?> right;
 
@@ -764,7 +766,7 @@ public class Optimizer {
         }
     }
 
-    public static class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
+    private static class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
         private final AnnotatedExpr<?> left;
         private final AnnotatedExpr<?> right;
 
@@ -807,7 +809,7 @@ public class Optimizer {
         }
     }
 
-    public static class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
+    private static class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
         private final AnnotatedExpr<?> left;
         private final AnnotatedExpr<?> right;
 
