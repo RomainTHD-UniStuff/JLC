@@ -8,6 +8,7 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.FunType;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Instruction builder for LLVM
@@ -510,6 +511,16 @@ public class InstructionBuilder {
             global.getSize(),
             global.getSize(),
             global
+        ));
+    }
+
+    public Instruction classDef(String className, List<TypeCode> members) {
+        return new Instruction(String.format(
+            "%%%s = type { %s }",
+            className,
+            members.stream()
+                   .map(TypeCode::toString)
+                   .collect(Collectors.joining(", "))
         ));
     }
 }

@@ -3,6 +3,7 @@ package fr.rthd.jlc.env;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -86,11 +87,12 @@ public class ClassType {
         return this._attributes.values();
     }
 
-    public Collection<Attribute> getAllAttributes() {
-        Collection<Attribute> attrs = new ArrayList<>(this.getOwnAttributes());
+    public List<Attribute> getAllAttributes() {
+        List<Attribute> attrs = new ArrayList<>();
         if (this.superclassName != null) {
             attrs.addAll(this.getSuperclass().getAllAttributes());
         }
+        attrs.addAll(this.getOwnAttributes());
         return attrs;
     }
 
