@@ -15,7 +15,7 @@ class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         env.setReturn(false);
         env.enterScope();
 
-        for (FunArg arg : func.args) {
+        for (FunArg arg : func.getArgs()) {
             env.insertVar(arg.name, arg.type);
         }
 

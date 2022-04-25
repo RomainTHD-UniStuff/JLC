@@ -257,7 +257,7 @@ public class Optimizer implements Visitor {
 
             env.enterScope();
 
-            for (FunArg arg : func.args) {
+            for (FunArg arg : func.getArgs()) {
                 env.insertVar(
                     arg.name,
                     new AnnotatedExpr<>(arg.type, new EVar(arg.name))
@@ -593,7 +593,7 @@ public class Optimizer implements Visitor {
             funcType.addUsageIn(env.getCurrentFunction());
 
             ListExpr exps = new ListExpr();
-            for (int i = 0; i < funcType.args.size(); ++i) {
+            for (int i = 0; i < funcType.getArgs().size(); ++i) {
                 AnnotatedExpr<?> exp = e.listexpr_.get(i).accept(
                     new ExprVisitor(),
                     env

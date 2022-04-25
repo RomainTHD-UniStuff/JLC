@@ -92,11 +92,11 @@ class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
             );
         }
 
-        if (!mainFunc.args.isEmpty()) {
+        if (!mainFunc.getArgs().isEmpty()) {
             throw new InvalidArgumentCountException(
                 "main",
                 0,
-                mainFunc.args.size()
+                mainFunc.getArgs().size()
             );
         }
 

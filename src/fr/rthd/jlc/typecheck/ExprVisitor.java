@@ -91,17 +91,17 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             throw new NoSuchFunctionException(e.ident_);
         }
 
-        if (e.listexpr_.size() != funcType.args.size()) {
+        if (e.listexpr_.size() != funcType.getArgs().size()) {
             throw new InvalidArgumentCountException(
                 e.ident_,
-                funcType.args.size(),
+                funcType.getArgs().size(),
                 e.listexpr_.size()
             );
         }
 
         ListExpr exps = new ListExpr();
-        for (int i = 0; i < funcType.args.size(); ++i) {
-            FunArg expected = funcType.args.get(i);
+        for (int i = 0; i < funcType.getArgs().size(); ++i) {
+            FunArg expected = funcType.getArgs().get(i);
             AnnotatedExpr<?> exp = e
                 .listexpr_
                 .get(i)
