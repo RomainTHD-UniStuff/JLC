@@ -1,10 +1,8 @@
 package fr.rthd.jlc.compiler;
 
-import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
-import javalette.Absyn.Void;
 
 class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
     public Void visit(TopFnDef p, EnvCompiler env) {
@@ -12,6 +10,6 @@ class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
     }
 
     public Void visit(TopClsDef p, EnvCompiler env) {
-        throw new NotImplementedException();
+        return p.classdef_.accept(new ClassDefVisitor(), env);
     }
 }

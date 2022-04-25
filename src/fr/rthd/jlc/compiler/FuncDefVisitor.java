@@ -6,7 +6,6 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.Init;
-import javalette.Absyn.Void;
 
 class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
     public Void visit(FnDef p, EnvCompiler env) {
