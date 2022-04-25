@@ -30,7 +30,11 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         }
 
         func.getArgs().forEach(arg -> {
-            Variable var = env.createVar(arg.type, arg.name, false);
+            Variable var = env.createVar(
+                arg.type,
+                arg.name,
+                !arg.type.isPrimitive() // Primitive types are passed by value
+            );
             env.insertVar(arg.name, var);
             arg.setGeneratedName(var.name);
         });
@@ -38,14 +42,20 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.functionDeclarationStart(c, func));
         env.emit(env.instructionBuilder.label("entry"));
 
-        // FIXME: Document this
-        func.getArgs().forEach(arg -> new Init(
-            arg.name,
-            new EVar(arg.name)
-        ).accept(new ItemVisitor(
-            arg.type,
-            true
-        ), env));
+        for (FunArg arg : func.getArgs()) {
+            Variable v = env.lookupVar(arg.name);
+            if (!v.isPointer()) {
+                // Arguments are passed by value, so we load them to respect the
+                //  convention that all variables are pointers
+                new Init(
+                    arg.name,
+                    new EVar(arg.name)
+                ).accept(new ItemVisitor(
+                    arg.type,
+                    true
+                ), env);
+            }
+        }
 
         p.blk_.accept(new BlkVisitor(), env);
 
