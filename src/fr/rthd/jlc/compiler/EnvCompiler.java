@@ -31,6 +31,11 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
     public static final char SEP = '$';
 
     /**
+     * Instruction builder
+     */
+    public final InstructionBuilder instructionBuilder;
+
+    /**
      * Instructions output
      */
     private final List<String> _output;
@@ -67,8 +72,12 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * Constructor
      * @param env Parent environment
      */
-    public EnvCompiler(Env<?, FunType, ClassType> env) {
+    public EnvCompiler(
+        Env<?, FunType, ClassType> env,
+        InstructionBuilder builder
+    ) {
         super(env);
+        this.instructionBuilder = builder;
         this._output = new ArrayList<>();
         this._varCount = new LinkedList<>();
         this._labelCount = new LinkedList<>();
