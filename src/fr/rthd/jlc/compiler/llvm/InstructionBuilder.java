@@ -5,6 +5,7 @@ import fr.rthd.jlc.compiler.Instruction;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 
 import java.util.List;
@@ -89,22 +90,28 @@ public class InstructionBuilder {
 
     /**
      * Start a function declaration
+     * @param parentClass Parent class or null
      * @param func Function to declare
      * @return Instruction
      */
-    public Instruction functionDeclarationStart(FunType func) {
+    public Instruction functionDeclarationStart(
+        ClassType parentClass,
+        FunType func
+    ) {
         return new Instruction(String.format(
             "define %s @%s(%s) {",
             func.retType,
-            func.name,
-            func.args.stream()
-                     .map(arg -> String.format(
-                         "%s %%%s",
-                         arg.type,
-                         arg.getGeneratedName()
-                     ))
-                     .reduce((a, b) -> String.format("%s, %s", a, b))
-                     .orElse("")
+            (parentClass == null ? "" : parentClass.name + "__") + func.name,
+            func.getArgs()
+                .stream()
+                .map(arg -> String.format(
+                    "%s%s %%%s",
+                    arg.type,
+                    arg.type.isPrimitive() ? "" : "*",
+                    arg.getGeneratedName()
+                ))
+                .reduce((a, b) -> String.format("%s, %s", a, b))
+                .orElse("")
         ));
     }
 
@@ -126,7 +133,7 @@ public class InstructionBuilder {
             "declare %s @%s(%s)",
             func.retType,
             func.name,
-            func.args
+            func.getArgs()
                 .stream()
                 .map(arg -> String.format(
                     "%s %%%s",

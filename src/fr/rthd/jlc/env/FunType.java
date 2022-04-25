@@ -1,7 +1,7 @@
 package fr.rthd.jlc.env;
 
-import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.utils.Choice;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +25,7 @@ public class FunType {
     /**
      * Arguments
      */
-    public final List<FunArg> args;
+    private final List<FunArg> _args;
 
     /**
      * External or defined
@@ -45,10 +45,10 @@ public class FunType {
 
     /**
      * Clone constructor
-     * @param other
+     * @param other Other function
      */
     public FunType(FunType other) {
-        this(other.retType, other.name, other.args);
+        this(other.retType, other.name, other._args);
         this._isExternal = other._isExternal;
         this._isMain = other._isMain;
         this._isPure = other._isPure;
@@ -61,7 +61,7 @@ public class FunType {
     ) {
         this.retType = retType;
         this.name = name;
-        this.args = Arrays.asList(args);
+        this._args = Arrays.asList(args);
     }
 
     public FunType(
@@ -71,7 +71,7 @@ public class FunType {
     ) {
         this.retType = retType;
         this.name = name;
-        this.args = args;
+        this._args = args;
     }
 
     @Override
@@ -80,10 +80,10 @@ public class FunType {
             "%s %s(%s)",
             retType.getRealName(),
             name,
-            args.stream()
-                .map(FunArg::toString)
-                .reduce((a, b) -> a + ", " + b)
-                .orElse("")
+            _args.stream()
+                 .map(FunArg::toString)
+                 .reduce((a, b) -> a + ", " + b)
+                 .orElse("")
         );
     }
 
@@ -111,5 +111,13 @@ public class FunType {
     public FunType setExternal() {
         _isExternal = true;
         return this;
+    }
+
+    public void addArgFirst(FunArg arg) {
+        _args.add(0, arg);
+    }
+
+    public List<FunArg> getArgs() {
+        return _args;
     }
 }

@@ -125,7 +125,7 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                "(TBD)",
+                "%" + realName,
                 null,
                 0,
                 false,

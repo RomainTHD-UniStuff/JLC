@@ -3,6 +3,8 @@ package fr.rthd.jlc.compiler.llvm;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.Variable;
+import fr.rthd.jlc.env.ClassType;
+import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
@@ -11,20 +13,33 @@ import javalette.Absyn.Init;
 
 class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
     public Void visit(FnDef p, EnvCompiler env) {
-        FunType func = env.lookupFun(p.ident_);
+        FunType func;
+
+        ClassType c = env.getCurrentClass();
+        if (c == null) {
+            func = env.lookupFun(p.ident_);
+        } else {
+            func = c.getMethod(p.ident_);
+        }
 
         env.resetScope();
 
-        func.args.forEach(arg -> {
+        if (c != null) {
+            // `this` is the first argument
+            func.addArgFirst(new FunArg(TypeCode.forClass(c.name), "this"));
+        }
+
+        func.getArgs().forEach(arg -> {
             Variable var = env.createVar(arg.type, arg.name, false);
             env.insertVar(arg.name, var);
             arg.setGeneratedName(var.name);
         });
 
-        env.emit(env.instructionBuilder.functionDeclarationStart(func));
+        env.emit(env.instructionBuilder.functionDeclarationStart(c, func));
         env.emit(env.instructionBuilder.label("entry"));
 
-        func.args.forEach(arg -> new Init(
+        // FIXME: Document this
+        func.getArgs().forEach(arg -> new Init(
             arg.name,
             new EVar(arg.name)
         ).accept(new ItemVisitor(
