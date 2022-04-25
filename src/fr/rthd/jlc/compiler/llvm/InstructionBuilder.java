@@ -99,7 +99,7 @@ public class InstructionBuilder {
         FunType func
     ) {
         return new Instruction(String.format(
-            "define %s @%s(%s) {",
+            "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
             func.retType,
             (parentClass == null ? "" : parentClass.name + "__") + func.name,
             func.getArgs()
