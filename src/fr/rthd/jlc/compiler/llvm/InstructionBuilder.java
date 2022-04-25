@@ -1,9 +1,7 @@
 package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
-import fr.rthd.jlc.compiler.ComparisonOperator;
 import fr.rthd.jlc.compiler.Instruction;
-import fr.rthd.jlc.compiler.InstructionBuilder;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
@@ -12,24 +10,43 @@ import fr.rthd.jlc.env.FunType;
 import java.util.List;
 
 /**
- * Instruction builder for LLVM.
+ * Instruction builder for LLVM
  * @author RomainTHD
- * @see InstructionBuilder
  */
-public class LLVMInstructionBuilder extends InstructionBuilder {
-    @Override
+public class InstructionBuilder {
+    /**
+     * Output a new line
+     * @return Instruction
+     */
+    public Instruction newLine() {
+        return new Instruction("");
+    }
+
+    /**
+     * Output a comment
+     * @param comment Comment to add
+     * @return Instruction
+     */
     public Instruction comment(String comment) {
         return new Instruction(
             String.format("; %s", comment)
         );
     }
 
-    @Override
+    /**
+     * No-op
+     * @return Instruction
+     */
     public Instruction noop() {
         throw new UnsupportedOperationException("Noop is not supported by LLVM");
     }
 
-    @Override
+    /**
+     * Store a value in a variable
+     * @param dst Destination variable
+     * @param src Value
+     * @return Instruction
+     */
     public Instruction store(Variable dst, OperationItem src) {
         return new Instruction(String.format(
             "store %s %s, %s* %s",
@@ -40,7 +57,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Load a variable in memory to a temporary variable
+     * @param dst Destination variable
+     * @param src Source variable
+     * @return Instruction
+     */
     public Instruction load(Variable dst, Variable src) {
         return new Instruction(String.format(
             "%s = load %s, %s* %s",
@@ -51,7 +73,11 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Declare a new variable in memory
+     * @param dst Destination variable
+     * @return Instruction
+     */
     public Instruction declare(Variable dst) {
         return new Instruction(String.format(
             "%s = alloca %s",
@@ -60,7 +86,11 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Start a function declaration
+     * @param func Function to declare
+     * @return Instruction
+     */
     public Instruction functionDeclarationStart(FunType func) {
         return new Instruction(String.format(
             "define %s @%s(%s) {",
@@ -77,12 +107,19 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * End a function declaration
+     * @return Instruction
+     */
     public Instruction functionDeclarationEnd() {
         return new Instruction("}");
     }
 
-    @Override
+    /**
+     * Declare an external function
+     * @param func External function to declare
+     * @return Instruction
+     */
     public Instruction declareExternalFunction(FunType func) {
         return new Instruction(String.format(
             "declare %s @%s(%s)",
@@ -100,7 +137,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Call a void function
+     * @param funcName Function name
+     * @param args Arguments
+     * @return Instruction
+     */
     public Instruction call(
         String funcName,
         List<OperationItem> args
@@ -108,7 +150,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         return call(null, funcName, args);
     }
 
-    @Override
+    /**
+     * Call a non-void function
+     * @param dst Destination variable for return value
+     * @param funcName Function name
+     * @param args Arguments
+     * @return Instruction
+     */
     public Instruction call(
         Variable dst,
         String funcName,
@@ -126,14 +174,24 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Output a label
+     * @param labelName Label name
+     * @return Instruction
+     */
     public Instruction label(String labelName) {
         Instruction i = new Instruction(String.format("%s:", labelName));
         i.indentable = false;
         return i;
     }
 
-    @Override
+    /**
+     * Add two values
+     * @param dst Destination variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction add(
         Variable dst,
         OperationItem left,
@@ -149,7 +207,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Increment a variable
+     * @param dst Destination temp variable
+     * @param src Input variable
+     * @return Instruction
+     */
     public Instruction increment(
         Variable dst,
         Variable src
@@ -157,7 +220,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         return add(dst, src, new Literal(src.type, 1));
     }
 
-    @Override
+    /**
+     * Subtract two values
+     * @param dst Destination variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction subtract(
         Variable dst,
         OperationItem left,
@@ -173,7 +242,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Decrement a variable
+     * @param dst Destination temp variable
+     * @param src Input variable
+     * @return Instruction
+     */
     public Instruction decrement(
         Variable dst,
         Variable src
@@ -181,7 +255,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         return subtract(dst, src, new Literal(src.type, 1));
     }
 
-    @Override
+    /**
+     * Multiply two values
+     * @param dst Destination temp variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction multiply(
         Variable dst,
         OperationItem left,
@@ -197,7 +277,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Divide two values
+     * @param dst Destination temp variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction divide(
         Variable dst,
         OperationItem left,
@@ -213,7 +299,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Modulo two values
+     * @param dst Destination temp variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction modulo(
         Variable dst,
         OperationItem left,
@@ -228,7 +320,14 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Compare two values
+     * @param dst Destination temp variable
+     * @param left Left value
+     * @param operator Operator
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction compare(
         Variable dst,
         OperationItem left,
@@ -240,19 +339,29 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
             "%s = %ccmp %s %s %s, %s",
             dst,
             left.type == TypeCode.CDouble ? 'f' : 'i',
-            LLVMComparisonOperator.getOperand(operator, left.type),
+            ComparisonOperator.getOperand(operator, left.type),
             left.type,
             left,
             right
         ));
     }
 
-    @Override
+    /**
+     * Jump to a label
+     * @param label Label name
+     * @return Instruction
+     */
     public Instruction jump(String label) {
         return new Instruction(String.format("br label %%%s", label));
     }
 
-    @Override
+    /**
+     * Conditional jump, for if statements or while statements
+     * @param condition Condition value, boolean
+     * @param labelTrue Label name if condition is true
+     * @param labelFalse Label name if condition is false
+     * @return Instruction
+     */
     public Instruction conditionalJump(
         OperationItem condition,
         String labelTrue,
@@ -266,12 +375,19 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Void return
+     * @return Instruction
+     */
     public Instruction ret() {
         return new Instruction("ret void");
     }
 
-    @Override
+    /**
+     * Non-void return
+     * @param returned Returned value
+     * @return Instruction
+     */
     public Instruction ret(OperationItem returned) {
         return new Instruction(String.format(
             "ret %s %s",
@@ -280,7 +396,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * AND two values
+     * @param dst Destination temp variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction and(
         Variable dst,
         OperationItem left,
@@ -295,7 +417,13 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * OR two values
+     * @param dst Destination temp variable
+     * @param left Left value
+     * @param right Right value
+     * @return Instruction
+     */
     public Instruction or(
         Variable dst,
         OperationItem left,
@@ -310,7 +438,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Logic negation of a value
+     * @param dst Destination temp variable
+     * @param src Source value
+     * @return Instruction
+     */
     public Instruction not(
         Variable dst,
         OperationItem src
@@ -323,7 +456,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
+    /**
+     * Mathematical negation of a value
+     * @param dst Destination temp variable
+     * @param src Source value
+     * @return Instruction
+     */
     public Instruction neg(
         Variable dst,
         Variable src
@@ -344,7 +482,12 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         }
     }
 
-    @Override
+    /**
+     * Global string literal
+     * @param global Global variable
+     * @param content String content
+     * @return Instruction
+     */
     public Instruction globalStringLiteral(
         Variable global,
         String content
@@ -357,7 +500,6 @@ public class LLVMInstructionBuilder extends InstructionBuilder {
         ));
     }
 
-    @Override
     public Instruction loadStringLiteral(
         Variable dst,
         Variable global

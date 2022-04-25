@@ -1,6 +1,8 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.OperationItem;
+import fr.rthd.jlc.compiler.Variable;
 import javalette.Absyn.EQU;
 import javalette.Absyn.GE;
 import javalette.Absyn.GTH;

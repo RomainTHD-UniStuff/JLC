@@ -1,6 +1,8 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.Instruction;
+import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
@@ -19,7 +21,7 @@ import java.util.Map;
  * @see Env
  * @see Variable
  */
-class EnvCompiler extends Env<Variable, FunType, ClassType> {
+public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Indent character
      */

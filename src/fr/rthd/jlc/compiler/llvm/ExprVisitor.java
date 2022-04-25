@@ -1,6 +1,9 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.Literal;
+import fr.rthd.jlc.compiler.OperationItem;
+import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;

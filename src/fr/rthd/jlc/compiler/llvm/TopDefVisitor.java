@@ -1,4 +1,4 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;

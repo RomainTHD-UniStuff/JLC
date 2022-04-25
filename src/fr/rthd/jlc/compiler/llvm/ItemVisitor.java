@@ -1,7 +1,8 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.Variable;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.NoInit;

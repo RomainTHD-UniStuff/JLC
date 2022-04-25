@@ -1,6 +1,8 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeVisitor;
+import fr.rthd.jlc.compiler.OperationItem;
+import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;

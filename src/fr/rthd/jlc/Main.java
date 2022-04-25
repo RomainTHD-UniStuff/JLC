@@ -1,7 +1,7 @@
 package fr.rthd.jlc;
 
-import fr.rthd.jlc.compiler.llvm.LLVMInstructionBuilder;
-import fr.rthd.jlc.compiler.Compiler;
+import fr.rthd.jlc.compiler.llvm.InstructionBuilder;
+import fr.rthd.jlc.compiler.llvm.LLVMCompiler;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
@@ -53,8 +53,8 @@ public class Main {
             /*
             tree = new Optimizer().accept(tree, env);
              */
-            tree = new Compiler(
-                new LLVMInstructionBuilder()
+            tree = new LLVMCompiler(
+                new InstructionBuilder()
             ).accept(tree, env);
             System.err.println("OK");
         } catch (TypeException e) {

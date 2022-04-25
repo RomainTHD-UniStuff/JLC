@@ -1,4 +1,4 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.Visitor;
@@ -21,7 +21,7 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  * Compiler
  * @author RomainTHD
  */
-public class Compiler implements Visitor {
+public class LLVMCompiler implements Visitor {
     /**
      * Instruction builder
      */
@@ -31,7 +31,7 @@ public class Compiler implements Visitor {
      * Constructor
      * @param builder Instruction builder
      */
-    public Compiler(InstructionBuilder builder) {
+    public LLVMCompiler(InstructionBuilder builder) {
         instructionBuilder = builder;
     }
 

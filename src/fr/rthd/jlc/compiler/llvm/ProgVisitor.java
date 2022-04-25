@@ -1,4 +1,4 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Prog;
