@@ -136,7 +136,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             env
         );
 
-        if (!expr.type.isClass()) {
+        if (!expr.type.isObject()) {
             throw new InvalidMethodCallException(expr.type);
         }
 

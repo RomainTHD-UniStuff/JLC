@@ -48,7 +48,7 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             );
         }
 
-        if (type.isClass() && env.lookupClass(type) == null) {
+        if (type.isObject() && env.lookupClass(type) == null) {
             throw new NoSuchClassException(type);
         }
 
@@ -74,8 +74,8 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             exp.type
         );
 
-        if (exp.type.isClass()) {
-            if (!expectedType.isClass()) {
+        if (exp.type.isObject()) {
+            if (!expectedType.isObject()) {
                 // `int x = new A;`
                 throw e;
             }

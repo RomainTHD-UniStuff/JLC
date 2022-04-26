@@ -53,7 +53,7 @@ class RelOpVisitor implements RelOp.Visitor<String, Void> {
             TypeCode.CInt,
             TypeCode.CDouble,
             TypeCode.CBool
-        ) || (_left.isClass() && _left == _right)
+        ) || (_left.isObject() && _left == _right)
                ? null
                : "equality";
     }
@@ -63,7 +63,7 @@ class RelOpVisitor implements RelOp.Visitor<String, Void> {
             TypeCode.CInt,
             TypeCode.CDouble,
             TypeCode.CBool
-        ) || (_left.isClass() && _left == _right)
+        ) || (_left.isObject() && _left == _right)
                ? null
                : "difference";
     }
