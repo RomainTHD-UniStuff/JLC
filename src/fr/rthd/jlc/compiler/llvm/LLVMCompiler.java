@@ -12,6 +12,9 @@ import javalette.Absyn.Prog;
 import javalette.Absyn.Type;
 import javalette.Absyn.Void;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 import static fr.rthd.jlc.TypeCode.CBool;
 import static fr.rthd.jlc.TypeCode.CDouble;
 import static fr.rthd.jlc.TypeCode.CInt;
@@ -22,17 +25,10 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  * @author RomainTHD
  */
 public class LLVMCompiler implements Visitor {
-    /**
-     * Instruction builder
-     */
-    private static InstructionBuilder instructionBuilder;
+    private final String _outputFile;
 
-    /**
-     * Constructor
-     * @param builder Instruction builder
-     */
-    public LLVMCompiler(InstructionBuilder builder) {
-        instructionBuilder = builder;
+    public LLVMCompiler(String output) {
+        this._outputFile = output;
     }
 
     /**
@@ -66,9 +62,23 @@ public class LLVMCompiler implements Visitor {
      * @return Compiled program as a string
      */
     public Prog accept(Prog p, Env<?, FunType, ClassType> parent) {
-        EnvCompiler env = new EnvCompiler(parent, instructionBuilder);
+        EnvCompiler env = new EnvCompiler(parent, new InstructionBuilder());
         p.accept(new ProgVisitor(), env);
-        System.out.println(env.toAssembly());
+        String asm = env.toAssembly();
+
+        if (this._outputFile == null) {
+            System.out.println(asm);
+        } else {
+            try {
+                FileWriter fw = new FileWriter(this._outputFile);
+                fw.write(asm);
+                fw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                // TODO: Log error
+            }
+        }
+
         return p;
     }
 }
