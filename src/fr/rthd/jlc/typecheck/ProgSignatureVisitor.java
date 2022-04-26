@@ -1,6 +1,8 @@
 package fr.rthd.jlc.typecheck;
 
+import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.Attribute;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
@@ -10,13 +12,24 @@ import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typecheck.exception.NoSuchClassException;
 import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
 import fr.rthd.jlc.utils.Choice;
+import javalette.Absyn.Argument;
+import javalette.Absyn.Ass;
+import javalette.Absyn.Block;
+import javalette.Absyn.Class;
+import javalette.Absyn.FnDef;
+import javalette.Absyn.ListArg;
+import javalette.Absyn.ListStmt;
+import javalette.Absyn.ListTopDef;
 import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
 import javalette.Absyn.TopDef;
+import javalette.Absyn.TopFnDef;
 
-class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
-    public Void visit(Program p, EnvTypecheck env) {
-        for (TopDef def : p.listtopdef_) {
+class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
+    public Prog visit(Program p, EnvTypecheck env) {
+        ListTopDef listTopDef = p.listtopdef_;
+
+        for (TopDef def : listTopDef) {
             def.accept(new TopDefClassDefSignatureVisitor(), env);
         }
 
@@ -45,7 +58,34 @@ class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
             } while (superclass != null);
         }
 
-        for (TopDef def : p.listtopdef_) {
+        for (ClassType c : env.getAllClass()) {
+            // Create the constructor
+
+            ListArg args = new ListArg();
+            args.add(new Argument(new Class(c.name), "this"));
+
+            ListStmt body = new ListStmt();
+            for (Attribute attr : c.getAllAttributes()) {
+                if (attr.type.isPrimitive()) {
+                    // FIXME: Not working ?
+                    body.add(new Ass(
+                        attr.name,
+                        AnnotatedExpr.getDefaultValue(attr.type)
+                    ));
+                }
+            }
+
+            listTopDef.add(new TopFnDef(
+                new FnDef(
+                    new javalette.Absyn.Void(),
+                    c.getConstructorName(),
+                    args,
+                    new Block(body)
+                )
+            ));
+        }
+
+        for (TopDef def : listTopDef) {
             def.accept(new TopDefSignatureVisitor(), env);
         }
 
@@ -100,6 +140,6 @@ class ProgSignatureVisitor implements Prog.Visitor<Void, EnvTypecheck> {
             );
         }
 
-        return null;
+        return new Program(listTopDef);
     }
 }

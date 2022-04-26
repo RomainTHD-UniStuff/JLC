@@ -162,4 +162,8 @@ public class ClassType {
                _attributes +
                "}";
     }
+
+    public String getConstructorName() {
+        return this.name + "__constructor";
+    }
 }

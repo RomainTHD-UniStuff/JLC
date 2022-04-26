@@ -8,6 +8,7 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -179,6 +180,16 @@ public class InstructionBuilder {
                 .reduce((a, b) -> String.format("%s, %s", a, b))
                 .orElse("")
         ));
+    }
+
+    public Instruction constructor(
+        Variable var,
+        ClassType c
+    ) {
+        return call(
+            c.getConstructorName(),
+            Collections.singletonList(var)
+        );
     }
 
     /**
