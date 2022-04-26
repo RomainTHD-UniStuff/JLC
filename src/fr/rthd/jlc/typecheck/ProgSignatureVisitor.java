@@ -30,10 +30,12 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
         ListTopDef listTopDef = p.listtopdef_;
 
         for (TopDef def : listTopDef) {
+            // List all the classes
             def.accept(new TopDefClassDefSignatureVisitor(), env);
         }
 
         for (ClassType c : env.getAllClass()) {
+            // Update all the classes' superclass with a java object reference
             if (c.superclassName == null) {
                 c.updateSuperclass(null);
             } else {
@@ -46,6 +48,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
         }
 
         for (ClassType c : env.getAllClass()) {
+            // Check for cyclic inheritance
             ClassType superclass = c;
             do {
                 if (c.equals(superclass.getSuperclass())) {
@@ -58,8 +61,13 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             } while (superclass != null);
         }
 
+        for (TopDef def : listTopDef) {
+            // List all the functions, methods and attributes
+            def.accept(new TopDefSignatureVisitor(), env);
+        }
+
         for (ClassType c : env.getAllClass()) {
-            // Create the constructor
+            // Add the constructors
 
             ListArg args = new ListArg();
             args.add(new Argument(new Class(c.name), "this"));
@@ -67,7 +75,9 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             ListStmt body = new ListStmt();
             for (Attribute attr : c.getAllAttributes()) {
                 if (attr.type.isPrimitive()) {
-                    // FIXME: Not working ?
+                    // FIXME: The constructor shouldn't be a top-level function
+                    //  but a method of the class, so that it can access the
+                    //  attributes directly.
                     body.add(new Ass(
                         attr.name,
                         AnnotatedExpr.getDefaultValue(attr.type)
@@ -75,19 +85,20 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
                 }
             }
 
-            listTopDef.add(new TopFnDef(
+            TopDef def = new TopFnDef(
                 new FnDef(
                     new javalette.Absyn.Void(),
                     c.getConstructorName(),
                     args,
                     new Block(body)
                 )
-            ));
+            );
+
+            def.accept(new TopDefSignatureVisitor(), env);
+            listTopDef.add(def);
         }
 
-        for (TopDef def : listTopDef) {
-            def.accept(new TopDefSignatureVisitor(), env);
-        }
+        // Add the external functions like `printInt`
 
         env.insertFun(new FunType(
             TypeCode.CVoid,
@@ -116,6 +127,8 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             TypeCode.CDouble,
             "readDouble"
         ).setExternal().setPure(Choice.FALSE));
+
+        // Check for the main function
 
         FunType mainFunc = env.lookupFun("main");
         if (mainFunc == null) {
