@@ -26,16 +26,36 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 
 class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
+    @Override
     public Prog visit(Program p, EnvTypecheck env) {
         ListTopDef listTopDef = p.listtopdef_;
+        listAllClasses(listTopDef, env);
+        updateSuperclasses(env);
+        checkCycles(env);
+        listFunctions(listTopDef, env);
+        addConstructors(listTopDef, env);
+        addExternalFunctions(env);
+        checkMain(env);
+        return new Program(listTopDef);
+    }
 
+    /**
+     * List all the classes in the program
+     * @param listTopDef List of top definitions
+     * @param env Environment
+     */
+    private void listAllClasses(ListTopDef listTopDef, EnvTypecheck env) {
         for (TopDef def : listTopDef) {
-            // List all the classes
             def.accept(new TopDefClassDefSignatureVisitor(), env);
         }
+    }
 
+    /**
+     * Update all the classes' superclass with a java object reference
+     * @param env Environment
+     */
+    private void updateSuperclasses(EnvTypecheck env) {
         for (ClassType c : env.getAllClass()) {
-            // Update all the classes' superclass with a java object reference
             if (c.superclassName == null) {
                 c.updateSuperclass(null);
             } else {
@@ -46,9 +66,14 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
                 c.updateSuperclass(superclass);
             }
         }
+    }
 
+    /**
+     * Check for cyclic inheritance
+     * @param env Environment
+     */
+    private void checkCycles(EnvTypecheck env) {
         for (ClassType c : env.getAllClass()) {
-            // Check for cyclic inheritance
             ClassType superclass = c;
             do {
                 if (c.equals(superclass.getSuperclass())) {
@@ -60,15 +85,26 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
                 superclass = superclass.getSuperclass();
             } while (superclass != null);
         }
+    }
 
+    /**
+     * List all the functions, methods and attributes
+     * @param listTopDef List of top definitions
+     * @param env Environment
+     */
+    private void listFunctions(ListTopDef listTopDef, EnvTypecheck env) {
         for (TopDef def : listTopDef) {
-            // List all the functions, methods and attributes
             def.accept(new TopDefSignatureVisitor(), env);
         }
+    }
 
+    /**
+     * Add constructors to all the classes
+     * @param listTopDef List of top definitions
+     * @param env Environment
+     */
+    private void addConstructors(ListTopDef listTopDef, EnvTypecheck env) {
         for (ClassType c : env.getAllClass()) {
-            // Add the constructors
-
             ListArg args = new ListArg();
             args.add(new Argument(new Class(c.name), "this"));
 
@@ -97,9 +133,14 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             def.accept(new TopDefSignatureVisitor(), env);
             listTopDef.add(def);
         }
+    }
 
-        // Add the external functions like `printInt`
 
+    /**
+     * Add the external functions to the environment, like `printInt`
+     * @param env Environment
+     */
+    private void addExternalFunctions(EnvTypecheck env) {
         env.insertFun(new FunType(
             TypeCode.CVoid,
             "printInt",
@@ -127,9 +168,14 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             TypeCode.CDouble,
             "readDouble"
         ).setExternal().setPure(Choice.FALSE));
+    }
 
-        // Check for the main function
-
+    /**
+     * Check everything related to the main function of the program
+     * @param env Environment
+     */
+    private void checkMain(EnvTypecheck env) {
+        // Check that main exists
         FunType mainFunc = env.lookupFun("main");
         if (mainFunc == null) {
             throw new NoSuchFunctionException("main");
@@ -137,6 +183,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             mainFunc.setAsMain();
         }
 
+        // Check that it returns an int
         if (mainFunc.retType != TypeCode.CInt) {
             throw new InvalidReturnedTypeException(
                 "main",
@@ -145,6 +192,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             );
         }
 
+        // Check that it has no arguments
         if (!mainFunc.getArgs().isEmpty()) {
             throw new InvalidArgumentCountException(
                 "main",
@@ -152,7 +200,5 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
                 mainFunc.getArgs().size()
             );
         }
-
-        return new Program(listTopDef);
     }
 }
