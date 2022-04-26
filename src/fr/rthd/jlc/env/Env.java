@@ -274,7 +274,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @throws EnvException If the class is already defined
      */
     public void insertClass(Class cls) throws EnvException {
-        if (lookupFun(cls.name) == null) {
+        if (lookupClass(cls.name) == null) {
             _classSignatures.put(cls.name, cls);
         } else {
             throw new SymbolAlreadyDefinedException(cls.name);
