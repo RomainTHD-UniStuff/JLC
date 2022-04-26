@@ -26,11 +26,13 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.declare(
             env.lookupVar(p.ident_)
         ));
-        env.emit(env.instructionBuilder.store(
-            env.lookupVar(p.ident_),
-            AnnotatedExpr.getDefaultValue(type)
-                         .accept(new ExprVisitor(), env)
-        ));
+        if (type.isPrimitive()) {
+            env.emit(env.instructionBuilder.store(
+                env.lookupVar(p.ident_),
+                AnnotatedExpr.getDefaultValue(type)
+                             .accept(new ExprVisitor(), env)
+            ));
+        }
         env.emit(env.instructionBuilder.newLine());
         return null;
     }

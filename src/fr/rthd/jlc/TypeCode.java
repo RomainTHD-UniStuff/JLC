@@ -125,7 +125,7 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                "%" + realName,
+                "%" + realName + "*",
                 null,
                 0,
                 false,
@@ -198,11 +198,20 @@ public class TypeCode {
         return _baseType != null;
     }
 
-    public boolean isClass() {
+    public boolean isObject() {
         return _baseType == null && !_isPrimitive;
     }
 
     public Object getDefaultValue() {
         return _defaultValue;
+    }
+
+    public String withoutPointer() {
+        String s = toString();
+        if (isPrimitive()) {
+            return s;
+        } else {
+            return s.substring(0, s.length() - 1);
+        }
     }
 }

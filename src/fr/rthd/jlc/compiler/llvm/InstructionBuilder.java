@@ -84,7 +84,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = alloca %s",
             dst,
-            dst.type
+            dst.type.withoutPointer()
         ));
     }
 
@@ -105,9 +105,8 @@ public class InstructionBuilder {
             func.getArgs()
                 .stream()
                 .map(arg -> String.format(
-                    "%s%s %%%s",
+                    "%s %%%s",
                     arg.type,
-                    arg.type.isPrimitive() ? "" : "*",
                     arg.getGeneratedName()
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))

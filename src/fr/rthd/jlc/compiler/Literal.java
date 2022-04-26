@@ -25,6 +25,10 @@ public class Literal extends OperationItem {
 
     @Override
     public String toString() {
-        return value.toString();
+        if (value == null) {
+            return "null";
+        } else {
+            return value.toString();
+        }
     }
 }
