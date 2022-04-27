@@ -67,6 +67,12 @@ public class ArgParse {
     public final Backend backend;
 
     /**
+     * Print the AST or not
+     * Flag --ast or --print-ast
+     */
+    public final boolean printAST;
+
+    /**
      * Constructor, builder pattern
      * @param showHelp Show help or not
      * @param verbosity Verbosity level
@@ -75,6 +81,7 @@ public class ArgParse {
      * @param inputFile Input file
      * @param outputFile Output file
      * @param backend Specified backend
+     * @param printAST Print the AST or not
      */
     private ArgParse(
         boolean showHelp,
@@ -83,7 +90,8 @@ public class ArgParse {
         boolean typecheckOnly,
         String inputFile,
         String outputFile,
-        Backend backend
+        Backend backend,
+        boolean printAST
     ) {
         this.showHelp = showHelp;
         this.verbosity = verbosity;
@@ -92,6 +100,7 @@ public class ArgParse {
         this.inputFile = inputFile;
         this.outputFile = outputFile;
         this.backend = backend;
+        this.printAST = printAST;
     }
 
     /**
@@ -116,6 +125,7 @@ public class ArgParse {
         String inputFile = null;
         String outputFile = null;
         Backend backend = Backend.LLVM;
+        boolean printAST = false;
 
         String linkedFlag = null;
         for (String arg : args) {
@@ -185,6 +195,11 @@ public class ArgParse {
                 case "--typecheck":
                 case "-t":
                     typecheckOnly = true;
+                    break;
+
+                case "--print-ast":
+                case "--ast":
+                    printAST = true;
                     break;
 
                 case "-h":
@@ -281,7 +296,8 @@ public class ArgParse {
             typecheckOnly,
             inputFile,
             outputFile,
-            backend
+            backend,
+            printAST
         );
     }
 

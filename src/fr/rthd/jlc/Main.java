@@ -5,10 +5,12 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
+import fr.rthd.jlc.internal.Unannotater;
 import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
 import javalette.Absyn.Prog;
+import javalette.PrettyPrinter;
 import javalette.Yylex;
 import javalette.parser;
 
@@ -47,6 +49,7 @@ public class Main {
             "\t-v, --info, --verbose\t\t\tShow info",
             "\t-vv, --debug, --very-verbose\t\tShow debug",
             "\t-t, --typecheck-only, --typecheck\tOnly typecheck",
+            "\t--ast, --ast-only\t\t\t\tOnly print AST",
             "\t-h, --help\t\t\t\tShow this help",
             "\t-Oz, -Os, -0, --O0, --O1, --O2, --O3\tOptimization level",
             "",
@@ -110,8 +113,17 @@ public class Main {
                 exit(0);
             }
 
-            if (opt.optimizationLevel > 0) {
-                tree = new Optimizer().accept(tree, env);
+            if (opt.optimizationLevel != 0) {
+                tree = new Optimizer(opt.optimizationLevel).accept(tree, env);
+            }
+
+            if (opt.printAST) {
+                // TODO: Respect the -o flag
+                System.out.println(PrettyPrinter.print(new Unannotater().accept(
+                    tree,
+                    env
+                )));
+                exit(0);
             }
 
             if (opt.backend == ArgParse.Backend.LLVM) {

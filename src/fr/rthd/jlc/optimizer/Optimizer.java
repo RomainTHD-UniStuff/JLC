@@ -84,6 +84,9 @@ import javalette.Absyn.While;
  * @author RomainTHD
  */
 public class Optimizer implements Visitor {
+    public Optimizer(int optimizationLevel) {
+    }
+
     /**
      * Generic action on an operator. The correct function will be called if
      * both sides are literals. Otherwise, the default action will be called.
