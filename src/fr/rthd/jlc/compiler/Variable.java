@@ -16,7 +16,7 @@ public class Variable extends OperationItem {
     /**
      * Global or not
      */
-    private boolean _isGlobal;
+    private final boolean _isGlobal;
 
     /**
      * Pointer or not
@@ -31,14 +31,21 @@ public class Variable extends OperationItem {
     /**
      * Variable size. Only used for strings for now
      */
-    private int _size;
+    private final int _size;
 
     /**
      * Constructor
-     * @param type Variable type
-     * @param name Variable name
-     * @param isPointer Is a pointer or not
-     * @param isClassVariable Is a class variable or not
+     */
+    public Variable(
+        TypeCode type,
+        String name,
+        boolean isPointer
+    ) {
+        this(type, name, isPointer, false, false, 1);
+    }
+
+    /**
+     * Constructor
      */
     public Variable(
         TypeCode type,
@@ -46,34 +53,30 @@ public class Variable extends OperationItem {
         boolean isPointer,
         boolean isClassVariable
     ) {
-        super(type);
-        this.name = name;
-        this._isGlobal = false;
-        this._isPointer = isPointer;
-        this._size = 1;
-        this._isClassVariable = isClassVariable;
+        this(type, name, isPointer, isClassVariable, false, 1);
     }
 
     /**
      * Constructor
-     * @param type Variable type
-     * @param name Variable name
-     * @param isPointer Is a pointer or not
      */
     public Variable(
         TypeCode type,
         String name,
-        boolean isPointer
+        boolean isPointer,
+        boolean isClassVariable,
+        boolean isGlobal,
+        int size
     ) {
-        this(type, name, isPointer, false);
+        super(type);
+        this.name = name;
+        this._isPointer = isPointer;
+        this._isClassVariable = isClassVariable;
+        this._isGlobal = isGlobal;
+        this._size = size;
     }
 
     public boolean isGlobal() {
         return this._isGlobal;
-    }
-
-    public void setGlobal() {
-        this._isGlobal = true;
     }
 
     public boolean isPointer() {
@@ -88,8 +91,8 @@ public class Variable extends OperationItem {
         return this._size;
     }
 
-    public void setSize(int size) {
-        this._size = size;
+    public String getName() {
+        return name;
     }
 
     @Override

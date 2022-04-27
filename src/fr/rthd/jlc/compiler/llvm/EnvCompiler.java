@@ -243,14 +243,11 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @return String literal address
      */
     public Variable createGlobalStringLiteral(String content) {
-        Variable var = new Variable(TypeCode.CString, String.format(
+        return new Variable(TypeCode.CString, String.format(
             ".string%c%s",
             SEP,
             getHash(content)
-        ), false);
-        var.setGlobal();
-        var.setSize(content.length() + 1);
-        return var;
+        ), false, false, true, content.length() + 1);
     }
 
     /**
