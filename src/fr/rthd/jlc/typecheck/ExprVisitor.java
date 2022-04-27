@@ -69,12 +69,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             throw new SelfOutOfClassException();
         }
 
-        return new AnnotatedExpr<>(
-            // FIXME: Error prone, we should probably store the typecode
-            //  of the class in the class itself
-            TypeCode.forClass(c.name),
-            e
-        );
+        return new AnnotatedExpr<>(c.getType(), e);
     }
 
     public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
@@ -172,7 +167,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         if (c == null) {
             throw new NoSuchClassException(e.ident_);
         }
-        return new AnnotatedExpr<>(TypeCode.forClass(c.name), e);
+        return new AnnotatedExpr<>(c.getType(), e);
     }
 
     public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {

@@ -1,5 +1,7 @@
 package fr.rthd.jlc.env;
 
+import fr.rthd.jlc.TypeCode;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -165,5 +167,9 @@ public class ClassType {
 
     public String getConstructorName() {
         return "__constructor";
+    }
+
+    public TypeCode getType() {
+        return TypeCode.forClass(name);
     }
 }
