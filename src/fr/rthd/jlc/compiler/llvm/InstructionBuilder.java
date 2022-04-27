@@ -77,6 +77,28 @@ public class InstructionBuilder {
     }
 
     /**
+     * Load a class attribute in memory
+     * @param dst Destination variable
+     * @param arg Attribute location
+     * @return Instruction
+     */
+    public Instruction loadAttribute(
+        Variable dst,
+        Variable thisVar,
+        int arg
+    ) {
+        // FIXME: Ugly use of int
+        return new Instruction(String.format(
+            "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
+            dst,
+            thisVar.type,
+            thisVar.type,
+            thisVar,
+            arg
+        ));
+    }
+
+    /**
      * Declare a new variable in memory
      * @param dst Destination variable
      * @return Instruction
@@ -85,7 +107,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = alloca %s",
             dst,
-            dst.type.withoutPointer()
+            dst.type
         ));
     }
 
@@ -102,12 +124,15 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
             func.retType,
-            (parentClass == null ? "" : parentClass.name + "__") + func.name,
+            (parentClass == null ? "" : parentClass.name + "$") + func.name,
             func.getArgs()
                 .stream()
                 .map(arg -> String.format(
-                    "%s %%%s",
+                    "%s%s %%%s",
                     arg.type,
+                    arg.type.isPrimitive() ? "" : "*",
+                    // FIXME: Shouldn't be used, will not work with
+                    //  primitive pointers
                     arg.getGeneratedName()
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))

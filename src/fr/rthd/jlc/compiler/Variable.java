@@ -21,7 +21,12 @@ public class Variable extends OperationItem {
     /**
      * Pointer or not
      */
-    private boolean _isPointer;
+    private final boolean _isPointer;
+
+    /**
+     * Class variable or not
+     */
+    private final boolean _isClassVariable;
 
     /**
      * Variable size. Only used for strings for now
@@ -33,13 +38,34 @@ public class Variable extends OperationItem {
      * @param type Variable type
      * @param name Variable name
      * @param isPointer Is a pointer or not
+     * @param isClassVariable Is a class variable or not
      */
-    public Variable(TypeCode type, String name, boolean isPointer) {
+    public Variable(
+        TypeCode type,
+        String name,
+        boolean isPointer,
+        boolean isClassVariable
+    ) {
         super(type);
         this.name = name;
         this._isGlobal = false;
         this._isPointer = isPointer;
         this._size = 1;
+        this._isClassVariable = isClassVariable;
+    }
+
+    /**
+     * Constructor
+     * @param type Variable type
+     * @param name Variable name
+     * @param isPointer Is a pointer or not
+     */
+    public Variable(
+        TypeCode type,
+        String name,
+        boolean isPointer
+    ) {
+        this(type, name, isPointer, false);
     }
 
     public boolean isGlobal() {
@@ -54,8 +80,8 @@ public class Variable extends OperationItem {
         return this._isPointer;
     }
 
-    public void setPointerStatus(boolean isPointer) {
-        this._isPointer = isPointer;
+    public boolean isClassVariable() {
+        return this._isClassVariable;
     }
 
     public int getSize() {

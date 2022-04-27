@@ -212,12 +212,29 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @return Variable
      */
     public Variable createVar(TypeCode type, String name, boolean isPointer) {
+        return createVar(type, name, isPointer, false);
+    }
+
+    /**
+     * Create a variable
+     * @param type Variable type
+     * @param name Variable name
+     * @param isPointer Whether the variable is a pointer or not
+     * @param isClassVariable Whether the variable is a class variable or not
+     * @return Variable
+     */
+    public Variable createVar(
+        TypeCode type,
+        String name,
+        boolean isPointer,
+        boolean isClassVariable
+    ) {
         return new Variable(type, String.format(
             "%s%c%s",
             name,
             SEP,
             getVariableUID(name)
-        ), isPointer);
+        ), isPointer, isClassVariable);
     }
 
     /**

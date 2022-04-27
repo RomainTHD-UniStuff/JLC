@@ -3,6 +3,7 @@ package fr.rthd.jlc.compiler.llvm;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.Variable;
+import fr.rthd.jlc.env.Attribute;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
@@ -10,6 +11,8 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.Init;
+
+import java.util.List;
 
 class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
     public Void visit(FnDef p, EnvCompiler env) {
@@ -26,7 +29,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
 
         if (c != null) {
             // `this` is the first argument
-            func.addArgFirst(new FunArg(TypeCode.forClass(c.name), "this"));
+            func.addArgFirst(new FunArg(c.getType(), "this"));
         }
 
         func.getArgs().forEach(arg -> {
@@ -54,6 +57,25 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                     arg.type,
                     true
                 ), env);
+            }
+        }
+
+        if (c != null) {
+            List<Attribute> attrs = c.getAllAttributes();
+            for (int i = 0; i < attrs.size(); i++) {
+                Attribute a = attrs.get(i);
+                Variable v = env.createVar(
+                    a.type,
+                    a.name,
+                    true,
+                    true
+                );
+                env.insertVar(a.name, v);
+                env.emit(env.instructionBuilder.loadAttribute(
+                    v,
+                    env.lookupVar("this"),
+                    i
+                ));
             }
         }
 
