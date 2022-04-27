@@ -19,8 +19,8 @@ public class AnnotatedStmt<T extends Stmt> extends Stmt {
     private final boolean _doesReturn;
 
     public AnnotatedStmt(T parentStmt, boolean doesReturn) {
-        this._parentStmt = parentStmt;
-        this._doesReturn = doesReturn;
+        _parentStmt = parentStmt;
+        _doesReturn = doesReturn;
     }
 
     public AnnotatedStmt(T parentStmt) {

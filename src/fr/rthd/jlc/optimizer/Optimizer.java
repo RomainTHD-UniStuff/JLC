@@ -505,10 +505,10 @@ public class Optimizer implements Visitor {
     }
 
     private static class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
-        private final TypeCode varType;
+        private final TypeCode _varType;
 
         public ItemVisitor(TypeCode varType) {
-            this.varType = varType;
+            _varType = varType;
         }
 
         public NoInit visit(NoInit s, EnvOptimizer env) {
@@ -523,7 +523,7 @@ public class Optimizer implements Visitor {
 
             env.insertVar(
                 s.ident_,
-                AnnotatedExpr.getDefaultValue(varType),
+                AnnotatedExpr.getDefaultValue(_varType),
                 true
             );
             return new NoInit(s.ident_);
@@ -733,18 +733,18 @@ public class Optimizer implements Visitor {
     }
 
     private static class AddOpVisitor implements AddOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
-        private final AnnotatedExpr<?> left;
-        private final AnnotatedExpr<?> right;
+        private final AnnotatedExpr<?> _left;
+        private final AnnotatedExpr<?> _right;
 
         public AddOpVisitor(AnnotatedExpr<?> left, AnnotatedExpr<?> right) {
-            this.left = left;
-            this.right = right;
+            _left = left;
+            _right = right;
         }
 
         public AnnotatedExpr<?> visit(Plus p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> new ELitInt(l + r),
                 (l, r) -> new ELitDoub(l + r),
                 null,
@@ -753,9 +753,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Minus p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> new ELitInt(l - r),
                 (l, r) -> new ELitDoub(l - r),
                 null,
@@ -765,18 +765,18 @@ public class Optimizer implements Visitor {
     }
 
     private static class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
-        private final AnnotatedExpr<?> left;
-        private final AnnotatedExpr<?> right;
+        private final AnnotatedExpr<?> _left;
+        private final AnnotatedExpr<?> _right;
 
         public MulOpVisitor(AnnotatedExpr<?> left, AnnotatedExpr<?> right) {
-            this.left = left;
-            this.right = right;
+            _left = left;
+            _right = right;
         }
 
         public AnnotatedExpr<?> visit(Times p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> new ELitInt(l * r),
                 (l, r) -> new ELitDoub(l * r),
                 null,
@@ -785,9 +785,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Div p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> new ELitInt(l / r),
                 (l, r) -> new ELitDoub(l / r),
                 null,
@@ -796,9 +796,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Mod p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> new ELitInt(l % r),
                 (l, r) -> new ELitDoub(l % r),
                 null,
@@ -808,18 +808,18 @@ public class Optimizer implements Visitor {
     }
 
     private static class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
-        private final AnnotatedExpr<?> left;
-        private final AnnotatedExpr<?> right;
+        private final AnnotatedExpr<?> _left;
+        private final AnnotatedExpr<?> _right;
 
         public RelOpVisitor(AnnotatedExpr<?> left, AnnotatedExpr<?> right) {
-            this.left = left;
-            this.right = right;
+            _left = left;
+            _right = right;
         }
 
         public AnnotatedExpr<?> visit(LTH p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> l < r ? new ELitTrue() : new ELitFalse(),
                 (l, r) -> l < r ? new ELitTrue() : new ELitFalse(),
                 null,
@@ -828,9 +828,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(LE p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
                 (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
                 null,
@@ -839,9 +839,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(GTH p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> l > r ? new ELitTrue() : new ELitFalse(),
                 (l, r) -> l > r ? new ELitTrue() : new ELitFalse(),
                 null,
@@ -850,9 +850,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(GE p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
                 (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
                 null,
@@ -861,9 +861,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(EQU p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> l.equals(r) ? new ELitTrue() : new ELitFalse(),
                 (l, r) -> l.equals(r) ? new ELitTrue() : new ELitFalse(),
                 (l, r) -> l.equals(r) ? new ELitTrue() : new ELitFalse(),
@@ -872,9 +872,9 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(NE p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.getType(), operatorAction(
-                left,
-                right,
+            return new AnnotatedExpr<>(_left.getType(), operatorAction(
+                _left,
+                _right,
                 (l, r) -> l.equals(r) ? new ELitFalse() : new ELitTrue(),
                 (l, r) -> l.equals(r) ? new ELitFalse() : new ELitTrue(),
                 (l, r) -> l.equals(r) ? new ELitFalse() : new ELitTrue(),

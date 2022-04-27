@@ -20,7 +20,7 @@ public class Literal extends OperationItem {
      */
     public Literal(TypeCode type, Object value) {
         super(type);
-        this._value = value;
+        _value = value;
     }
 
     @Override

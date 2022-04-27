@@ -30,8 +30,8 @@ public class FunTypeOptimizer extends FunType {
      */
     public FunTypeOptimizer(FunType funType) {
         super(funType);
-        this._usedBy = new HashSet<>();
-        this._purityDependencies = new HashSet<>();
+        _usedBy = new HashSet<>();
+        _purityDependencies = new HashSet<>();
     }
 
     /**
@@ -40,7 +40,7 @@ public class FunTypeOptimizer extends FunType {
      * @param caller Function using this
      */
     public void addUsageIn(FunTypeOptimizer caller) {
-        this._usedBy.add(caller);
+        _usedBy.add(caller);
         caller._purityDependencies.add(this);
     }
 
@@ -76,17 +76,17 @@ public class FunTypeOptimizer extends FunType {
         while (!queue.isEmpty()) {
             FunTypeOptimizer funType = queue.poll();
             if (funType.isPure() == Choice.FALSE) {
-                this.setPure(Choice.FALSE);
+                setPure(Choice.FALSE);
                 return;
             } else if (!visited.contains(funType)) {
                 visited.add(funType);
                 queue.addAll(funType._purityDependencies);
             }
         }
-        this.setPure(Choice.TRUE);
+        setPure(Choice.TRUE);
     }
 
     public void clearUsage() {
-        this._usedBy.clear();
+        _usedBy.clear();
     }
 }

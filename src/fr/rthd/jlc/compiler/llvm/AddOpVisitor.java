@@ -7,23 +7,23 @@ import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
 
 class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
-    private final OperationItem left;
-    private final OperationItem right;
+    private final OperationItem _left;
+    private final OperationItem _right;
 
     public AddOpVisitor(OperationItem left, OperationItem right) {
-        this.left = left;
-        this.right = right;
+        _left = left;
+        _right = right;
     }
 
     public OperationItem visit(Plus p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.getType(), "add");
-        env.emit(env.instructionBuilder.add(var, left, right));
+        Variable var = env.createTempVar(_left.getType(), "add");
+        env.emit(env.instructionBuilder.add(var, _left, _right));
         return var;
     }
 
     public OperationItem visit(Minus p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.getType(), "sub");
-        env.emit(env.instructionBuilder.subtract(var, left, right));
+        Variable var = env.createTempVar(_left.getType(), "sub");
+        env.emit(env.instructionBuilder.subtract(var, _left, _right));
         return var;
     }
 }

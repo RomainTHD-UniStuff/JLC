@@ -9,27 +9,27 @@ import javalette.Absyn.NoInit;
 import javalette.Absyn.Void;
 
 class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
-    private final TypeCode type;
-    private final boolean override;
+    private final TypeCode _type;
+    private final boolean _override;
 
     public ItemVisitor(TypeCode type) {
         this(type, false);
     }
 
     public ItemVisitor(TypeCode type, boolean override) {
-        this.type = type;
-        this.override = override;
+        _type = type;
+        _override = override;
     }
 
     public Void visit(NoInit p, EnvCompiler env) {
-        env.insertVar(p.ident_, env.createVar(type, p.ident_, true));
+        env.insertVar(p.ident_, env.createVar(_type, p.ident_, true));
         env.emit(env.instructionBuilder.declare(
             env.lookupVar(p.ident_)
         ));
-        if (type.isPrimitive()) {
+        if (_type.isPrimitive()) {
             env.emit(env.instructionBuilder.store(
                 env.lookupVar(p.ident_),
-                AnnotatedExpr.getDefaultValue(type)
+                AnnotatedExpr.getDefaultValue(_type)
                              .accept(new ExprVisitor(), env)
             ));
         }
@@ -38,13 +38,13 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
     }
 
     public Void visit(Init p, EnvCompiler env) {
-        Variable var = env.createVar(type, p.ident_, true);
+        Variable var = env.createVar(_type, p.ident_, true);
         env.emit(env.instructionBuilder.declare(var));
         env.emit(env.instructionBuilder.store(
             var,
             p.expr_.accept(new ExprVisitor(), env)
         ));
-        if (this.override) {
+        if (_override) {
             env.updateVar(p.ident_, var);
         } else {
             env.insertVar(p.ident_, var);

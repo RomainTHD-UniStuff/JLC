@@ -12,21 +12,21 @@ import javalette.Absyn.NE;
 import javalette.Absyn.RelOp;
 
 class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
-    private final OperationItem left;
-    private final OperationItem right;
+    private final OperationItem _left;
+    private final OperationItem _right;
 
     public RelOpVisitor(OperationItem left, OperationItem right) {
-        this.left = left;
-        this.right = right;
+        _left = left;
+        _right = right;
     }
 
     public OperationItem visit(LTH p, EnvCompiler env) {
         Variable var = env.createTempVar(TypeCode.CBool, "lt");
         env.emit(env.instructionBuilder.compare(
             var,
-            left,
+            _left,
             ComparisonOperator.LT,
-            right
+            _right
         ));
         return var;
     }
@@ -35,9 +35,9 @@ class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.createTempVar(TypeCode.CBool, "le");
         env.emit(env.instructionBuilder.compare(
             var,
-            left,
+            _left,
             ComparisonOperator.LE,
-            right
+            _right
         ));
         return var;
     }
@@ -46,9 +46,9 @@ class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.createTempVar(TypeCode.CBool, "gt");
         env.emit(env.instructionBuilder.compare(
             var,
-            left,
+            _left,
             ComparisonOperator.GT,
-            right
+            _right
         ));
         return var;
     }
@@ -57,9 +57,9 @@ class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.createTempVar(TypeCode.CBool, "ge");
         env.emit(env.instructionBuilder.compare(
             var,
-            left,
+            _left,
             ComparisonOperator.GE,
-            right
+            _right
         ));
         return var;
     }
@@ -68,9 +68,9 @@ class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.createTempVar(TypeCode.CBool, "eq");
         env.emit(env.instructionBuilder.compare(
             var,
-            left,
+            _left,
             ComparisonOperator.EQ,
-            right
+            _right
         ));
         return var;
     }
@@ -79,9 +79,9 @@ class RelOpVisitor implements RelOp.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.createTempVar(TypeCode.CBool, "ne");
         env.emit(env.instructionBuilder.compare(
             var,
-            left,
+            _left,
             ComparisonOperator.NE,
-            right
+            _right
         ));
         return var;
     }

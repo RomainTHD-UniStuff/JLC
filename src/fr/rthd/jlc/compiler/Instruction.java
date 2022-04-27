@@ -22,8 +22,8 @@ public class Instruction {
      * Constructor
      */
     public Instruction() {
-        this._commands = new ArrayList<>();
-        this._indentable = true;
+        _commands = new ArrayList<>();
+        _indentable = true;
     }
 
     /**
@@ -32,7 +32,7 @@ public class Instruction {
      */
     public Instruction(String command) {
         this();
-        this.add(command);
+        add(command);
     }
 
     /**
@@ -40,7 +40,7 @@ public class Instruction {
      * @param inst Instruction
      */
     protected void add(Instruction inst) {
-        this._commands.addAll(inst.emit());
+        _commands.addAll(inst.emit());
     }
 
     /**
@@ -48,7 +48,7 @@ public class Instruction {
      * @param command Command
      */
     protected void add(String command) {
-        this._commands.add(command);
+        _commands.add(command);
     }
 
     /**
@@ -64,6 +64,6 @@ public class Instruction {
     }
 
     public void setIndentable(boolean indentable) {
-        this._indentable = indentable;
+        _indentable = indentable;
     }
 }

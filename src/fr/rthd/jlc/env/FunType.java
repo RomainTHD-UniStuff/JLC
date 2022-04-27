@@ -49,9 +49,9 @@ public class FunType {
      */
     public FunType(FunType other) {
         this(other._retType, other._name, other._args);
-        this._isExternal = other._isExternal;
-        this._isMain = other._isMain;
-        this._isPure = other._isPure;
+        _isExternal = other._isExternal;
+        _isMain = other._isMain;
+        _isPure = other._isPure;
     }
 
     public FunType(
@@ -59,9 +59,9 @@ public class FunType {
         String name,
         FunArg... args
     ) {
-        this._retType = retType;
-        this._name = name;
-        this._args = Arrays.asList(args);
+        _retType = retType;
+        _name = name;
+        _args = Arrays.asList(args);
     }
 
     public FunType(
@@ -69,9 +69,9 @@ public class FunType {
         String name,
         List<FunArg> args
     ) {
-        this._retType = retType;
-        this._name = name;
-        this._args = args;
+        _retType = retType;
+        _name = name;
+        _args = args;
     }
 
     @Override

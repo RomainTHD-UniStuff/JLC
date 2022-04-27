@@ -23,8 +23,8 @@ public class Attribute {
      * @param name Attribute name
      */
     public Attribute(TypeCode type, String name) {
-        this._type = type;
-        this._name = name;
+        _type = type;
+        _name = name;
     }
 
     @Override

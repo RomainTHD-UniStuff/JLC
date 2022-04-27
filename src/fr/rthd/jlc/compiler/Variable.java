@@ -68,27 +68,27 @@ public class Variable extends OperationItem {
         int size
     ) {
         super(type);
-        this._name = name;
-        this._isPointer = isPointer;
-        this._isClassVariable = isClassVariable;
-        this._isGlobal = isGlobal;
-        this._size = size;
+        _name = name;
+        _isPointer = isPointer;
+        _isClassVariable = isClassVariable;
+        _isGlobal = isGlobal;
+        _size = size;
     }
 
     public boolean isGlobal() {
-        return this._isGlobal;
+        return _isGlobal;
     }
 
     public boolean isPointer() {
-        return this._isPointer;
+        return _isPointer;
     }
 
     public boolean isClassVariable() {
-        return this._isClassVariable;
+        return _isClassVariable;
     }
 
     public int getSize() {
-        return this._size;
+        return _size;
     }
 
     public String getName() {
@@ -100,7 +100,7 @@ public class Variable extends OperationItem {
         // Example: "%tmp"
         return String.format(
             "%c%s",
-            this.isGlobal() ? '@' : '%',
+            isGlobal() ? '@' : '%',
             _name
         );
     }

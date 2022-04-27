@@ -28,8 +28,8 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
     private final TypeCode _type;
 
     public AnnotatedExpr(TypeCode expType, T parentExp) {
-        this._type = expType;
-        this._parentExp = parentExp;
+        _type = expType;
+        _parentExp = parentExp;
     }
 
     /**

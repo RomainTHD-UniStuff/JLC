@@ -79,13 +79,13 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         InstructionBuilder builder
     ) {
         super(env);
-        this.instructionBuilder = builder;
-        this._output = new ArrayList<>();
-        this._varCount = new LinkedList<>();
-        this._labelCount = new LinkedList<>();
-        this._depthAccessCount = new HashMap<>();
-        this._depthAccessCount.put(getScopeDepth(), 0);
-        this._indentLevel = 0;
+        instructionBuilder = builder;
+        _output = new ArrayList<>();
+        _varCount = new LinkedList<>();
+        _labelCount = new LinkedList<>();
+        _depthAccessCount = new HashMap<>();
+        _depthAccessCount.put(getScopeDepth(), 0);
+        _indentLevel = 0;
 
         MessageDigest md = null;
         try {
@@ -93,7 +93,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         } catch (Exception ignored) {
             // MD5 not supported, use native `hashCode` instead
         }
-        this._hashAlgorithm = md;
+        _hashAlgorithm = md;
     }
 
     /**
@@ -110,11 +110,11 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     }
 
     public void indent() {
-        ++this._indentLevel;
+        ++_indentLevel;
     }
 
     public void unindent() {
-        --this._indentLevel;
+        --_indentLevel;
     }
 
     private String getIndentString() {

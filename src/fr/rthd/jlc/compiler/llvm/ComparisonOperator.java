@@ -16,7 +16,7 @@ class ComparisonOperator {
     public static final ComparisonOperator GE = new ComparisonOperator("ge");
     private final String _name;
     private ComparisonOperator(String name) {
-        this._name = name;
+        _name = name;
     }
 
     /**

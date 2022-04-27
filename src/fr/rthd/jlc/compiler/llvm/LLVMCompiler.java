@@ -17,7 +17,7 @@ public class LLVMCompiler implements Visitor {
     private final String _outputFile;
 
     public LLVMCompiler(String output) {
-        this._outputFile = output;
+        _outputFile = output;
     }
 
     /**
@@ -31,11 +31,11 @@ public class LLVMCompiler implements Visitor {
         p.accept(new ProgVisitor(), env);
         String asm = env.toAssembly();
 
-        if (this._outputFile == null) {
+        if (_outputFile == null) {
             System.out.println(asm);
         } else {
             try {
-                FileWriter fw = new FileWriter(this._outputFile);
+                FileWriter fw = new FileWriter(_outputFile);
                 fw.write(asm);
                 fw.close();
             } catch (IOException e) {

@@ -84,12 +84,12 @@ public class TypeCode {
         boolean isPrimitive,
         TypeCode baseType
     ) {
-        this._realName = realName;
-        this._assemblyName = assemblyName;
-        this._defaultValue = defaultValue;
-        this._size = size;
-        this._isPrimitive = isPrimitive;
-        this._baseType = baseType;
+        _realName = realName;
+        _assemblyName = assemblyName;
+        _defaultValue = defaultValue;
+        _size = size;
+        _isPrimitive = isPrimitive;
+        _baseType = baseType;
     }
 
     private static TypeCode fromPrimitive(
@@ -157,7 +157,7 @@ public class TypeCode {
 
     @Override
     public String toString() {
-        return this._assemblyName;
+        return _assemblyName;
     }
 
     @Override
@@ -168,7 +168,7 @@ public class TypeCode {
             return true;
         } else if (obj instanceof TypeCode) {
             TypeCode other = (TypeCode) obj;
-            return this._realName.equals(other._realName);
+            return _realName.equals(other._realName);
         } else {
             return false;
         }

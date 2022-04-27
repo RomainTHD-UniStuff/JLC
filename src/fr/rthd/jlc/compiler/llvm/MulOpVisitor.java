@@ -8,29 +8,29 @@ import javalette.Absyn.MulOp;
 import javalette.Absyn.Times;
 
 class MulOpVisitor implements MulOp.Visitor<OperationItem, EnvCompiler> {
-    private final OperationItem left;
-    private final OperationItem right;
+    private final OperationItem _left;
+    private final OperationItem _right;
 
     public MulOpVisitor(OperationItem left, OperationItem right) {
-        this.left = left;
-        this.right = right;
+        _left = left;
+        _right = right;
     }
 
     public OperationItem visit(Times p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.getType(), "mult");
-        env.emit(env.instructionBuilder.multiply(var, left, right));
+        Variable var = env.createTempVar(_left.getType(), "mult");
+        env.emit(env.instructionBuilder.multiply(var, _left, _right));
         return var;
     }
 
     public OperationItem visit(Div p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.getType(), "div");
-        env.emit(env.instructionBuilder.divide(var, left, right));
+        Variable var = env.createTempVar(_left.getType(), "div");
+        env.emit(env.instructionBuilder.divide(var, _left, _right));
         return var;
     }
 
     public OperationItem visit(Mod p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.getType(), "mod");
-        env.emit(env.instructionBuilder.modulo(var, left, right));
+        Variable var = env.createTempVar(_left.getType(), "mod");
+        env.emit(env.instructionBuilder.modulo(var, _left, _right));
         return var;
     }
 }

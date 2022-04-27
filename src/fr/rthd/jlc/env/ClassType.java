@@ -49,77 +49,77 @@ public class ClassType {
         String name,
         String superclassName
     ) {
-        this._name = name;
-        this._superclassName = superclassName;
-        this._methods = new HashMap<>();
-        this._attributes = new HashMap<>();
+        _name = name;
+        _superclassName = superclassName;
+        _methods = new HashMap<>();
+        _attributes = new HashMap<>();
     }
 
     public void addMethod(FunType f) {
-        this._methods.put(f.getName(), f);
+        _methods.put(f.getName(), f);
     }
 
     public Collection<FunType> getOwnMethods() {
-        return this._methods.values();
+        return _methods.values();
     }
 
     public Collection<FunType> getAllMethods() {
-        Collection<FunType> methods = new ArrayList<>(this.getOwnMethods());
-        if (this._superclassName != null) {
-            methods.addAll(this.getSuperclass().getAllMethods());
+        Collection<FunType> methods = new ArrayList<>(getOwnMethods());
+        if (_superclassName != null) {
+            methods.addAll(getSuperclass().getAllMethods());
         }
         return methods;
     }
 
     public FunType getMethod(String name) {
-        if (this._methods.containsKey(name)) {
-            return this._methods.get(name);
-        } else if (this._superclassName != null) {
-            return this.getSuperclass().getMethod(name);
+        if (_methods.containsKey(name)) {
+            return _methods.get(name);
+        } else if (_superclassName != null) {
+            return getSuperclass().getMethod(name);
         } else {
             return null;
         }
     }
 
     public void addAttribute(Attribute a) {
-        this._attributes.put(a.getName(), a);
+        _attributes.put(a.getName(), a);
     }
 
     public Collection<Attribute> getOwnAttributes() {
-        return this._attributes.values();
+        return _attributes.values();
     }
 
     public List<Attribute> getAllAttributes() {
         List<Attribute> attrs = new ArrayList<>();
-        if (this._superclassName != null) {
-            attrs.addAll(this.getSuperclass().getAllAttributes());
+        if (_superclassName != null) {
+            attrs.addAll(getSuperclass().getAllAttributes());
         }
-        attrs.addAll(this.getOwnAttributes());
+        attrs.addAll(getOwnAttributes());
         return attrs;
     }
 
     public boolean hasAttribute(String name) {
-        if (this._attributes.containsKey(name)) {
+        if (_attributes.containsKey(name)) {
             return true;
-        } else if (this._superclassName != null) {
-            return this.getSuperclass().hasAttribute(name);
+        } else if (_superclassName != null) {
+            return getSuperclass().hasAttribute(name);
         } else {
             return false;
         }
     }
 
     public boolean hasMethod(String name) {
-        if (this._methods.containsKey(name)) {
+        if (_methods.containsKey(name)) {
             return true;
-        } else if (this._superclassName != null) {
-            return this.getSuperclass().hasMethod(name);
+        } else if (_superclassName != null) {
+            return getSuperclass().hasMethod(name);
         } else {
             return false;
         }
     }
 
     public void updateSuperclass(ClassType c) {
-        this._superclass = c;
+        _superclass = c;
     }
 
     public ClassType getSuperclass() {
@@ -127,13 +127,13 @@ public class ClassType {
     }
 
     public boolean isCastableTo(ClassType c) {
-        if (this.equals(c)) {
+        if (equals(c)) {
             return true;
         }
-        if (this._superclassName == null) {
+        if (_superclassName == null) {
             return false;
         }
-        ClassType superclass = this.getSuperclass();
+        ClassType superclass = getSuperclass();
         return superclass.isCastableTo(c);
     }
 
@@ -147,7 +147,7 @@ public class ClassType {
             return false;
         } else {
             ClassType c = (ClassType) obj;
-            return this._name.equals(c._name);
+            return _name.equals(c._name);
         }
     }
 

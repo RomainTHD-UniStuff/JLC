@@ -37,7 +37,7 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassType> {
         for (FunType funType : env.getAllFun()) {
             // We receive `FunType` objects but need to store `FunTypeOptimizer`
             //  objects
-            this.insertFun(new FunTypeOptimizer(funType));
+            insertFun(new FunTypeOptimizer(funType));
         }
     }
 

@@ -53,10 +53,10 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * Empty constructor
      */
     public Env() {
-        this._funcSignatures = new HashMap<>();
-        this._classFuncSignatures = new HashMap<>();
-        this._classSignatures = new HashMap<>();
-        this._contexts = new LinkedList<>();
+        _funcSignatures = new HashMap<>();
+        _classFuncSignatures = new HashMap<>();
+        _classSignatures = new HashMap<>();
+        _contexts = new LinkedList<>();
     }
 
     /**
@@ -64,13 +64,13 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param baseEnv Parent environment
      */
     public Env(Env<?, Func, Class> baseEnv) {
-        this._funcSignatures = baseEnv._funcSignatures;
-        this._classFuncSignatures = baseEnv._classFuncSignatures;
-        this._classSignatures = baseEnv._classSignatures;
-        this._contexts = new LinkedList<>();
-        this._contexts.push(new HashMap<>());
-        this._currentClass = null;
-        this._callerClass = null;
+        _funcSignatures = baseEnv._funcSignatures;
+        _classFuncSignatures = baseEnv._classFuncSignatures;
+        _classSignatures = baseEnv._classSignatures;
+        _contexts = new LinkedList<>();
+        _contexts.push(new HashMap<>());
+        _currentClass = null;
+        _callerClass = null;
     }
 
 
@@ -114,7 +114,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     }
 
     public void setCurrentClass(Class c) {
-        this._currentClass = c;
+        _currentClass = c;
     }
 
     public Class getCaller() {
@@ -122,7 +122,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     }
 
     public void setCaller(Class c) {
-        this._callerClass = c;
+        _callerClass = c;
     }
 
     /**
@@ -249,7 +249,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     }
 
     public void setClassFunctions(Map<String, Func> fns) {
-        this._classFuncSignatures = Objects.requireNonNullElseGet(
+        _classFuncSignatures = Objects.requireNonNullElseGet(
             fns,
             HashMap::new
         );

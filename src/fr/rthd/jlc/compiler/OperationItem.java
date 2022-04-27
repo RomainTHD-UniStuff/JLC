@@ -17,7 +17,7 @@ public abstract class OperationItem {
      * @param type Item type
      */
     public OperationItem(TypeCode type) {
-        this._type = type;
+        _type = type;
     }
 
     /**

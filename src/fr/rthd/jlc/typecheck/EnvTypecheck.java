@@ -26,11 +26,11 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
     }
 
     public boolean doesReturn() {
-        return this._doesReturn;
+        return _doesReturn;
     }
 
     public void setReturn(boolean doesReturn) {
-        this._doesReturn = doesReturn;
+        _doesReturn = doesReturn;
     }
 
     public FunType getCurrentFunction() {
@@ -38,6 +38,6 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
     }
 
     public void setCurrentFunction(FunType currentFunction) {
-        this._currentFunction = currentFunction;
+        _currentFunction = currentFunction;
     }
 }

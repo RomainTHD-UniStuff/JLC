@@ -28,8 +28,8 @@ public class FunArg {
      * @param name Argument name
      */
     public FunArg(TypeCode type, String name) {
-        this._type = type;
-        this._name = name;
+        _type = type;
+        _name = name;
     }
 
     public String getGeneratedName() {
@@ -37,7 +37,7 @@ public class FunArg {
     }
 
     public void setGeneratedName(String name) {
-        this._generatedName = name;
+        _generatedName = name;
     }
 
     @Override

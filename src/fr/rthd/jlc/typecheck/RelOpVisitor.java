@@ -16,8 +16,8 @@ class RelOpVisitor implements RelOp.Visitor<String, Void> {
     private final TypeCode _right;
 
     public RelOpVisitor(TypeCode left, TypeCode right) {
-        this._left = left;
-        this._right = right;
+        _left = left;
+        _right = right;
     }
 
     private boolean bothTypes(TypeCode... expected) {
