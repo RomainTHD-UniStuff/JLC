@@ -10,6 +10,6 @@ class TopDefSignatureVisitor implements TopDef.Visitor<Void, EnvTypecheck> {
     }
 
     public Void visit(TopClsDef p, EnvTypecheck env) {
-        return p.classdef_.accept(new ClassDefSignatureVisitor(true), env);
+        return p.classdef_.accept(new ClassDefSignatureVisitor(false), env);
     }
 }

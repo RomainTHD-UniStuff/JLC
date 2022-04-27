@@ -1,8 +1,6 @@
 package fr.rthd.jlc.typecheck;
 
-import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
-import fr.rthd.jlc.env.Attribute;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
@@ -12,18 +10,10 @@ import fr.rthd.jlc.typecheck.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typecheck.exception.NoSuchClassException;
 import fr.rthd.jlc.typecheck.exception.NoSuchFunctionException;
 import fr.rthd.jlc.utils.Choice;
-import javalette.Absyn.Argument;
-import javalette.Absyn.Ass;
-import javalette.Absyn.Block;
-import javalette.Absyn.Class;
-import javalette.Absyn.FnDef;
-import javalette.Absyn.ListArg;
-import javalette.Absyn.ListStmt;
 import javalette.Absyn.ListTopDef;
 import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
 import javalette.Absyn.TopDef;
-import javalette.Absyn.TopFnDef;
 
 class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
     @Override
@@ -99,42 +89,15 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
     }
 
     /**
-     * Add constructors to all the classes
+     * Add the constructors to the classes
      * @param listTopDef List of top definitions
      * @param env Environment
      */
     private void addConstructors(ListTopDef listTopDef, EnvTypecheck env) {
-        for (ClassType c : env.getAllClass()) {
-            ListArg args = new ListArg();
-            args.add(new Argument(new Class(c.name), "this"));
-
-            ListStmt body = new ListStmt();
-            for (Attribute attr : c.getAllAttributes()) {
-                if (attr.type.isPrimitive()) {
-                    // FIXME: The constructor shouldn't be a top-level function
-                    //  but a method of the class, so that it can access the
-                    //  attributes directly.
-                    body.add(new Ass(
-                        attr.name,
-                        AnnotatedExpr.getDefaultValue(attr.type)
-                    ));
-                }
-            }
-
-            TopDef def = new TopFnDef(
-                new FnDef(
-                    new javalette.Absyn.Void(),
-                    c.getConstructorName(),
-                    args,
-                    new Block(body)
-                )
-            );
-
-            def.accept(new TopDefSignatureVisitor(), env);
-            listTopDef.add(def);
+        for (TopDef def : listTopDef) {
+            def.accept(new TopDefConstructorSignatureVisitor(), env);
         }
     }
-
 
     /**
      * Add the external functions to the environment, like `printInt`
