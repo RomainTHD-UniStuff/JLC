@@ -20,16 +20,16 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
     /**
      * Parent expression
      */
-    public final T parentExp;
+    private final T _parentExp;
 
     /**
      * Expression type
      */
-    public TypeCode type;
+    private final TypeCode _type;
 
     public AnnotatedExpr(TypeCode expType, T parentExp) {
-        this.type = expType;
-        this.parentExp = parentExp;
+        this._type = expType;
+        this._parentExp = parentExp;
     }
 
     /**
@@ -57,6 +57,14 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
         // Call the parent accept method
-        return parentExp.accept(v, arg);
+        return _parentExp.accept(v, arg);
+    }
+
+    public T getParentExp() {
+        return _parentExp;
+    }
+
+    public TypeCode getType() {
+        return _type;
     }
 }

@@ -10,14 +10,14 @@ public abstract class OperationItem {
     /**
      * Item type
      */
-    public final TypeCode type;
+    private final TypeCode _type;
 
     /**
      * Constructor
      * @param type Item type
      */
     public OperationItem(TypeCode type) {
-        this.type = type;
+        this._type = type;
     }
 
     /**
@@ -25,4 +25,8 @@ public abstract class OperationItem {
      * @return String representation of the item
      */
     public abstract String toString();
+
+    public TypeCode getType() {
+        return _type;
+    }
 }

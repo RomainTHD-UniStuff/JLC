@@ -46,12 +46,12 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      */
     private void updateSuperclasses(EnvTypecheck env) {
         for (ClassType c : env.getAllClass()) {
-            if (c.superclassName == null) {
+            if (c.getSuperclassName() == null) {
                 c.updateSuperclass(null);
             } else {
-                ClassType superclass = env.lookupClass(c.superclassName);
+                ClassType superclass = env.lookupClass(c.getSuperclassName());
                 if (superclass == null) {
-                    throw new NoSuchClassException(c.superclassName);
+                    throw new NoSuchClassException(c.getSuperclassName());
                 }
                 c.updateSuperclass(superclass);
             }
@@ -68,8 +68,8 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
             do {
                 if (c.equals(superclass.getSuperclass())) {
                     throw new CyclicInheritanceException(
-                        superclass.name,
-                        c.name
+                        superclass.getName(),
+                        c.getName()
                     );
                 }
                 superclass = superclass.getSuperclass();
@@ -147,11 +147,11 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
         }
 
         // Check that it returns an int
-        if (mainFunc.retType != TypeCode.CInt) {
+        if (mainFunc.getRetType() != TypeCode.CInt) {
             throw new InvalidReturnedTypeException(
                 "main",
                 TypeCode.CInt,
-                mainFunc.retType
+                mainFunc.getRetType()
             );
         }
 

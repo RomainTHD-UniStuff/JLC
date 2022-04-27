@@ -16,14 +16,14 @@ public class Instruction {
     /**
      * Indentable instruction or not
      */
-    public boolean indentable;
+    private boolean _indentable;
 
     /**
      * Constructor
      */
     public Instruction() {
         this._commands = new ArrayList<>();
-        this.indentable = true;
+        this._indentable = true;
     }
 
     /**
@@ -57,5 +57,13 @@ public class Instruction {
      */
     public List<String> emit() {
         return _commands;
+    }
+
+    public boolean isIndentable() {
+        return _indentable;
+    }
+
+    public void setIndentable(boolean indentable) {
+        this._indentable = indentable;
     }
 }

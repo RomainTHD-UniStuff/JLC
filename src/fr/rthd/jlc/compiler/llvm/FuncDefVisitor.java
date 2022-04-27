@@ -34,27 +34,27 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
 
         func.getArgs().forEach(arg -> {
             Variable var = env.createVar(
-                arg.type,
-                arg.name,
-                !arg.type.isPrimitive() // Primitive types are passed by value
+                arg.getType(),
+                arg.getName(),
+                !arg.getType().isPrimitive()// Primitive types are passed by value
             );
-            env.insertVar(arg.name, var);
-            arg.setGeneratedName(var.name);
+            env.insertVar(arg.getName(), var);
+            arg.setGeneratedName(var.getName());
         });
 
         env.emit(env.instructionBuilder.functionDeclarationStart(c, func));
         env.emit(env.instructionBuilder.label("entry"));
 
         for (FunArg arg : func.getArgs()) {
-            Variable v = env.lookupVar(arg.name);
+            Variable v = env.lookupVar(arg.getName());
             if (!v.isPointer()) {
                 // Arguments are passed by value, so we load them to respect the
                 //  convention that all variables are pointers
                 new Init(
-                    arg.name,
-                    new EVar(arg.name)
+                    arg.getName(),
+                    new EVar(arg.getName())
                 ).accept(new ItemVisitor(
-                    arg.type,
+                    arg.getType(),
                     true
                 ), env);
             }
@@ -65,12 +65,12 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             for (int i = 0; i < attrs.size(); i++) {
                 Attribute a = attrs.get(i);
                 Variable v = env.createVar(
-                    a.type,
-                    a.name,
+                    a.getType(),
+                    a.getName(),
                     true,
                     true
                 );
-                env.insertVar(a.name, v);
+                env.insertVar(a.getName(), v);
                 env.emit(env.instructionBuilder.loadAttribute(
                     v,
                     env.lookupVar("this"),
@@ -81,12 +81,12 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
 
         p.blk_.accept(new BlkVisitor(), env);
 
-        if (func.retType == TypeCode.CVoid) {
+        if (func.getRetType() == TypeCode.CVoid) {
             env.emit(env.instructionBuilder.ret());
         } else {
             env.emit(env.instructionBuilder.ret(new Literal(
-                func.retType,
-                func.retType.getDefaultValue()
+                func.getRetType(),
+                func.getRetType().getDefaultValue()
             )));
         }
 

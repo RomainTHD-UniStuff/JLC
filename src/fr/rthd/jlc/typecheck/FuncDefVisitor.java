@@ -16,7 +16,7 @@ class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         env.enterScope();
 
         for (FunArg arg : func.getArgs()) {
-            env.insertVar(arg.name, arg.type);
+            env.insertVar(arg.getName(), arg.getType());
         }
 
         env.setCurrentFunction(func);
@@ -24,7 +24,7 @@ class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
 
         env.leaveScope();
-        if (func.retType != TypeCode.CVoid && !env.doesReturn()) {
+        if (func.getRetType() != TypeCode.CVoid && !env.doesReturn()) {
             throw new NoReturnException(f.ident_);
         }
 

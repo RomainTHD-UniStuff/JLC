@@ -129,7 +129,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
                 _output.add("");
-            } else if (inst.indentable) {
+            } else if (inst.isIndentable()) {
                 _output.add(getIndentString() + emitted);
             } else {
                 _output.add(emitted);

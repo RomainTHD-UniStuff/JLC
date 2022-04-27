@@ -11,7 +11,7 @@ public class AnnotatedStmt<T extends Stmt> extends Stmt {
     /**
      * Parent statement
      */
-    public final T parentStmt;
+    private final T _parentStmt;
 
     /**
      * Returning statement or not
@@ -19,7 +19,7 @@ public class AnnotatedStmt<T extends Stmt> extends Stmt {
     private final boolean _doesReturn;
 
     public AnnotatedStmt(T parentStmt, boolean doesReturn) {
-        this.parentStmt = parentStmt;
+        this._parentStmt = parentStmt;
         this._doesReturn = doesReturn;
     }
 
@@ -30,10 +30,14 @@ public class AnnotatedStmt<T extends Stmt> extends Stmt {
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
         // Call parent statement accept method
-        return parentStmt.accept(v, arg);
+        return _parentStmt.accept(v, arg);
     }
 
     public boolean doesReturn() {
         return _doesReturn;
+    }
+
+    public T getParentStmt() {
+        return _parentStmt;
     }
 }

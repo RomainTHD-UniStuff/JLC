@@ -106,29 +106,29 @@ public class Optimizer implements Visitor {
         OperatorAction<Boolean> onBool,
         OperatorAction<Expr> onDefault
     ) {
-        if (left.parentExp instanceof ELitInt &&
-            right.parentExp instanceof ELitInt) {
-            int lvalue = ((ELitInt) left.parentExp).integer_;
-            int rvalue = ((ELitInt) right.parentExp).integer_;
+        if (left.getParentExp() instanceof ELitInt &&
+            right.getParentExp() instanceof ELitInt) {
+            int lvalue = ((ELitInt) left.getParentExp()).integer_;
+            int rvalue = ((ELitInt) right.getParentExp()).integer_;
             return onInt.execute(lvalue, rvalue);
-        } else if (left.parentExp instanceof ELitDoub &&
-                   right.parentExp instanceof ELitDoub) {
-            double lvalue = ((ELitDoub) left.parentExp).double_;
-            double rvalue = ((ELitDoub) right.parentExp).double_;
+        } else if (left.getParentExp() instanceof ELitDoub &&
+                   right.getParentExp() instanceof ELitDoub) {
+            double lvalue = ((ELitDoub) left.getParentExp()).double_;
+            double rvalue = ((ELitDoub) right.getParentExp()).double_;
             return onDouble.execute(lvalue, rvalue);
         } else {
             Boolean lvalue = null;
             Boolean rvalue = null;
 
-            if (left.parentExp instanceof ELitTrue) {
+            if (left.getParentExp() instanceof ELitTrue) {
                 lvalue = true;
-            } else if (left.parentExp instanceof ELitFalse) {
+            } else if (left.getParentExp() instanceof ELitFalse) {
                 lvalue = false;
             }
 
-            if (right.parentExp instanceof ELitTrue) {
+            if (right.getParentExp() instanceof ELitTrue) {
                 rvalue = true;
-            } else if (right.parentExp instanceof ELitFalse) {
+            } else if (right.getParentExp() instanceof ELitFalse) {
                 rvalue = false;
             }
 
@@ -145,11 +145,11 @@ public class Optimizer implements Visitor {
      * @return If the expression is a literal or not
      */
     private static boolean isLiteral(AnnotatedExpr<?> exp) {
-        return exp.parentExp instanceof ELitInt
-               || exp.parentExp instanceof ELitDoub
-               || exp.parentExp instanceof EString
-               || exp.parentExp instanceof ELitTrue
-               || exp.parentExp instanceof ELitFalse;
+        return exp.getParentExp() instanceof ELitInt
+               || exp.getParentExp() instanceof ELitDoub
+               || exp.getParentExp() instanceof EString
+               || exp.getParentExp() instanceof ELitTrue
+               || exp.getParentExp() instanceof ELitFalse;
     }
 
     /**
@@ -174,7 +174,7 @@ public class Optimizer implements Visitor {
                 exp,
                 op,
                 new AnnotatedExpr<>(
-                    exp.type,
+                    exp.getType(),
                     new ELitInt(1)
                 )
             ).accept(new ExprVisitor(), env);
@@ -186,7 +186,7 @@ public class Optimizer implements Visitor {
                 // Different block, we need to repudiate the old value, but
                 //  still insert the new value for future use in this block
                 env.updateVar(ident, new AnnotatedExpr<>(
-                    exp.type,
+                    exp.getType(),
                     new EVar(ident)
                 ));
                 env.insertVar(ident, newExp);
@@ -231,7 +231,7 @@ public class Optimizer implements Visitor {
                         func.updatePurity();
                         usedTopDef.add(def);
                     } else {
-                        env.removeFun(func.name);
+                        env.removeFun(func.getName());
                     }
                 } else {
                     // Class def, not implemented yet
@@ -261,8 +261,8 @@ public class Optimizer implements Visitor {
 
             for (FunArg arg : func.getArgs()) {
                 env.insertVar(
-                    arg.name,
-                    new AnnotatedExpr<>(arg.type, new EVar(arg.name))
+                    arg.getName(),
+                    new AnnotatedExpr<>(arg.getType(), new EVar(arg.getName()))
                 );
             }
 
@@ -291,7 +291,7 @@ public class Optimizer implements Visitor {
 
             for (Stmt s : p.liststmt_) {
                 AnnotatedStmt<?> stmt = s.accept(new StmtVisitor(), env);
-                if (stmt.parentStmt instanceof Empty) {
+                if (stmt.getParentStmt() instanceof Empty) {
                     continue;
                 }
 
@@ -351,7 +351,7 @@ public class Optimizer implements Visitor {
                     // Different block, we need to repudiate the old value, but
                     //  still insert the new value for future use in this block
                     env.updateVar(s.ident_, new AnnotatedExpr<>(
-                        exp.type,
+                        exp.getType(),
                         new EVar(s.ident_)
                     ));
                     env.insertVar(s.ident_, exp);
@@ -359,7 +359,7 @@ public class Optimizer implements Visitor {
             } else {
                 // Not a literal, we lose the ability to optimize this variable
                 env.updateVar(s.ident_, new AnnotatedExpr<>(
-                    exp.type,
+                    exp.getType(),
                     new EVar(s.ident_)
                 ));
             }
@@ -392,9 +392,9 @@ public class Optimizer implements Visitor {
                 env
             );
 
-            if (exp.parentExp instanceof ELitTrue) {
+            if (exp.getParentExp() instanceof ELitTrue) {
                 return s.stmt_.accept(new StmtVisitor(), env);
-            } else if (exp.parentExp instanceof ELitFalse) {
+            } else if (exp.getParentExp() instanceof ELitFalse) {
                 return new AnnotatedStmt<>(new Empty());
             } else {
                 env.enterScope();
@@ -411,9 +411,9 @@ public class Optimizer implements Visitor {
                 env
             );
 
-            if (exp.parentExp instanceof ELitTrue) {
+            if (exp.getParentExp() instanceof ELitTrue) {
                 return s.stmt_1.accept(new StmtVisitor(), env);
-            } else if (exp.parentExp instanceof ELitFalse) {
+            } else if (exp.getParentExp() instanceof ELitFalse) {
                 return s.stmt_2.accept(new StmtVisitor(), env);
             } else {
                 env.enterScope();
@@ -458,7 +458,7 @@ public class Optimizer implements Visitor {
 
             // TODO: Optimize infinite loop
 
-            if (exp.parentExp instanceof ELitFalse) {
+            if (exp.getParentExp() instanceof ELitFalse) {
                 return new AnnotatedStmt<>(new Empty());
             } else {
                 // FIXME: Constant propagation in while body must be fixed
@@ -468,7 +468,7 @@ public class Optimizer implements Visitor {
                 env.leaveScope();
                 env.setConstantPropagation(true);
 
-                if (exp.parentExp instanceof ELitTrue) {
+                if (exp.getParentExp() instanceof ELitTrue) {
                     // Functions with infinite loops cannot safely be marked
                     //  as pure for the sake of optimization, so we can simply
                     //  remove functions calls that are known to be pure
@@ -477,7 +477,7 @@ public class Optimizer implements Visitor {
 
                 return new AnnotatedStmt<>(
                     new While(exp, stmt),
-                    exp.parentExp instanceof ELitTrue
+                    exp.getParentExp() instanceof ELitTrue
                 );
             }
         }
@@ -488,9 +488,9 @@ public class Optimizer implements Visitor {
 
         public AnnotatedStmt<?> visit(SExp s, EnvOptimizer env) {
             AnnotatedExpr<?> expr = (AnnotatedExpr<?>) s.expr_;
-            if (expr.parentExp instanceof EApp) {
+            if (expr.getParentExp() instanceof EApp) {
                 FunTypeOptimizer funType = env.lookupFun(
-                    ((EApp) expr.parentExp).ident_
+                    ((EApp) expr.getParentExp()).ident_
                 );
                 if (funType.isPure() == Choice.TRUE) {
                     return new AnnotatedStmt<>(new Empty());
@@ -541,7 +541,7 @@ public class Optimizer implements Visitor {
                 env.insertVar(
                     s.ident_,
                     new AnnotatedExpr<>(
-                        exp.type,
+                        exp.getType(),
                         new EVar(s.ident_)
                     ),
                     true
@@ -564,7 +564,7 @@ public class Optimizer implements Visitor {
                 return expr;
             } else {
                 return new AnnotatedExpr<>(
-                    expr.type,
+                    expr.getType(),
                     new EVar(e.ident_)
                 );
             }
@@ -604,7 +604,7 @@ public class Optimizer implements Visitor {
             }
 
             return new AnnotatedExpr<>(
-                funcType.retType,
+                funcType.getRetType(),
                 new EApp(e.ident_, exps)
             );
         }
@@ -623,40 +623,40 @@ public class Optimizer implements Visitor {
 
         public AnnotatedExpr<?> visit(Neg e, EnvOptimizer env) {
             AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-            if (expr.parentExp instanceof ELitInt) {
+            if (expr.getParentExp() instanceof ELitInt) {
                 return new AnnotatedExpr<>(
                     TypeCode.CInt,
-                    new ELitInt(-((ELitInt) expr.parentExp).integer_)
+                    new ELitInt(-((ELitInt) expr.getParentExp()).integer_)
                 );
-            } else if (expr.parentExp instanceof ELitDoub) {
+            } else if (expr.getParentExp() instanceof ELitDoub) {
                 return new AnnotatedExpr<>(
                     TypeCode.CDouble,
-                    new ELitDoub(-((ELitDoub) expr.parentExp).double_)
+                    new ELitDoub(-((ELitDoub) expr.getParentExp()).double_)
                 );
             } else {
                 return new AnnotatedExpr<>(
-                    expr.type,
-                    new Neg(expr.parentExp)
+                    expr.getType(),
+                    new Neg(expr.getParentExp())
                 );
             }
         }
 
         public AnnotatedExpr<?> visit(Not e, EnvOptimizer env) {
             AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-            if (expr.parentExp instanceof ELitTrue) {
+            if (expr.getParentExp() instanceof ELitTrue) {
                 return new AnnotatedExpr<>(
                     TypeCode.CBool,
                     new ELitFalse()
                 );
-            } else if (expr.parentExp instanceof ELitFalse) {
+            } else if (expr.getParentExp() instanceof ELitFalse) {
                 return new AnnotatedExpr<>(
                     TypeCode.CBool,
                     new ELitTrue()
                 );
             } else {
                 return new AnnotatedExpr<>(
-                    expr.type,
-                    new Not(expr.parentExp)
+                    expr.getType(),
+                    new Not(expr.getParentExp())
                 );
             }
         }
@@ -683,14 +683,14 @@ public class Optimizer implements Visitor {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-            if (left.parentExp instanceof ELitTrue) {
+            if (left.getParentExp() instanceof ELitTrue) {
                 return new AnnotatedExpr<>(TypeCode.CBool, right);
-            } else if (right.parentExp instanceof ELitTrue) {
+            } else if (right.getParentExp() instanceof ELitTrue) {
                 return new AnnotatedExpr<>(TypeCode.CBool, left);
-            } else if (left.parentExp instanceof ELitFalse) {
+            } else if (left.getParentExp() instanceof ELitFalse) {
                 // Short circuit
                 return new AnnotatedExpr<>(TypeCode.CBool, new ELitFalse());
-            } else if (right.parentExp instanceof ELitFalse) {
+            } else if (right.getParentExp() instanceof ELitFalse) {
                 // Still need to execute the left expression, even though
                 // we know it will result in literal false
                 return new AnnotatedExpr<>(
@@ -709,19 +709,19 @@ public class Optimizer implements Visitor {
             AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
             AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-            if (left.parentExp instanceof ELitTrue) {
+            if (left.getParentExp() instanceof ELitTrue) {
                 // Short circuit
                 return new AnnotatedExpr<>(TypeCode.CBool, new ELitTrue());
-            } else if (right.parentExp instanceof ELitTrue) {
+            } else if (right.getParentExp() instanceof ELitTrue) {
                 // Still need to execute the left expression, even though
                 // we know it will result in literal true
                 return new AnnotatedExpr<>(
                     TypeCode.CBool,
                     new EOr(left, right)
                 );
-            } else if (left.parentExp instanceof ELitFalse) {
+            } else if (left.getParentExp() instanceof ELitFalse) {
                 return new AnnotatedExpr<>(TypeCode.CBool, right);
-            } else if (right.parentExp instanceof ELitFalse) {
+            } else if (right.getParentExp() instanceof ELitFalse) {
                 return new AnnotatedExpr<>(TypeCode.CBool, left);
             } else {
                 return new AnnotatedExpr<>(
@@ -742,7 +742,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Plus p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> new ELitInt(l + r),
@@ -753,7 +753,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Minus p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> new ELitInt(l - r),
@@ -774,7 +774,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Times p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> new ELitInt(l * r),
@@ -785,7 +785,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Div p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> new ELitInt(l / r),
@@ -796,7 +796,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(Mod p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> new ELitInt(l % r),
@@ -817,7 +817,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(LTH p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> l < r ? new ELitTrue() : new ELitFalse(),
@@ -828,7 +828,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(LE p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
@@ -839,7 +839,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(GTH p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> l > r ? new ELitTrue() : new ELitFalse(),
@@ -850,7 +850,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(GE p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
@@ -861,7 +861,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(EQU p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> l.equals(r) ? new ELitTrue() : new ELitFalse(),
@@ -872,7 +872,7 @@ public class Optimizer implements Visitor {
         }
 
         public AnnotatedExpr<?> visit(NE p, EnvOptimizer env) {
-            return new AnnotatedExpr<>(left.type, operatorAction(
+            return new AnnotatedExpr<>(left.getType(), operatorAction(
                 left,
                 right,
                 (l, r) -> l.equals(r) ? new ELitFalse() : new ELitTrue(),

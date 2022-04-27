@@ -19,14 +19,14 @@ class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
 
         Map<String, FunType> classFunctions = new HashMap<>();
         for (FunType f : c.getAllMethods()) {
-            classFunctions.put(f.name, f);
+            classFunctions.put(f.getName(), f);
         }
         env.setClassFunctions(classFunctions);
         env.setCurrentClass(c);
         env.enterScope();
 
         for (Attribute a : c.getAllAttributes()) {
-            env.insertVar(a.name, a.type);
+            env.insertVar(a.getName(), a.getType());
         }
 
         for (Member m : p.listmember_) {

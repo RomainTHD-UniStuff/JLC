@@ -10,12 +10,12 @@ public class FunArg {
     /**
      * Argument type
      */
-    public final TypeCode type;
+    private final TypeCode _type;
 
     /**
      * Argument logical name, like `x` for `f(x)`
      */
-    public final String name;
+    private final String _name;
 
     /**
      * Argument generated name, like `x$0$0` for `f(x)`
@@ -28,8 +28,8 @@ public class FunArg {
      * @param name Argument name
      */
     public FunArg(TypeCode type, String name) {
-        this.type = type;
-        this.name = name;
+        this._type = type;
+        this._name = name;
     }
 
     public String getGeneratedName() {
@@ -44,8 +44,16 @@ public class FunArg {
     public String toString() {
         return String.format(
             "%s %s",
-            type.getRealName(),
-            name
+            _type.getRealName(),
+            _name
         );
+    }
+
+    public TypeCode getType() {
+        return _type;
+    }
+
+    public String getName() {
+        return _name;
     }
 }

@@ -16,13 +16,13 @@ public class ClassType {
     /**
      * Class name
      */
-    public final String name;
+    private final String _name;
 
     /**
      * Superclass name or null
      * @see #_superclass
      */
-    public final String superclassName;
+    private final String _superclassName;
 
     /**
      * List of defined methods
@@ -49,14 +49,14 @@ public class ClassType {
         String name,
         String superclassName
     ) {
-        this.name = name;
-        this.superclassName = superclassName;
+        this._name = name;
+        this._superclassName = superclassName;
         this._methods = new HashMap<>();
         this._attributes = new HashMap<>();
     }
 
     public void addMethod(FunType f) {
-        this._methods.put(f.name, f);
+        this._methods.put(f.getName(), f);
     }
 
     public Collection<FunType> getOwnMethods() {
@@ -65,7 +65,7 @@ public class ClassType {
 
     public Collection<FunType> getAllMethods() {
         Collection<FunType> methods = new ArrayList<>(this.getOwnMethods());
-        if (this.superclassName != null) {
+        if (this._superclassName != null) {
             methods.addAll(this.getSuperclass().getAllMethods());
         }
         return methods;
@@ -74,7 +74,7 @@ public class ClassType {
     public FunType getMethod(String name) {
         if (this._methods.containsKey(name)) {
             return this._methods.get(name);
-        } else if (this.superclassName != null) {
+        } else if (this._superclassName != null) {
             return this.getSuperclass().getMethod(name);
         } else {
             return null;
@@ -82,7 +82,7 @@ public class ClassType {
     }
 
     public void addAttribute(Attribute a) {
-        this._attributes.put(a.name, a);
+        this._attributes.put(a.getName(), a);
     }
 
     public Collection<Attribute> getOwnAttributes() {
@@ -91,7 +91,7 @@ public class ClassType {
 
     public List<Attribute> getAllAttributes() {
         List<Attribute> attrs = new ArrayList<>();
-        if (this.superclassName != null) {
+        if (this._superclassName != null) {
             attrs.addAll(this.getSuperclass().getAllAttributes());
         }
         attrs.addAll(this.getOwnAttributes());
@@ -101,7 +101,7 @@ public class ClassType {
     public boolean hasAttribute(String name) {
         if (this._attributes.containsKey(name)) {
             return true;
-        } else if (this.superclassName != null) {
+        } else if (this._superclassName != null) {
             return this.getSuperclass().hasAttribute(name);
         } else {
             return false;
@@ -111,7 +111,7 @@ public class ClassType {
     public boolean hasMethod(String name) {
         if (this._methods.containsKey(name)) {
             return true;
-        } else if (this.superclassName != null) {
+        } else if (this._superclassName != null) {
             return this.getSuperclass().hasMethod(name);
         } else {
             return false;
@@ -130,7 +130,7 @@ public class ClassType {
         if (this.equals(c)) {
             return true;
         }
-        if (this.superclassName == null) {
+        if (this._superclassName == null) {
             return false;
         }
         ClassType superclass = this.getSuperclass();
@@ -147,7 +147,7 @@ public class ClassType {
             return false;
         } else {
             ClassType c = (ClassType) obj;
-            return this.name.equals(c.name);
+            return this._name.equals(c._name);
         }
     }
 
@@ -155,9 +155,9 @@ public class ClassType {
     public String toString() {
         return "ClassType{" +
                "name=" +
-               name +
+               _name +
                ", superclass=" +
-               superclassName +
+               _superclassName +
                ", methods=" +
                _methods +
                ", attributes=" +
@@ -170,6 +170,14 @@ public class ClassType {
     }
 
     public TypeCode getType() {
-        return TypeCode.forClass(name);
+        return TypeCode.forClass(_name);
+    }
+
+    public String getName() {
+        return _name;
+    }
+
+    public String getSuperclassName() {
+        return _superclassName;
     }
 }

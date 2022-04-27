@@ -11,7 +11,7 @@ public class Variable extends OperationItem {
     /**
      * Variable name
      */
-    public final String name;
+    private final String _name;
 
     /**
      * Global or not
@@ -68,7 +68,7 @@ public class Variable extends OperationItem {
         int size
     ) {
         super(type);
-        this.name = name;
+        this._name = name;
         this._isPointer = isPointer;
         this._isClassVariable = isClassVariable;
         this._isGlobal = isGlobal;
@@ -92,7 +92,7 @@ public class Variable extends OperationItem {
     }
 
     public String getName() {
-        return name;
+        return _name;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class Variable extends OperationItem {
         return String.format(
             "%c%s",
             this.isGlobal() ? '@' : '%',
-            name
+            _name
         );
     }
 }

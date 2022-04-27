@@ -16,13 +16,13 @@ class AddOpVisitor implements AddOp.Visitor<OperationItem, EnvCompiler> {
     }
 
     public OperationItem visit(Plus p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.type, "add");
+        Variable var = env.createTempVar(left.getType(), "add");
         env.emit(env.instructionBuilder.add(var, left, right));
         return var;
     }
 
     public OperationItem visit(Minus p, EnvCompiler env) {
-        Variable var = env.createTempVar(left.type, "sub");
+        Variable var = env.createTempVar(left.getType(), "sub");
         env.emit(env.instructionBuilder.subtract(var, left, right));
         return var;
     }

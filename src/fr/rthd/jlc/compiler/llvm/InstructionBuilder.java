@@ -53,9 +53,9 @@ public class InstructionBuilder {
     public Instruction store(Variable dst, OperationItem src) {
         return new Instruction(String.format(
             "store %s %s, %s* %s",
-            src.type,
+            src.getType(),
             src,
-            src.type,
+            src.getType(),
             dst
         ));
     }
@@ -70,8 +70,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = load %s, %s* %s",
             dst,
-            dst.type,
-            dst.type,
+            dst.getType(),
+            dst.getType(),
             src
         ));
     }
@@ -91,8 +91,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
             dst,
-            thisVar.type,
-            thisVar.type,
+            thisVar.getType(),
+            thisVar.getType(),
             thisVar,
             arg
         ));
@@ -107,7 +107,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = alloca %s",
             dst,
-            dst.type
+            dst.getType()
         ));
     }
 
@@ -123,14 +123,15 @@ public class InstructionBuilder {
     ) {
         return new Instruction(String.format(
             "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
-            func.retType,
-            (parentClass == null ? "" : parentClass.name + "$") + func.name,
+            func.getRetType(),
+            (parentClass == null ? "" : parentClass.getName() + "$") +
+            func.getName(),
             func.getArgs()
                 .stream()
                 .map(arg -> String.format(
                     "%s%s %%%s",
-                    arg.type,
-                    arg.type.isPrimitive() ? "" : "*",
+                    arg.getType(),
+                    arg.getType().isPrimitive() ? "" : "*",
                     // FIXME: Shouldn't be used, will not work with
                     //  primitive pointers
                     arg.getGeneratedName()
@@ -156,13 +157,13 @@ public class InstructionBuilder {
     public Instruction declareExternalFunction(FunType func) {
         return new Instruction(String.format(
             "declare %s @%s(%s)",
-            func.retType,
-            func.name,
+            func.getRetType(),
+            func.getName(),
             func.getArgs()
                 .stream()
                 .map(arg -> String.format(
                     "%s %%%s",
-                    arg.type,
+                    arg.getType(),
                     arg.getGeneratedName()
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
@@ -198,10 +199,10 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%scall %s @%s(%s)",
             dst == null ? "" : dst + " = ",
-            dst == null ? TypeCode.CVoid : dst.type,
+            dst == null ? TypeCode.CVoid : dst.getType(),
             funcName,
             args.stream()
-                .map(arg -> String.format("%s %s", arg.type, arg))
+                .map(arg -> String.format("%s %s", arg.getType(), arg))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
                 .orElse("")
         ));
@@ -224,7 +225,7 @@ public class InstructionBuilder {
      */
     public Instruction label(String labelName) {
         Instruction i = new Instruction(String.format("%s:", labelName));
-        i.indentable = false;
+        i.setIndentable(false);
         return i;
     }
 
@@ -243,8 +244,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = %sadd %s %s, %s",
             dst,
-            left.type == TypeCode.CDouble ? "f" : "",
-            left.type,
+            left.getType() == TypeCode.CDouble ? "f" : "",
+            left.getType(),
             left,
             right
         ));
@@ -260,7 +261,7 @@ public class InstructionBuilder {
         Variable dst,
         Variable src
     ) {
-        return add(dst, src, new Literal(src.type, 1));
+        return add(dst, src, new Literal(src.getType(), 1));
     }
 
     /**
@@ -278,8 +279,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = %ssub %s %s, %s",
             dst,
-            left.type == TypeCode.CDouble ? "f" : "",
-            left.type,
+            left.getType() == TypeCode.CDouble ? "f" : "",
+            left.getType(),
             left,
             right
         ));
@@ -295,7 +296,7 @@ public class InstructionBuilder {
         Variable dst,
         Variable src
     ) {
-        return subtract(dst, src, new Literal(src.type, 1));
+        return subtract(dst, src, new Literal(src.getType(), 1));
     }
 
     /**
@@ -313,8 +314,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = %smul %s %s, %s",
             dst,
-            left.type == TypeCode.CDouble ? "f" : "",
-            left.type,
+            left.getType() == TypeCode.CDouble ? "f" : "",
+            left.getType(),
             left,
             right
         ));
@@ -335,8 +336,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = %cdiv %s %s, %s",
             dst,
-            left.type == TypeCode.CDouble ? 'f' : 's',
-            left.type,
+            left.getType() == TypeCode.CDouble ? 'f' : 's',
+            left.getType(),
             left,
             right
         ));
@@ -357,7 +358,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = srem %s %s, %s",
             dst,
-            left.type,
+            left.getType(),
             left,
             right
         ));
@@ -381,9 +382,9 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = %ccmp %s %s %s, %s",
             dst,
-            left.type == TypeCode.CDouble ? 'f' : 'i',
-            ComparisonOperator.getOperand(operator, left.type),
-            left.type,
+            left.getType() == TypeCode.CDouble ? 'f' : 'i',
+            ComparisonOperator.getOperand(operator, left.getType()),
+            left.getType(),
             left,
             right
         ));
@@ -434,7 +435,7 @@ public class InstructionBuilder {
     public Instruction ret(OperationItem returned) {
         return new Instruction(String.format(
             "ret %s %s",
-            returned.type,
+            returned.getType(),
             returned
         ));
     }
@@ -454,7 +455,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = and %s %s, %s",
             dst,
-            left.type,
+            left.getType(),
             left,
             right
         ));
@@ -475,7 +476,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = or %s %s, %s",
             dst,
-            left.type,
+            left.getType(),
             left,
             right
         ));
@@ -494,7 +495,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = xor %s %s, 1",
             dst,
-            src.type,
+            src.getType(),
             src
         ));
     }
@@ -509,17 +510,17 @@ public class InstructionBuilder {
         Variable dst,
         Variable src
     ) {
-        if (src.type == TypeCode.CDouble) {
+        if (src.getType() == TypeCode.CDouble) {
             return new Instruction(String.format(
                 "%s = fneg %s %s",
                 dst,
-                src.type,
+                src.getType(),
                 src
             ));
         } else {
             return subtract(
                 dst,
-                new Literal(src.type, 0),
+                new Literal(src.getType(), 0),
                 src
             );
         }

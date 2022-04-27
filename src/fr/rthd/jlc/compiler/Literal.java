@@ -11,7 +11,7 @@ public class Literal extends OperationItem {
     /**
      * Value
      */
-    public final Object value;
+    private final Object _value;
 
     /**
      * Constructor
@@ -20,15 +20,19 @@ public class Literal extends OperationItem {
      */
     public Literal(TypeCode type, Object value) {
         super(type);
-        this.value = value;
+        this._value = value;
     }
 
     @Override
     public String toString() {
-        if (value == null) {
+        if (_value == null) {
             return "null";
         } else {
-            return value.toString();
+            return _value.toString();
         }
+    }
+
+    public Object getValue() {
+        return _value;
     }
 }

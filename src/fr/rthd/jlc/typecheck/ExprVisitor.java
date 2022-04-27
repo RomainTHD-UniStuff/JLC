@@ -104,11 +104,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
                     new ExprVisitor(),
                     env
                 );
-            if (exp.type != expected.type) {
+            if (exp.getType() != expected.getType()) {
                 throw new InvalidAssignmentTypeException(
-                    expected.name,
-                    expected.type,
-                    exp.type,
+                    expected.getName(),
+                    expected.getType(),
+                    exp.getType(),
                     true
                 );
             }
@@ -116,7 +116,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         }
 
         return new AnnotatedExpr<>(
-            funcType.retType,
+            funcType.getRetType(),
             new EApp(e.ident_, exps)
         );
     }
@@ -131,11 +131,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             env
         );
 
-        if (!expr.type.isObject()) {
-            throw new InvalidMethodCallException(expr.type);
+        if (!expr.getType().isObject()) {
+            throw new InvalidMethodCallException(expr.getType());
         }
 
-        ClassType c = env.lookupClass(expr.type);
+        ClassType c = env.lookupClass(expr.getType());
         if (c == null) {
             // It should be impossible to get here, since it would mean we
             //  created a variable with a type that doesn't exist
@@ -153,11 +153,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         env.setCaller(null);
 
         return new AnnotatedExpr<>(
-            app.type,
+            app.getType(),
             new EDot(
                 expr,
                 p.ident_,
-                ((EApp) app.parentExp).listexpr_
+                ((EApp) app.getParentExp()).listexpr_
             )
         );
     }
@@ -185,24 +185,24 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
     public AnnotatedExpr<Neg> visit(Neg e, EnvTypecheck env) {
         AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-        if (expr.type != TypeCode.CInt && expr.type != TypeCode.CDouble) {
+        if (expr.getType() != TypeCode.CInt && expr.getType() != TypeCode.CDouble) {
             throw new InvalidOperationException(
                 "negation",
-                expr.type,
+                expr.getType(),
                 TypeCode.CInt,
                 TypeCode.CDouble
             );
         }
 
-        return new AnnotatedExpr<>(expr.type, new Neg(expr));
+        return new AnnotatedExpr<>(expr.getType(), new Neg(expr));
     }
 
     public AnnotatedExpr<Not> visit(Not e, EnvTypecheck env) {
         AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
-        if (expr.type != TypeCode.CBool) {
+        if (expr.getType() != TypeCode.CBool) {
             throw new InvalidOperationException(
                 "not",
-                expr.type,
+                expr.getType(),
                 TypeCode.CBool
             );
         }
@@ -217,35 +217,35 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
         AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-        if (left.type != right.type) {
+        if (left.getType() != right.getType()) {
             throw new InvalidOperationException(
                 e.mulop_.accept(new MulOpVisitor(), null),
-                left.type,
-                right.type
+                left.getType(),
+                right.getType()
             );
         }
 
         if (e.mulop_ instanceof Mod) {
-            if (left.type != TypeCode.CInt) {
+            if (left.getType() != TypeCode.CInt) {
                 throw new InvalidOperationException(
                     e.mulop_.accept(new MulOpVisitor(), null),
-                    left.type,
+                    left.getType(),
                     TypeCode.CInt
                 );
             }
         }
 
-        if (left.type != TypeCode.CInt && left.type != TypeCode.CDouble) {
+        if (left.getType() != TypeCode.CInt && left.getType() != TypeCode.CDouble) {
             throw new InvalidOperationException(
                 e.mulop_.accept(new MulOpVisitor(), null),
-                left.type,
+                left.getType(),
                 TypeCode.CInt,
                 TypeCode.CDouble
             );
         }
 
         return new AnnotatedExpr<>(
-            left.type,
+            left.getType(),
             new EMul(
                 left,
                 e.mulop_,
@@ -258,25 +258,25 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
         AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-        if (left.type != right.type) {
+        if (left.getType() != right.getType()) {
             throw new InvalidOperationException(
                 e.addop_.accept(new AddOpVisitor(), null),
-                left.type,
-                right.type
+                left.getType(),
+                right.getType()
             );
         }
 
-        if (left.type != TypeCode.CInt && left.type != TypeCode.CDouble) {
+        if (left.getType() != TypeCode.CInt && left.getType() != TypeCode.CDouble) {
             throw new InvalidOperationException(
                 e.addop_.accept(new AddOpVisitor(), null),
-                left.type,
+                left.getType(),
                 TypeCode.CInt,
                 TypeCode.CDouble
             );
         }
 
         return new AnnotatedExpr<>(
-            left.type,
+            left.getType(),
             new EAdd(
                 left,
                 e.addop_,
@@ -289,15 +289,15 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
         AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
         String opName = e.relop_.accept(
-            new RelOpVisitor(left.type, right.type),
+            new RelOpVisitor(left.getType(), right.getType()),
             null
         );
 
         if (opName != null) {
             throw new InvalidOperationException(
                 opName,
-                left.type,
-                right.type
+                left.getType(),
+                right.getType()
             );
         }
 
@@ -315,11 +315,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
         AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-        if (left.type != TypeCode.CBool || right.type != TypeCode.CBool) {
+        if (left.getType() != TypeCode.CBool || right.getType() != TypeCode.CBool) {
             throw new InvalidOperationException(
                 "conjunction",
-                left.type,
-                right.type
+                left.getType(),
+                right.getType()
             );
         }
 
@@ -336,11 +336,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         AnnotatedExpr<?> left = e.expr_1.accept(new ExprVisitor(), env);
         AnnotatedExpr<?> right = e.expr_2.accept(new ExprVisitor(), env);
 
-        if (left.type != TypeCode.CBool || right.type != TypeCode.CBool) {
+        if (left.getType() != TypeCode.CBool || right.getType() != TypeCode.CBool) {
             throw new InvalidOperationException(
                 "disjunction",
-                left.type,
-                right.type
+                left.getType(),
+                right.getType()
             );
         }
 

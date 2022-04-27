@@ -39,9 +39,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
         if (var.isPointer()) {
-            Variable tmp = env.createTempVar(var.type, String.format(
+            Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
-                var.name.replace(EnvCompiler.SEP, '-')
+                var.getName().replace(EnvCompiler.SEP, '-')
             ));
             env.emit(env.instructionBuilder.load(tmp, var));
             return tmp;
@@ -79,15 +79,15 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         FunType func = env.lookupFun(p.ident_);
 
-        if (func.retType == TypeCode.CVoid) {
-            env.emit(env.instructionBuilder.call(func.name, args));
+        if (func.getRetType() == TypeCode.CVoid) {
+            env.emit(env.instructionBuilder.call(func.getName(), args));
             return null;
         } else {
             Variable out = env.createTempVar(
-                func.retType,
+                func.getRetType(),
                 "function_call"
             );
-            env.emit(env.instructionBuilder.call(out, func.name, args));
+            env.emit(env.instructionBuilder.call(out, func.getName(), args));
             return out;
         }
     }
@@ -96,9 +96,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         String content = p.string_;
         Variable global = env.createGlobalStringLiteral(content);
 
-        if (env.lookupVar(global.name) == null) {
+        if (env.lookupVar(global.getName()) == null) {
             // Avoid loading the same string literal multiple times
-            env.insertVar(global.name, global);
+            env.insertVar(global.getName(), global);
             env.emitAtBeginning(env.instructionBuilder.globalStringLiteral(
                 global,
                 content
@@ -125,15 +125,15 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
         if (expr instanceof Literal) {
             Literal lit = (Literal) expr;
-            if (lit.type == CInt) {
-                return new Literal(CInt, -(int) lit.value);
-            } else if (lit.type == TypeCode.CDouble) {
-                return new Literal(TypeCode.CDouble, -(double) lit.value);
+            if (lit.getType() == CInt) {
+                return new Literal(CInt, -(int) lit.getValue());
+            } else if (lit.getType() == TypeCode.CDouble) {
+                return new Literal(TypeCode.CDouble, -(double) lit.getValue());
             } else {
                 throw new RuntimeException("Unsupported type for negation");
             }
         } else {
-            Variable var = env.createTempVar(expr.type, "neg");
+            Variable var = env.createTempVar(expr.getType(), "neg");
             env.emit(env.instructionBuilder.neg(var, (Variable) expr));
             return var;
         }
@@ -141,7 +141,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
     public OperationItem visit(Not p, EnvCompiler env) {
         OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
-        Variable var = env.createTempVar(expr.type, "not");
+        Variable var = env.createTempVar(expr.getType(), "not");
         env.emit(env.instructionBuilder.not(var, expr));
         return var;
     }
@@ -209,7 +209,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("endand"));
         env.emit(env.instructionBuilder.newLine());
 
-        Variable tmp = env.createTempVar(var.type, "and");
+        Variable tmp = env.createTempVar(var.getType(), "and");
         env.emit(env.instructionBuilder.load(tmp, var));
         return tmp;
     }
@@ -256,7 +256,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("endor"));
         env.emit(env.instructionBuilder.newLine());
 
-        Variable tmp = env.createTempVar(var.type, "or");
+        Variable tmp = env.createTempVar(var.getType(), "or");
         env.emit(env.instructionBuilder.load(tmp, var));
         return tmp;
     }

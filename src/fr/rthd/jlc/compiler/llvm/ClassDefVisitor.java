@@ -22,9 +22,9 @@ public class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
                  .collect(Collectors.joining(", "))
         )));
         env.emit(env.instructionBuilder.classDef(
-            c.name,
+            c.getName(),
             attrs.stream()
-                 .map(attr -> attr.type)
+                 .map(attr -> attr.getType())
                  .collect(Collectors.toList())
         ));
         env.emit(env.instructionBuilder.newLine());

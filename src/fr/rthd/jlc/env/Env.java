@@ -261,10 +261,10 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @throws EnvException If the function is already defined
      */
     public void insertFun(Func func) throws EnvException {
-        if (lookupFun(func.name) == null) {
-            _funcSignatures.put(func.name, func);
+        if (lookupFun(func.getName()) == null) {
+            _funcSignatures.put(func.getName(), func);
         } else {
-            throw new SymbolAlreadyDefinedException(func.name);
+            throw new SymbolAlreadyDefinedException(func.getName());
         }
     }
 
@@ -274,10 +274,10 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @throws EnvException If the class is already defined
      */
     public void insertClass(Class cls) throws EnvException {
-        if (lookupClass(cls.name) == null) {
-            _classSignatures.put(cls.name, cls);
+        if (lookupClass(cls.getName()) == null) {
+            _classSignatures.put(cls.getName(), cls);
         } else {
-            throw new SymbolAlreadyDefinedException(cls.name);
+            throw new SymbolAlreadyDefinedException(cls.getName());
         }
     }
 

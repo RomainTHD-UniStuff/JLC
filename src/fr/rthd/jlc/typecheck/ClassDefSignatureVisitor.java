@@ -50,10 +50,10 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
 
         ListStmt body = new ListStmt();
         for (Attribute attr : c.getAllAttributes()) {
-            if (attr.type.isPrimitive()) {
+            if (attr.getType().isPrimitive()) {
                 body.add(new Ass(
-                    attr.name,
-                    AnnotatedExpr.getDefaultValue(attr.type)
+                    attr.getName(),
+                    AnnotatedExpr.getDefaultValue(attr.getType())
                 ));
             }
         }
@@ -77,7 +77,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         if (c.hasMethod(f.ident_)) {
             throw new DuplicateFieldException(
                 f.ident_,
-                c.name,
+                c.getName(),
                 "method"
             );
         }
@@ -92,7 +92,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         if (c.hasAttribute(a.ident_)) {
             throw new DuplicateFieldException(
                 a.ident_,
-                c.name,
+                c.getName(),
                 "attribute"
             );
         }

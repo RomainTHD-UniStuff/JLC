@@ -71,22 +71,22 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         TypeException e = new InvalidAssignmentTypeException(
             s.ident_,
             expectedType,
-            exp.type
+            exp.getType()
         );
 
-        if (exp.type.isObject()) {
+        if (exp.getType().isObject()) {
             if (!expectedType.isObject()) {
                 // `int x = new A;`
                 throw e;
             }
 
             ClassType expectedClass = env.lookupClass(expectedType);
-            ClassType actualClass = env.lookupClass(exp.type);
+            ClassType actualClass = env.lookupClass(exp.getType());
             if (!actualClass.isCastableTo(expectedClass)) {
                 // `B x = new A;`
                 throw e;
             }
-        } else if (exp.type != expectedType) {
+        } else if (exp.getType() != expectedType) {
             // `int x = true;`
             throw e;
         }
@@ -132,10 +132,10 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
 
     public Ret visit(Ret s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (exp.type != env.getCurrentFunction().retType) {
+        if (exp.getType() != env.getCurrentFunction().getRetType()) {
             throw new InvalidReturnedTypeException(
-                env.getCurrentFunction().retType,
-                exp.type
+                env.getCurrentFunction().getRetType(),
+                exp.getType()
             );
         }
 
@@ -144,9 +144,9 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
     }
 
     public VRet visit(VRet s, EnvTypecheck env) {
-        if (env.getCurrentFunction().retType != TypeCode.CVoid) {
+        if (env.getCurrentFunction().getRetType() != TypeCode.CVoid) {
             throw new InvalidReturnedTypeException(
-                env.getCurrentFunction().retType,
+                env.getCurrentFunction().getRetType(),
                 TypeCode.CVoid
             );
         }
@@ -157,8 +157,8 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
 
     public Cond visit(Cond s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (exp.type != TypeCode.CBool) {
-            throw new InvalidConditionTypeException("if", exp.type);
+        if (exp.getType() != TypeCode.CBool) {
+            throw new InvalidConditionTypeException("if", exp.getType());
         }
 
         boolean doesReturn = env.doesReturn();
@@ -174,8 +174,8 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
 
     public CondElse visit(CondElse s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (exp.type != TypeCode.CBool) {
-            throw new InvalidConditionTypeException("if-else", exp.type);
+        if (exp.getType() != TypeCode.CBool) {
+            throw new InvalidConditionTypeException("if-else", exp.getType());
         }
 
         boolean doesReturn = env.doesReturn();
@@ -200,8 +200,8 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
 
     public While visit(While s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (exp.type != TypeCode.CBool) {
-            throw new InvalidConditionTypeException("while", exp.type);
+        if (exp.getType() != TypeCode.CBool) {
+            throw new InvalidConditionTypeException("while", exp.getType());
         }
 
         boolean doesReturn = env.doesReturn();
@@ -222,9 +222,9 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
     public SExp visit(SExp s, EnvTypecheck env) {
         AnnotatedExpr<?> expr = s.expr_.accept(new ExprVisitor(), env);
 
-        if (expr.type != TypeCode.CVoid) {
+        if (expr.getType() != TypeCode.CVoid) {
             throw new InvalidExpressionTypeException(
-                expr.type,
+                expr.getType(),
                 TypeCode.CVoid
             );
         }

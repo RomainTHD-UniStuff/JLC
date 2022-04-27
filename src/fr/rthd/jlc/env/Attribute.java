@@ -10,12 +10,12 @@ public class Attribute {
     /**
      * Attribute type
      */
-    public final TypeCode type;
+    private final TypeCode _type;
 
     /**
      * Attribute logical name, like `x` for `self.x`
      */
-    public final String name;
+    private final String _name;
 
     /**
      * Constructor
@@ -23,16 +23,24 @@ public class Attribute {
      * @param name Attribute name
      */
     public Attribute(TypeCode type, String name) {
-        this.type = type;
-        this.name = name;
+        this._type = type;
+        this._name = name;
     }
 
     @Override
     public String toString() {
         return String.format(
             "%s %s",
-            type.getRealName(),
-            name
+            _type.getRealName(),
+            _name
         );
+    }
+
+    public TypeCode getType() {
+        return _type;
+    }
+
+    public String getName() {
+        return _name;
     }
 }

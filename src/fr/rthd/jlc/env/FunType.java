@@ -15,12 +15,12 @@ public class FunType {
     /**
      * Return type
      */
-    public final TypeCode retType;
+    private final TypeCode _retType;
 
     /**
      * Function name
      */
-    public final String name;
+    private final String _name;
 
     /**
      * Arguments
@@ -48,7 +48,7 @@ public class FunType {
      * @param other Other function
      */
     public FunType(FunType other) {
-        this(other.retType, other.name, other._args);
+        this(other._retType, other._name, other._args);
         this._isExternal = other._isExternal;
         this._isMain = other._isMain;
         this._isPure = other._isPure;
@@ -59,8 +59,8 @@ public class FunType {
         String name,
         FunArg... args
     ) {
-        this.retType = retType;
-        this.name = name;
+        this._retType = retType;
+        this._name = name;
         this._args = Arrays.asList(args);
     }
 
@@ -69,8 +69,8 @@ public class FunType {
         String name,
         List<FunArg> args
     ) {
-        this.retType = retType;
-        this.name = name;
+        this._retType = retType;
+        this._name = name;
         this._args = args;
     }
 
@@ -78,8 +78,8 @@ public class FunType {
     public String toString() {
         return String.format(
             "%s %s(%s)",
-            retType.getRealName(),
-            name,
+            _retType.getRealName(),
+            _name,
             _args.stream()
                  .map(FunArg::toString)
                  .reduce((a, b) -> a + ", " + b)
@@ -119,5 +119,13 @@ public class FunType {
 
     public List<FunArg> getArgs() {
         return _args;
+    }
+
+    public TypeCode getRetType() {
+        return _retType;
+    }
+
+    public String getName() {
+        return _name;
     }
 }
