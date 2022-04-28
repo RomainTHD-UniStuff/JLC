@@ -1,5 +1,6 @@
 package fr.rthd.jlc.compiler.llvm;
 
+import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
@@ -132,11 +133,14 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
     public OperationItem visit(EDot p, EnvCompiler env) {
         TypeCode left;
-        if (p.expr_ instanceof EVar) {
-            left = env.lookupVar(((EVar) p.expr_).ident_).getType();
+        Expr e = ((AnnotatedExpr<?>) p.expr_).getParentExp();
+        if (e instanceof EVar) {
+            left = env.lookupVar(((EVar) e).ident_).getType();
         } else {
             // FIXME: Avoid a double visit here, but not really portable
-            throw new NotImplementedException();
+            throw new NotImplementedException(
+                "Dot operator not implemented yet for non-variable expressions"
+            );
         }
 
         ClassType c = env.lookupClass(left);
@@ -173,7 +177,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         return new EDot(
-            new EVar(_refVar),
+            new AnnotatedExpr<>(ref.getType(), new EVar(_refVar)),
             env.lookupClass(ref.getType().getRealName()).getConstructorName(),
             new ListExpr()
         ).accept(new ExprVisitor(), env);
