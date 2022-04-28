@@ -4,6 +4,7 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
@@ -23,6 +24,7 @@ import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
+import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 
@@ -32,6 +34,19 @@ import java.util.List;
 import static fr.rthd.jlc.TypeCode.CInt;
 
 class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+    /**
+     * Used for ENew calls
+     */
+    private final String _refVar;
+
+    public ExprVisitor() {
+        this(null);
+    }
+
+    public ExprVisitor(String refVar) {
+        _refVar = refVar;
+    }
+
     public OperationItem visit(ENull p, EnvCompiler env) {
         throw new NotImplementedException();
     }
@@ -78,16 +93,18 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         FunType func = env.lookupFun(p.ident_);
+        // `getName` should not be used here, because it contains the logical
+        //  name of the function, not the name of the function in the LLVM IR
 
         if (func.getRetType() == TypeCode.CVoid) {
-            env.emit(env.instructionBuilder.call(func.getName(), args));
+            env.emit(env.instructionBuilder.call(p.ident_, args));
             return null;
         } else {
             Variable out = env.createTempVar(
                 func.getRetType(),
                 "function_call"
             );
-            env.emit(env.instructionBuilder.call(out, func.getName(), args));
+            env.emit(env.instructionBuilder.call(out, p.ident_, args));
             return out;
         }
     }
@@ -114,11 +131,54 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     public OperationItem visit(EDot p, EnvCompiler env) {
-        throw new NotImplementedException();
+        TypeCode left;
+        if (p.expr_ instanceof EVar) {
+            left = env.lookupVar(((EVar) p.expr_).ident_).getType();
+        } else {
+            // FIXME: Avoid a double visit here, but not really portable
+            throw new NotImplementedException();
+        }
+
+        ClassType c = env.lookupClass(left);
+
+        ListExpr args = new ListExpr();
+        args.add(p.expr_);
+
+        // TODO: Add `this` and change the name of the function
+        return new EApp(
+            c.getAssemblyMethodName(p.ident_),
+            args
+        ).accept(new ExprVisitor(), env);
     }
 
     public OperationItem visit(ENew p, EnvCompiler env) {
-        throw new NotImplementedException();
+        if (_refVar == null) {
+            // FIXME: Create a new variable instead?
+            throw new IllegalStateException(
+                "`new` expressions can only be used with a underlying variable"
+            );
+        }
+
+        Variable ref = env.lookupVar(_refVar);
+        if (ref == null) {
+            throw new IllegalStateException(
+                String.format("Variable `%s` not found", _refVar)
+            );
+        }
+
+        if (ref.getType().isPrimitive()) {
+            throw new IllegalStateException(
+                "Cannot create a new object for a primitive type"
+            );
+        }
+
+        System.err.println(ref.isPointer());
+
+        return new EDot(
+            new EVar(_refVar),
+            env.lookupClass(ref.getType().getRealName()).getConstructorName(),
+            new ListExpr()
+        ).accept(new ExprVisitor(), env);
     }
 
     public OperationItem visit(Neg p, EnvCompiler env) {

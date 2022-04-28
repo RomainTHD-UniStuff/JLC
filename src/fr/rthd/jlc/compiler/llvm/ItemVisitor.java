@@ -2,6 +2,7 @@ package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
@@ -40,14 +41,38 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
     public Void visit(Init p, EnvCompiler env) {
         Variable var = env.createVar(_type, p.ident_, true);
         env.emit(env.instructionBuilder.declare(var));
-        env.emit(env.instructionBuilder.store(
-            var,
-            p.expr_.accept(new ExprVisitor(), env)
-        ));
-        if (_override) {
-            env.updateVar(p.ident_, var);
+        if (_type.isPrimitive()) {
+            env.emit(env.instructionBuilder.store(
+                var,
+                p.expr_.accept(new ExprVisitor(), env)
+            ));
+            if (_override) {
+                env.updateVar(p.ident_, var);
+            } else {
+                env.insertVar(p.ident_, var);
+            }
         } else {
-            env.insertVar(p.ident_, var);
+            // FIXME: Ugly
+            if (_override) {
+                env.updateVar(p.ident_, var);
+            } else {
+                env.insertVar(p.ident_, var);
+            }
+            OperationItem value = p.expr_.accept(
+                new ExprVisitor(p.ident_),
+                env
+            );
+            if (value == null) {
+                // Something like `A a = new A` where we actually call the
+                //  constructor
+                if (!var.getType().isObject()) {
+                    throw new IllegalStateException(
+                        "Error with assignment to object variable"
+                    );
+                }
+            } else {
+                env.emit(env.instructionBuilder.store(var, value));
+            }
         }
         env.emit(env.instructionBuilder.newLine());
         return null;

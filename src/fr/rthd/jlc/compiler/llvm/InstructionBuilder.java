@@ -8,7 +8,6 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -124,8 +123,9 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
             func.getRetType(),
-            (parentClass == null ? "" : parentClass.getName() + "$") +
-            func.getName(),
+            parentClass == null
+            ? func.getName()
+            : parentClass.getAssemblyMethodName(func.getName()),
             func.getArgs()
                 .stream()
                 .map(arg -> String.format(
@@ -202,20 +202,16 @@ public class InstructionBuilder {
             dst == null ? TypeCode.CVoid : dst.getType(),
             funcName,
             args.stream()
-                .map(arg -> String.format("%s %s", arg.getType(), arg))
+                .map(arg -> String.format(
+                    "%s%s %s",
+                    arg.getType(),
+                    // FIXME: Use `arg.isPointer()` instead?
+                    arg.getType().isPrimitive() ? "" : "*",
+                    arg
+                ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
                 .orElse("")
         ));
-    }
-
-    public Instruction constructor(
-        Variable var,
-        ClassType c
-    ) {
-        return call(
-            c.getConstructorName(),
-            Collections.singletonList(var)
-        );
     }
 
     /**

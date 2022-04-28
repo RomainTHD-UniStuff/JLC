@@ -180,4 +180,8 @@ public class ClassType {
     public String getSuperclassName() {
         return _superclassName;
     }
+
+    public String getAssemblyMethodName(String funcName) {
+        return _name + "$" + funcName;
+    }
 }

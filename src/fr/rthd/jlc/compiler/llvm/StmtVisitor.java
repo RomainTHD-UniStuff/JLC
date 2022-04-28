@@ -57,10 +57,21 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
             );
         }
 
-        env.emit(env.instructionBuilder.store(
-            env.lookupVar(p.ident_),
-            p.expr_.accept(new ExprVisitor(), env)
-        ));
+        OperationItem value = p.expr_.accept(new ExprVisitor(p.ident_), env);
+        if (value == null) {
+            // Something like `a = new A`, where we actually only call the
+            //  constructor
+            if (!dst.getType().isObject()) {
+                throw new IllegalStateException(
+                    "Error with assignment to object variable"
+                );
+            }
+        } else {
+            env.emit(env.instructionBuilder.store(
+                env.lookupVar(p.ident_),
+                value
+            ));
+        }
         env.emit(env.instructionBuilder.newLine());
         return null;
     }
