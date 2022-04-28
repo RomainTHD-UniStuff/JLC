@@ -205,8 +205,7 @@ public class InstructionBuilder {
                 .map(arg -> String.format(
                     "%s%s %s",
                     arg.getType(),
-                    // FIXME: Use `arg.isPointer()` instead?
-                    arg.getType().isPrimitive() ? "" : "*",
+                    arg.isPointer() ? "*" : "",
                     arg
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))

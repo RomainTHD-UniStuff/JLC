@@ -53,7 +53,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
-        if (var.isPointer()) {
+        if (var.isPointer() && var.getType().isPrimitive()) {
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
                 var.getName().replace(EnvCompiler.SEP, '-')
@@ -171,8 +171,6 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
                 "Cannot create a new object for a primitive type"
             );
         }
-
-        System.err.println(ref.isPointer());
 
         return new EDot(
             new EVar(_refVar),

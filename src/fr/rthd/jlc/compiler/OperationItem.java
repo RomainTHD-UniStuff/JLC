@@ -13,11 +13,26 @@ public abstract class OperationItem {
     private final TypeCode _type;
 
     /**
+     * Pointer or not
+     */
+    private final boolean _isPointer;
+
+    /**
      * Constructor
      * @param type Item type
      */
     public OperationItem(TypeCode type) {
+        this(type, false);
+    }
+
+    /**
+     * Constructor
+     * @param type Item type
+     * @param isPointer Pointer or not
+     */
+    public OperationItem(TypeCode type, boolean isPointer) {
         _type = type;
+        _isPointer = isPointer;
     }
 
     /**
@@ -28,5 +43,9 @@ public abstract class OperationItem {
 
     public TypeCode getType() {
         return _type;
+    }
+
+    public boolean isPointer() {
+        return _isPointer;
     }
 }

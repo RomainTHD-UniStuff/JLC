@@ -19,11 +19,6 @@ public class Variable extends OperationItem {
     private final boolean _isGlobal;
 
     /**
-     * Pointer or not
-     */
-    private final boolean _isPointer;
-
-    /**
      * Class variable or not
      */
     private final boolean _isClassVariable;
@@ -67,9 +62,8 @@ public class Variable extends OperationItem {
         boolean isGlobal,
         int size
     ) {
-        super(type);
+        super(type, isPointer);
         _name = name;
-        _isPointer = isPointer;
         _isClassVariable = isClassVariable;
         _isGlobal = isGlobal;
         _size = size;
@@ -77,10 +71,6 @@ public class Variable extends OperationItem {
 
     public boolean isGlobal() {
         return _isGlobal;
-    }
-
-    public boolean isPointer() {
-        return _isPointer;
     }
 
     public boolean isClassVariable() {
