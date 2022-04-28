@@ -1,14 +1,15 @@
 # Compiler makefile
 
-# Sources files
-LABSRC    = $(filter-out src/javalette/*.java, $(wildcard src/*.java src/**/*.java))
-LABSRCDIR = src
-LABSRCOUT = src/javalette
+# Recursive wildcard expansion
+rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
-# Object files
-PARSERSRC = $(wildcard src/javalette/Absyn/*.java src/javalette/*.java)
-PARSEROBJ = $(PARSERSRC:.java=.class)
-LABOBJ    = $(LABSRC:.java=.class)
+# Sources files
+BNFC_SRC_DIR = src/javalette
+BNFC_SRC     = $(call rwildcard,$(BNFC_SRC_DIR),*.java)
+SRC_DIR      = src
+BUILD_DIR    = build
+SRC          = $(call rwildcard,$(SRC_DIR)/fr/rthd,*.java)
+OBJ          = $(subst $(SRC_DIR)/,$(BUILD_DIR)/,$(SRC:.java=.class))
 
 # Name of generated .cup file for bnfc ≥ 2.8.1
 CUPFILE = src/javalette/_cup.cup
@@ -49,7 +50,6 @@ build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: src/javalette.cf
 
 # Create parser and move it to the correct location
 src/javalette/parser.java src/javalette/sym.java: $(CUPFILE)
-	# FIXME: The BNFC grammar contains an unresolved conflict near Constructor
 	$(java) java_cup.Main -expect 2 -package javalette $<
 	mv parser.java sym.java src/javalette/
 
@@ -89,8 +89,8 @@ sdist: submission.tar.gz
 submission.tar.gz: Makefile
 	$(eval tmpdir := $(shell mktemp -d))
 	mkdir $(tmpdir)/submission
-	cp -r $(LABSRCDIR) $(tmpdir)/submission
-	rm -r $(tmpdir)/submission/$(LABSRCOUT)
+	cp -r $(SRC_DIR) $(tmpdir)/submission
+	rm -r $(tmpdir)/submission/$(BNFC_SRC_DIR)
 	cp jlc* $(tmpdir)/submission
 	mkdir $(tmpdir)/submission/doc
 	cp README.md $(tmpdir)/submission/doc
@@ -108,9 +108,9 @@ clean:
 
 # Clean all generated files
 vclean: clean
-	-rm -rf $(LABSRCOUT)
-	-mkdir $(LABSRCOUT)
-	touch $(LABSRCOUT)/.gitkeep
+	-rm -rf $(BNFC_SRC_DIR)
+	-mkdir $(BNFC_SRC_DIR)
+	touch $(BNFC_SRC_DIR)/.gitkeep
 
 # Clean everything
 distclean: vclean
