@@ -73,6 +73,7 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Optimizer
@@ -195,8 +196,9 @@ public class Optimizer implements Visitor {
         return new AnnotatedStmt<>(base);
     }
 
+    @NotNull
     @Override
-    public Prog accept(Prog p, Env<?, FunType, ClassType> parentEnv) {
+    public Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> parentEnv) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
         // First pass will mark functions as pure or impure
         p = p.accept(new ProgVisitor(), env);

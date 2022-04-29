@@ -1,6 +1,10 @@
 package fr.rthd.jlc.env;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,32 +16,38 @@ import java.util.Map;
  * Class representation
  * @author RomainTHD
  */
+@NonNls
 public class ClassType {
     /**
      * Class name
      */
+    @NotNull
     private final String _name;
 
     /**
      * Superclass name or null
      * @see #_superclass
      */
+    @Nullable
     private final String _superclassName;
 
     /**
      * List of defined methods
      */
+    @NotNull
     private final Map<String, FunType> _methods;
 
     /**
      * List of defined fields
      */
+    @NotNull
     private final Map<String, Attribute> _attributes;
 
     /**
      * Superclass or null. Will be definer later on, when all classes have been
      * discovered
      */
+    @Nullable
     private ClassType _superclass = null;
 
     /**
@@ -46,8 +56,8 @@ public class ClassType {
      * @param superclassName Superclass name or null
      */
     public ClassType(
-        String name,
-        String superclassName
+        @NotNull String name,
+        @Nullable String superclassName
     ) {
         _name = name;
         _superclassName = superclassName;
@@ -55,90 +65,95 @@ public class ClassType {
         _attributes = new HashMap<>();
     }
 
-    public void addMethod(FunType f) {
+    public void addMethod(@NotNull FunType f) {
         _methods.put(f.getName(), f);
     }
 
+    @NotNull
     public Collection<FunType> getOwnMethods() {
         return _methods.values();
     }
 
+    @NotNull
     public Collection<FunType> getAllMethods() {
         Collection<FunType> methods = new ArrayList<>(getOwnMethods());
-        if (_superclassName != null) {
-            methods.addAll(getSuperclass().getAllMethods());
+        if (_superclass != null) {
+            methods.addAll(_superclass.getAllMethods());
         }
         return methods;
     }
 
-    public FunType getMethod(String name) {
+    @Nullable
+    public FunType getMethod(@NotNull String name) {
         if (_methods.containsKey(name)) {
             return _methods.get(name);
-        } else if (_superclassName != null) {
-            return getSuperclass().getMethod(name);
+        } else if (_superclass != null) {
+            return _superclass.getMethod(name);
         } else {
             return null;
         }
     }
 
-    public void addAttribute(Attribute a) {
+    public void addAttribute(@NotNull Attribute a) {
         _attributes.put(a.getName(), a);
     }
 
+    @NotNull
     public Collection<Attribute> getOwnAttributes() {
         return _attributes.values();
     }
 
+    @NotNull
     public List<Attribute> getAllAttributes() {
         List<Attribute> attrs = new ArrayList<>();
-        if (_superclassName != null) {
-            attrs.addAll(getSuperclass().getAllAttributes());
+        if (_superclass != null) {
+            attrs.addAll(_superclass.getAllAttributes());
         }
         attrs.addAll(getOwnAttributes());
         return attrs;
     }
 
-    public boolean hasAttribute(String name) {
+    public boolean hasAttribute(@NotNull String name) {
         if (_attributes.containsKey(name)) {
             return true;
-        } else if (_superclassName != null) {
-            return getSuperclass().hasAttribute(name);
+        } else if (_superclass != null) {
+            return _superclass.hasAttribute(name);
         } else {
             return false;
         }
     }
 
-    public boolean hasMethod(String name) {
+    public boolean hasMethod(@NotNull String name) {
         if (_methods.containsKey(name)) {
             return true;
-        } else if (_superclassName != null) {
-            return getSuperclass().hasMethod(name);
+        } else if (_superclass != null) {
+            return _superclass.hasMethod(name);
         } else {
             return false;
         }
     }
 
-    public void updateSuperclass(ClassType c) {
+    public void updateSuperclass(@Nullable ClassType c) {
         _superclass = c;
     }
 
+    @Nullable
     public ClassType getSuperclass() {
         return _superclass;
     }
 
-    public boolean isCastableTo(ClassType c) {
+    public boolean isCastableTo(@NotNull ClassType c) {
         if (equals(c)) {
             return true;
         }
-        if (_superclassName == null) {
+        if (_superclass == null) {
             return false;
         }
-        ClassType superclass = getSuperclass();
-        return superclass.isCastableTo(c);
+        return _superclass.isCastableTo(c);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == null) {
             return false;
         } else if (obj == this) {
@@ -151,13 +166,15 @@ public class ClassType {
         }
     }
 
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
         return "ClassType{" +
                "name=" +
                _name +
                ", superclass=" +
-               _superclassName +
+               (_superclass == null ? "null" : _superclass.getName()) +
                ", methods=" +
                _methods +
                ", attributes=" +
@@ -165,23 +182,32 @@ public class ClassType {
                "}";
     }
 
+    @NotNull
+    @Contract(pure = true)
     public String getConstructorName() {
         return "__constructor";
     }
 
+    @NotNull
     public TypeCode getType() {
         return TypeCode.forClass(_name);
     }
 
+    @NotNull
+    @Contract(pure = true)
     public String getName() {
         return _name;
     }
 
+    @Nullable
+    @Contract(pure = true)
     public String getSuperclassName() {
         return _superclassName;
     }
 
-    public String getAssemblyMethodName(String funcName) {
+    @NotNull
+    @Contract(pure = true)
+    public String getAssemblyMethodName(@NotNull String funcName) {
         return _name + "$" + funcName;
     }
 }

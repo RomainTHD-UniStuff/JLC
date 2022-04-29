@@ -1,5 +1,8 @@
 package fr.rthd.jlc.internal;
 
+import org.jetbrains.annotations.Nls;
+
+@Nls
 public class NotImplementedException extends UnsupportedOperationException {
     public NotImplementedException() {
         super("ERROR: Not implemented yet");

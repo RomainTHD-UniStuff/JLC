@@ -59,6 +59,7 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Debug class to recreate an AST as expected by PrettyPrinter, without our
@@ -66,8 +67,9 @@ import javalette.Absyn.While;
  * @author RomainTHD
  */
 public class Unannotater implements Visitor {
+    @NotNull
     @Override
-    public Prog accept(Prog p, Env<?, FunType, ClassType> ignored) {
+    public Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> ignored) {
         return p.accept(new ProgVisitor(), null);
     }
 

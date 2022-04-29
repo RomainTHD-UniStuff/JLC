@@ -5,6 +5,7 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Prog;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -26,7 +27,8 @@ public class LLVMCompiler implements Visitor {
      * @param parent Parent environment
      * @return Compiled program as a string
      */
-    public Prog accept(Prog p, Env<?, FunType, ClassType> parent) {
+    @NotNull
+    public Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> parent) {
         EnvCompiler env = new EnvCompiler(parent, new InstructionBuilder());
         p.accept(new ProgVisitor(), env);
         String asm = env.toAssembly();

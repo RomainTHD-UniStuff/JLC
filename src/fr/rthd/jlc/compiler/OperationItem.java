@@ -1,15 +1,20 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Generic operation item, either a variable or a literal
  * @author RomainTHD
  */
+@NonNls
 public abstract class OperationItem {
     /**
      * Item type
      */
+    @NotNull
     private final TypeCode _type;
 
     /**
@@ -21,7 +26,7 @@ public abstract class OperationItem {
      * Constructor
      * @param type Item type
      */
-    public OperationItem(TypeCode type) {
+    public OperationItem(@NotNull TypeCode type) {
         this(type, false);
     }
 
@@ -30,7 +35,7 @@ public abstract class OperationItem {
      * @param type Item type
      * @param isPointer Pointer or not
      */
-    public OperationItem(TypeCode type, boolean isPointer) {
+    public OperationItem(@NotNull TypeCode type, boolean isPointer) {
         _type = type;
         _isPointer = isPointer;
     }
@@ -39,12 +44,17 @@ public abstract class OperationItem {
      * Should be overridden by subclasses
      * @return String representation of the item
      */
+    @Contract(pure = true)
+    @NotNull
     public abstract String toString();
 
+    @Contract(pure = true)
+    @NotNull
     public TypeCode getType() {
         return _type;
     }
 
+    @Contract(pure = true)
     public boolean isPointer() {
         return _isPointer;
     }

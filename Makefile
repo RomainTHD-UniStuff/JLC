@@ -15,7 +15,7 @@ OBJ          = $(subst $(SRC_DIR)/,$(BUILD_DIR)/,$(SRC:.java=.class))
 CUPFILE = src/javalette/_cup.cup
 
 JAVAC       = javac
-JAVAC_FLAGS = -sourcepath ./src -d ./build
+JAVAC_FLAGS = -cp *:lib/*:. -sourcepath ./src -d ./build
 JAVA        = java
 
 javac       = ${JAVAC} ${JAVAC_FLAGS}

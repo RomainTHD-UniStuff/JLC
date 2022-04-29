@@ -4,6 +4,7 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Prog;
+import org.jetbrains.annotations.NotNull;
 
 public interface Visitor {
     /**
@@ -12,5 +13,6 @@ public interface Visitor {
      * @param parentEnv Parent environment
      * @return Visited program
      */
-    Prog accept(Prog p, Env<?, FunType, ClassType> parentEnv);
+    @NotNull
+    Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> parentEnv);
 }

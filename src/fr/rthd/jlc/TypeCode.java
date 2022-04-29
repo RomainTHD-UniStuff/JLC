@@ -1,5 +1,10 @@
 package fr.rthd.jlc;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +12,9 @@ import java.util.Map;
  * Type code
  * @author RomainTHD
  */
+@NonNls
 public class TypeCode {
+    @NotNull
     public static final TypeCode CInt = TypeCode.fromPrimitive(
         "int",
         "i32",
@@ -15,6 +22,7 @@ public class TypeCode {
         1
     );
 
+    @NotNull
     public static final TypeCode CDouble = TypeCode.fromPrimitive(
         "double",
         "double",
@@ -22,6 +30,7 @@ public class TypeCode {
         2
     );
 
+    @NotNull
     public static final TypeCode CBool = TypeCode.fromPrimitive(
         "boolean",
         "i1",
@@ -29,11 +38,13 @@ public class TypeCode {
         1
     );
 
+    @NotNull
     public static final TypeCode CVoid = TypeCode.fromPrimitive(
         "void",
         "void"
     );
 
+    @NotNull
     public static final TypeCode CString = TypeCode.fromPrimitive(
         "string",
         "i8*"
@@ -44,21 +55,25 @@ public class TypeCode {
      * like `Dog == Dog` or `Dog[] == Dog[]`, because they might be different
      * instances.
      */
+    @NotNull
     private static final Map<String, TypeCode> _pool = new HashMap<>();
 
     /**
      * Real name in source code
      */
+    @NotNull
     private final String _realName;
 
     /**
      * Assembly name
      */
+    @NotNull
     private final String _assemblyName;
 
     /**
      * Default value
      */
+    @Nullable
     private final Object _defaultValue;
 
     /**
@@ -74,15 +89,16 @@ public class TypeCode {
     /**
      * Base type for arrays
      */
+    @Nullable
     private final TypeCode _baseType;
 
     private TypeCode(
-        String realName,
-        String assemblyName,
-        Object defaultValue,
+        @NotNull String realName,
+        @NotNull String assemblyName,
+        @Nullable Object defaultValue,
         int size,
         boolean isPrimitive,
-        TypeCode baseType
+        @Nullable TypeCode baseType
     ) {
         _realName = realName;
         _assemblyName = assemblyName;
@@ -93,9 +109,9 @@ public class TypeCode {
     }
 
     private static TypeCode fromPrimitive(
-        String realName,
-        String assemblyName,
-        Object defaultValue,
+        @NotNull String realName,
+        @NotNull String assemblyName,
+        @Nullable Object defaultValue,
         int size
     ) {
         return new TypeCode(
@@ -109,8 +125,8 @@ public class TypeCode {
     }
 
     private static TypeCode fromPrimitive(
-        String realName,
-        String assemblyName
+        @NotNull String realName,
+        @NotNull String assemblyName
     ) {
         return fromPrimitive(
             realName,
@@ -120,7 +136,8 @@ public class TypeCode {
         );
     }
 
-    public static TypeCode forClass(String realName) {
+    @NotNull
+    public static TypeCode forClass(@NotNull String realName) {
         TypeCode typeCode = _pool.get(realName);
         if (typeCode == null) {
             typeCode = new TypeCode(
@@ -137,7 +154,8 @@ public class TypeCode {
         return typeCode;
     }
 
-    public static TypeCode forArray(TypeCode baseType) {
+    @NotNull
+    public static TypeCode forArray(@NotNull TypeCode baseType) {
         String realName = baseType._realName + "[]";
         TypeCode typeCode = _pool.get(realName);
         if (typeCode == null) {
@@ -155,13 +173,16 @@ public class TypeCode {
         return typeCode;
     }
 
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
         return _assemblyName;
     }
 
+    @Contract(pure = true)
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == null) {
             return false;
         } else if (obj == this) {
@@ -174,34 +195,46 @@ public class TypeCode {
         }
     }
 
+    @Contract(pure = true)
     public int getSize() {
         return _size;
     }
 
+    @Contract(pure = true)
     public boolean isPrimitive() {
         return _isPrimitive;
     }
 
+    @Contract(pure = true)
+    @Nullable
     public TypeCode getBaseType() {
         return _baseType;
     }
 
+    @Contract(pure = true)
+    @NotNull
     public String getRealName() {
         return _realName;
     }
 
+    @Contract(pure = true)
+    @NotNull
     public String getAssemblyName() {
         return _assemblyName;
     }
 
+    @Contract(pure = true)
     public boolean isArray() {
         return _baseType != null;
     }
 
+    @Contract(pure = true)
     public boolean isObject() {
         return _baseType == null && !_isPrimitive;
     }
 
+    @Contract(pure = true)
+    @Nullable
     public Object getDefaultValue() {
         return _defaultValue;
     }

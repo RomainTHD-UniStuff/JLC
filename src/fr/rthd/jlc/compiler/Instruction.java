@@ -1,5 +1,9 @@
 package fr.rthd.jlc.compiler;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,10 +11,12 @@ import java.util.List;
  * Instruction
  * @author RomainTHD
  */
+@NonNls
 public class Instruction {
     /**
      * List of commands
      */
+    @NotNull
     private final List<String> _commands;
 
     /**
@@ -30,7 +36,7 @@ public class Instruction {
      * Constructor
      * @param command Command
      */
-    public Instruction(String command) {
+    public Instruction(@NotNull String command) {
         this();
         add(command);
     }
@@ -39,7 +45,7 @@ public class Instruction {
      * Add an instruction
      * @param inst Instruction
      */
-    protected void add(Instruction inst) {
+    protected void add(@NotNull Instruction inst) {
         _commands.addAll(inst.emit());
     }
 
@@ -47,18 +53,21 @@ public class Instruction {
      * Add a command
      * @param command Command
      */
-    protected void add(String command) {
+    protected void add(@NotNull String command) {
         _commands.add(command);
     }
 
     /**
      * Emit the instruction
-     * @return Instruction as string
+     * @return List of instructions
      */
+    @Contract(pure = true)
+    @NotNull
     public List<String> emit() {
         return _commands;
     }
 
+    @Contract(pure = true)
     public boolean isIndentable() {
         return _indentable;
     }

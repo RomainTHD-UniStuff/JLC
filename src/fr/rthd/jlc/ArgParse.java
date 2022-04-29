@@ -1,5 +1,9 @@
 package fr.rthd.jlc;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -7,6 +11,7 @@ import java.util.List;
  * Argument parser
  * @author RomainTHD
  */
+@NonNls
 public class ArgParse {
     /**
      * Show help or not.
@@ -23,6 +28,7 @@ public class ArgParse {
      * -v, --verbose or --info
      * -vv, --very-verbose or --debug
      */
+    @NotNull
     public final VerboseLevel verbosity;
 
     /**
@@ -46,12 +52,14 @@ public class ArgParse {
     /**
      * Input file, stdin if not specified
      */
+    @Nullable
     public final String inputFile;
 
     /**
      * Output file, stdout if not specified
      * Flag -o or --output <file>
      */
+    @Nullable
     public final String outputFile;
 
     /**
@@ -64,6 +72,7 @@ public class ArgParse {
      * - x86_64, amd64 or x64
      * - jvm or java
      */
+    @NotNull
     public final Backend backend;
 
     /**
@@ -85,12 +94,12 @@ public class ArgParse {
      */
     private ArgParse(
         boolean showHelp,
-        VerboseLevel verbosity,
+        @NotNull VerboseLevel verbosity,
         int optimizationLevel,
         boolean typecheckOnly,
-        String inputFile,
-        String outputFile,
-        Backend backend,
+        @Nullable String inputFile,
+        @Nullable String outputFile,
+        @NotNull Backend backend,
         boolean printAST
     ) {
         this.showHelp = showHelp;

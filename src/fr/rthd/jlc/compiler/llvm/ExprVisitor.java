@@ -32,7 +32,11 @@ import javalette.Absyn.Not;
 import java.util.ArrayList;
 import java.util.List;
 
+import static fr.rthd.jlc.TypeCode.CBool;
+import static fr.rthd.jlc.TypeCode.CDouble;
 import static fr.rthd.jlc.TypeCode.CInt;
+import static fr.rthd.jlc.TypeCode.CString;
+import static fr.rthd.jlc.TypeCode.CVoid;
 
 class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     /**
@@ -71,15 +75,15 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     public OperationItem visit(ELitDoub p, EnvCompiler env) {
-        return new Literal(TypeCode.CDouble, p.double_);
+        return new Literal(CDouble, p.double_);
     }
 
     public OperationItem visit(ELitTrue p, EnvCompiler env) {
-        return new Literal(TypeCode.CBool, true);
+        return new Literal(CBool, true);
     }
 
     public OperationItem visit(ELitFalse p, EnvCompiler env) {
-        return new Literal(TypeCode.CBool, false);
+        return new Literal(CBool, false);
     }
 
     public OperationItem visit(ESelf p, EnvCompiler env) {
@@ -97,7 +101,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         // `getName` should not be used here, because it contains the logical
         //  name of the function, not the name of the function in the LLVM IR
 
-        if (func.getRetType() == TypeCode.CVoid) {
+        if (func.getRetType() == CVoid) {
             env.emit(env.instructionBuilder.call(p.ident_, args));
             return null;
         } else {
@@ -124,7 +128,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         Variable tmp = env.createTempVar(
-            TypeCode.CString,
+            CString,
             "string_literal"
         );
         env.emit(env.instructionBuilder.loadStringLiteral(tmp, global));
@@ -187,10 +191,11 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
         if (expr instanceof Literal) {
             Literal lit = (Literal) expr;
+            assert lit.getValue() != null;
             if (lit.getType() == CInt) {
                 return new Literal(CInt, -(int) lit.getValue());
-            } else if (lit.getType() == TypeCode.CDouble) {
-                return new Literal(TypeCode.CDouble, -(double) lit.getValue());
+            } else if (lit.getType() == CDouble) {
+                return new Literal(CDouble, -(double) lit.getValue());
             } else {
                 throw new RuntimeException("Unsupported type for negation");
             }
@@ -230,7 +235,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     public OperationItem visit(EAnd p, EnvCompiler env) {
-        Variable var = env.createTempVar(TypeCode.CBool, "and_ptr", true);
+        Variable var = env.createTempVar(CBool, "and_ptr", true);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("and_true");
@@ -262,7 +267,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("and false"));
         env.emit(env.instructionBuilder.store(
             var,
-            new Literal(TypeCode.CBool, false)
+            new Literal(CBool, false)
         ));
         env.emit(env.instructionBuilder.jump(endLabel));
 
@@ -277,7 +282,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     public OperationItem visit(EOr p, EnvCompiler env) {
-        Variable var = env.createTempVar(TypeCode.CBool, "or_ptr", true);
+        Variable var = env.createTempVar(CBool, "or_ptr", true);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("or_true");
@@ -299,7 +304,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("or true"));
         env.emit(env.instructionBuilder.store(
             var,
-            new Literal(TypeCode.CBool, true)
+            new Literal(CBool, true)
         ));
         env.emit(env.instructionBuilder.jump(endLabel));
 

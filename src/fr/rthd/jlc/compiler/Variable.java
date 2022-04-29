@@ -1,6 +1,8 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Variable
@@ -11,6 +13,7 @@ public class Variable extends OperationItem {
     /**
      * Variable name
      */
+    @NotNull
     private final String _name;
 
     /**
@@ -32,8 +35,8 @@ public class Variable extends OperationItem {
      * Constructor
      */
     public Variable(
-        TypeCode type,
-        String name,
+        @NotNull TypeCode type,
+        @NotNull String name,
         boolean isPointer
     ) {
         this(type, name, isPointer, false, false, 1);
@@ -43,8 +46,8 @@ public class Variable extends OperationItem {
      * Constructor
      */
     public Variable(
-        TypeCode type,
-        String name,
+        @NotNull TypeCode type,
+        @NotNull String name,
         boolean isPointer,
         boolean isClassVariable
     ) {
@@ -55,8 +58,8 @@ public class Variable extends OperationItem {
      * Constructor
      */
     public Variable(
-        TypeCode type,
-        String name,
+        @NotNull TypeCode type,
+        @NotNull String name,
         boolean isPointer,
         boolean isClassVariable,
         boolean isGlobal,
@@ -69,22 +72,29 @@ public class Variable extends OperationItem {
         _size = size;
     }
 
+    @Contract(pure = true)
     public boolean isGlobal() {
         return _isGlobal;
     }
 
+    @Contract(pure = true)
     public boolean isClassVariable() {
         return _isClassVariable;
     }
 
+    @Contract(pure = true)
     public int getSize() {
         return _size;
     }
 
+    @Contract(pure = true)
+    @NotNull
     public String getName() {
         return _name;
     }
 
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
         // Example: "%tmp"

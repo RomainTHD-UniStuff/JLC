@@ -6,6 +6,7 @@ import javalette.Absyn.Doub;
 import javalette.Absyn.Int;
 import javalette.Absyn.Type;
 import javalette.Absyn.Void;
+import org.jetbrains.annotations.NotNull;
 
 import static fr.rthd.jlc.TypeCode.CBool;
 import static fr.rthd.jlc.TypeCode.CDouble;

@@ -4,6 +4,10 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.exception.EnvException;
 import fr.rthd.jlc.env.exception.SymbolAlreadyDefinedException;
 import fr.rthd.jlc.env.exception.SymbolNotFoundException;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,35 +22,42 @@ import java.util.Objects;
  * @param <Func> Function type
  * @author RomainTHD
  */
+@NonNls
 public class Env<Value, Func extends FunType, Class extends ClassType> {
     /**
      * Global functions map
      */
+    @NotNull
     private final Map<String, Func> _funcSignatures;
 
     /**
      * Class map
      */
+    @NotNull
     private final Map<String, Class> _classSignatures;
 
     /**
      * Variable contexts
      */
+    @NotNull
     private final LinkedList<Map<String, Value>> _contexts;
 
     /**
      * Class-wide function map
      */
+    @NotNull
     private Map<String, Func> _classFuncSignatures;
 
     /**
      * Class we're currently in
      */
+    @Nullable
     private Class _currentClass = null;
 
     /**
      * Calling class for method calls
      */
+    @Nullable
     private Class _callerClass = null;
 
     /**
@@ -63,7 +74,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * Copy constructor, will copy the function signatures
      * @param baseEnv Parent environment
      */
-    public Env(Env<?, Func, Class> baseEnv) {
+    public Env(@NotNull Env<?, Func, Class> baseEnv) {
         _funcSignatures = baseEnv._funcSignatures;
         _classFuncSignatures = baseEnv._classFuncSignatures;
         _classSignatures = baseEnv._classSignatures;
@@ -73,7 +84,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         _callerClass = null;
     }
 
-
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("\n");
@@ -109,19 +121,23 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         return s.toString();
     }
 
+    @Contract(pure = true)
+    @Nullable
     public Class getCurrentClass() {
         return _currentClass;
     }
 
-    public void setCurrentClass(Class c) {
+    public void setCurrentClass(@Nullable Class c) {
         _currentClass = c;
     }
 
+    @Contract(pure = true)
+    @Nullable
     public Class getCaller() {
         return _callerClass;
     }
 
-    public void setCaller(Class c) {
+    public void setCaller(@Nullable Class c) {
         _callerClass = c;
     }
 
@@ -130,6 +146,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param id Variable name
      * @return Variable or null if not found
      */
+    @Contract(pure = true)
+    @Nullable
     public Value lookupVar(String id) {
         for (Map<String, Value> env : _contexts) {
             Value v = env.get(id);
@@ -145,6 +163,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param id Function name
      * @return Function or null if not found
      */
+    @Contract(pure = true)
+    @Nullable
     public Func lookupFun(String id) {
         Func f = _classFuncSignatures.get(id);
         if (f == null) {
@@ -158,6 +178,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param id Class name
      * @return Class or null if not found
      */
+    @Contract(pure = true)
+    @Nullable
     public Class lookupClass(String id) {
         return _classSignatures.get(id);
     }
@@ -167,6 +189,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param t Class type
      * @return Class or null if not found
      */
+    @Contract(pure = true)
+    @Nullable
     public Class lookupClass(TypeCode t) {
         return lookupClass(t.getRealName());
     }
@@ -174,6 +198,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     /**
      * @return All functions
      */
+    @Contract(pure = true)
+    @NotNull
     public List<Func> getAllFun() {
         return new LinkedList<>(_funcSignatures.values());
     }
@@ -181,6 +207,8 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     /**
      * @return All class
      */
+    @Contract(pure = true)
+    @NotNull
     public List<Class> getAllClass() {
         return new LinkedList<>(_classSignatures.values());
     }
@@ -192,7 +220,10 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @throws EnvException If the variable is already set in the top-level
      *     context
      */
-    public void insertVar(String id, Value value) throws EnvException {
+    public void insertVar(
+        @NotNull String id,
+        @NotNull Value value
+    ) throws EnvException {
         insertVar(id, value, false);
     }
 
@@ -205,11 +236,10 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      *     context and `force` is false
      */
     public void insertVar(
-        String id,
-        Value value,
+        @NotNull String id,
+        @NotNull Value value,
         boolean force
     ) throws EnvException {
-        assert value != null;
         Map<String, Value> env = _contexts.peek();
         assert env != null;
         if (force || env.get(id) == null) {
@@ -223,6 +253,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param value Variable
      * @return Whether a variable is in the top-level context or not
      */
+    @Contract(pure = true)
     public boolean isTopLevel(Value value) {
         Map<String, Value> env = _contexts.peek();
         assert env != null;
@@ -234,7 +265,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param id Variable name
      * @param value Variable
      */
-    public void updateVar(String id, Value value) {
+    public void updateVar(@NotNull String id, @NotNull Value value) {
         for (Map<String, Value> env : _contexts) {
             Value v = env.get(id);
             if (v != null) {
@@ -244,11 +275,13 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         }
     }
 
+    @Contract(pure = true)
+    @NotNull
     public Map<String, Func> getClassFunctions() {
         return _classFuncSignatures;
     }
 
-    public void setClassFunctions(Map<String, Func> fns) {
+    public void setClassFunctions(@Nullable Map<String, Func> fns) {
         _classFuncSignatures = Objects.requireNonNullElseGet(
             fns,
             HashMap::new
@@ -260,7 +293,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param func Function
      * @throws EnvException If the function is already defined
      */
-    public void insertFun(Func func) throws EnvException {
+    public void insertFun(@NotNull Func func) throws EnvException {
         if (lookupFun(func.getName()) == null) {
             _funcSignatures.put(func.getName(), func);
         } else {
@@ -273,7 +306,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param cls Class
      * @throws EnvException If the class is already defined
      */
-    public void insertClass(Class cls) throws EnvException {
+    public void insertClass(@NotNull Class cls) throws EnvException {
         if (lookupClass(cls.getName()) == null) {
             _classSignatures.put(cls.getName(), cls);
         } else {
@@ -306,6 +339,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     /**
      * @return Scope depth
      */
+    @Contract(pure = true)
     public int getScopeDepth() {
         return _contexts.size() - 1;
     }
@@ -315,7 +349,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param name Function name
      * @throws EnvException If the function doesn't exist
      */
-    public void removeFun(String name) throws EnvException {
+    public void removeFun(@NotNull String name) throws EnvException {
         if (lookupFun(name) == null) {
             throw new SymbolNotFoundException(name);
         } else {
@@ -328,7 +362,7 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      * @param name Class name
      * @throws EnvException If the class doesn't exist
      */
-    public void removeClass(String name) throws EnvException {
+    public void removeClass(@NotNull String name) throws EnvException {
         if (lookupClass(name) == null) {
             throw new SymbolNotFoundException(name);
         } else {

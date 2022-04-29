@@ -2,6 +2,7 @@ package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.env.FunType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -17,18 +18,20 @@ public class FunTypeOptimizer extends FunType {
     /**
      * Set of all functions using this
      */
+    @NotNull
     private final Set<FunTypeOptimizer> _usedBy;
 
     /**
      * Set of all functions used, implicitly or not, by this
      */
+    @NotNull
     private final Set<FunTypeOptimizer> _purityDependencies;
 
     /**
      * Constructor
      * @param funType Base function
      */
-    public FunTypeOptimizer(FunType funType) {
+    public FunTypeOptimizer(@NotNull FunType funType) {
         super(funType);
         _usedBy = new HashSet<>();
         _purityDependencies = new HashSet<>();
@@ -39,7 +42,7 @@ public class FunTypeOptimizer extends FunType {
      * `g`, then `f` is added to `g`'s usage set.
      * @param caller Function using this
      */
-    public void addUsageIn(FunTypeOptimizer caller) {
+    public void addUsageIn(@NotNull FunTypeOptimizer caller) {
         _usedBy.add(caller);
         caller._purityDependencies.add(this);
     }
