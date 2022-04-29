@@ -65,8 +65,10 @@ public class ClassType {
         _attributes = new HashMap<>();
     }
 
-    public void addMethod(@NotNull FunType f) {
-        _methods.put(f.getName(), f);
+    public void addMethod(@NotNull FunType f, boolean override) {
+        if (override || !_methods.containsKey(f.getName())) {
+            _methods.put(f.getName(), f);
+        }
     }
 
     @NotNull

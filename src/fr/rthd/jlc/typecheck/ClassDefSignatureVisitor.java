@@ -71,15 +71,19 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         );
 
         p.listmember_.add(new FnMember(fdef));
-        addMethod(c, fdef);
+        addMethod(c, fdef, true);
     }
 
-    private void addMethod(@NotNull ClassType c, @NotNull FnDef f) {
+    private void addMethod(
+        @NotNull ClassType c,
+        @NotNull FnDef f,
+        boolean override
+    ) {
         List<FunArg> args = new LinkedList<>();
         for (Arg arg : f.listarg_) {
             args.add(arg.accept(new ArgVisitor(), null));
         }
-        if (c.hasMethod(f.ident_)) {
+        if (!override && c.hasMethod(f.ident_)) {
             throw new DuplicateFieldException(
                 f.ident_,
                 c.getName(),
@@ -90,7 +94,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
             f.type_.accept(new TypeVisitor(), null),
             f.ident_,
             args
-        ));
+        ), override);
     }
 
     private void addAttribute(@NotNull ClassType c, @NotNull AttrMember a) {
@@ -113,7 +117,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
 
         for (Member m : p.listmember_) {
             if (m instanceof FnMember) {
-                addMethod(c, (FnDef) ((FnMember) m).funcdef_);
+                addMethod(c, (FnDef) ((FnMember) m).funcdef_, false);
             } else if (m instanceof AttrMember) {
                 addAttribute(c, (AttrMember) m);
             } else {
