@@ -81,7 +81,9 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             }
 
             ClassType expectedClass = env.lookupClass(expectedType);
+            assert expectedClass != null;
             ClassType actualClass = env.lookupClass(exp.getType());
+            assert actualClass != null;
             if (!actualClass.isCastableTo(expectedClass)) {
                 // `B x = new A;`
                 throw e;

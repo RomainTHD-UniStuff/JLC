@@ -49,6 +49,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
 
     public Void visit(Ass p, EnvCompiler env) {
         Variable dst = env.lookupVar(p.ident_);
+        assert dst != null;
 
         if (!dst.isPointer()) {
             // We shouldn't be in this state

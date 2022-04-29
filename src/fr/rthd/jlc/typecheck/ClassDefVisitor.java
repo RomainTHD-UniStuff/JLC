@@ -14,6 +14,7 @@ import java.util.Map;
 class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
     public ClassDef visit(ClsDef p, EnvTypecheck env) {
         ClassType c = env.lookupClass(p.ident_);
+        assert c != null;
 
         ListMember members = new ListMember();
 

@@ -25,6 +25,8 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             func = c.getMethod(p.ident_);
         }
 
+        assert func != null;
+
         env.resetScope();
 
         if (c != null) {
@@ -47,6 +49,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
 
         for (FunArg arg : func.getArgs()) {
             Variable v = env.lookupVar(arg.getName());
+            assert v != null;
             if (!v.isPointer()) {
                 // Arguments are passed by value, so we load them to respect the
                 //  convention that all variables are pointers

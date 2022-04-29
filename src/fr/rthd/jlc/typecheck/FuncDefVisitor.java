@@ -11,6 +11,7 @@ import javalette.Absyn.FuncDef;
 class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
     public FnDef visit(FnDef f, EnvTypecheck env) {
         FunType func = env.lookupFun(f.ident_);
+        assert func != null;
 
         env.setReturn(false);
         env.enterScope();
