@@ -23,7 +23,7 @@ class ClassDefOnlySignatureVisitor implements ClassDef.Visitor<Void, EnvTypechec
             superclass = ((HExtends) p.classinheritance_).ident_;
         } else {
             throw new IllegalArgumentException(String.format(
-                "Unknown interhitance type: %s",
+                "Unknown inheritance type: %s",
                 p.classinheritance_.getClass().getName()
             ));
         }
