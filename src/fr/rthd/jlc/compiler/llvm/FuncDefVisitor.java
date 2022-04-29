@@ -11,17 +11,33 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.Init;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
+/**
+ * Function definition visitor
+ * @author RomainTHD
+ */
+@NonNls
 class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
+    /**
+     * Function definition
+     * @param p Function definition
+     * @param env Environment
+     */
+    @Override
     public Void visit(FnDef p, EnvCompiler env) {
         FunType func;
 
         ClassType c = env.getCurrentClass();
         if (c == null) {
+            // Look for global function
             func = env.lookupFun(p.ident_);
         } else {
+            // Look for method
+            // FIXME: Should already be resolved since ProgVisitor adds all
+            //  methods to the global environment
             func = c.getMethod(p.ident_);
         }
 
@@ -30,7 +46,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         env.resetScope();
 
         if (c != null) {
-            // `this` is the first argument
+            // `this` is the first argument for methods
             func.addArgFirst(new FunArg(c.getType(), "this"));
         }
 
@@ -38,7 +54,8 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             Variable var = env.createVar(
                 arg.getType(),
                 arg.getName(),
-                !arg.getType().isPrimitive()// Primitive types are passed by value
+                !arg.getType().isPrimitive()
+                // Primitive types are passed by value
             );
             env.insertVar(arg.getName(), var);
             arg.setGeneratedName(var.getName());
@@ -64,6 +81,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         }
 
         if (c != null) {
+            // If method, we load all fields on the stack
             List<Attribute> attrs = c.getAllAttributes();
             for (int i = 0; i < attrs.size(); i++) {
                 Attribute a = attrs.get(i);
@@ -84,6 +102,8 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
 
         p.blk_.accept(new BlkVisitor(), env);
 
+        // Add return instruction in case it wasn't already present
+        // FIXME: Check if it was actually already present
         if (func.getRetType() == TypeCode.CVoid) {
             env.emit(env.instructionBuilder.ret());
         } else {

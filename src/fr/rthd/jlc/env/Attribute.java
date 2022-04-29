@@ -44,12 +44,18 @@ public class Attribute {
         );
     }
 
+    /**
+     * @return Attribute type
+     */
     @Contract(pure = true)
     @NotNull
     public TypeCode getType() {
         return _type;
     }
 
+    /**
+     * @return Attribute name
+     */
     @Contract(pure = true)
     @NotNull
     public String getName() {

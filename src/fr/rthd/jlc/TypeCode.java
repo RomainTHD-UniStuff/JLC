@@ -14,6 +14,9 @@ import java.util.Map;
  */
 @NonNls
 public class TypeCode {
+    /**
+     * Integer type code
+     */
     @NotNull
     public static final TypeCode CInt = TypeCode.fromPrimitive(
         "int",
@@ -22,6 +25,9 @@ public class TypeCode {
         1
     );
 
+    /**
+     * Double type code
+     */
     @NotNull
     public static final TypeCode CDouble = TypeCode.fromPrimitive(
         "double",
@@ -30,6 +36,9 @@ public class TypeCode {
         2
     );
 
+    /**
+     * Boolean type code
+     */
     @NotNull
     public static final TypeCode CBool = TypeCode.fromPrimitive(
         "boolean",
@@ -38,12 +47,18 @@ public class TypeCode {
         1
     );
 
+    /**
+     * Void type code
+     */
     @NotNull
     public static final TypeCode CVoid = TypeCode.fromPrimitive(
         "void",
         "void"
     );
 
+    /**
+     * String type code
+     */
     @NotNull
     public static final TypeCode CString = TypeCode.fromPrimitive(
         "string",
@@ -92,6 +107,15 @@ public class TypeCode {
     @Nullable
     private final TypeCode _baseType;
 
+    /**
+     * Constructor
+     * @param realName Real name in source code
+     * @param assemblyName Assembly name
+     * @param defaultValue Default value
+     * @param size Size
+     * @param isPrimitive Primitive type or not
+     * @param baseType Base type for arrays
+     */
     private TypeCode(
         @NotNull String realName,
         @NotNull String assemblyName,
@@ -108,6 +132,15 @@ public class TypeCode {
         _baseType = baseType;
     }
 
+    /**
+     * Create a type code from a primitive type
+     * @param realName Real name in source code
+     * @param assemblyName Assembly name
+     * @param defaultValue Default value
+     * @param size Size
+     * @return Type code
+     */
+    @NotNull
     private static TypeCode fromPrimitive(
         @NotNull String realName,
         @NotNull String assemblyName,
@@ -124,6 +157,13 @@ public class TypeCode {
         );
     }
 
+    /**
+     * Create a type code from a primitive type
+     * @param realName Real name in source code
+     * @param assemblyName Assembly name
+     * @return Type code
+     */
+    @NotNull
     private static TypeCode fromPrimitive(
         @NotNull String realName,
         @NotNull String assemblyName
@@ -136,6 +176,11 @@ public class TypeCode {
         );
     }
 
+    /**
+     * Create a type code for a class
+     * @param realName Real class name in source code
+     * @return Type code
+     */
     @NotNull
     public static TypeCode forClass(@NotNull String realName) {
         TypeCode typeCode = _pool.get(realName);
@@ -154,6 +199,11 @@ public class TypeCode {
         return typeCode;
     }
 
+    /**
+     * Create a type code for an array
+     * @param baseType Array base type
+     * @return Type code
+     */
     @NotNull
     public static TypeCode forArray(@NotNull TypeCode baseType) {
         String realName = baseType._realName + "[]";
@@ -195,44 +245,68 @@ public class TypeCode {
         }
     }
 
+    /**
+     * @return Type size
+     */
     @Contract(pure = true)
     public int getSize() {
         return _size;
     }
 
+    /**
+     * @return Is a primitive type or not
+     */
     @Contract(pure = true)
     public boolean isPrimitive() {
         return _isPrimitive;
     }
 
+    /**
+     * @return Array base type
+     */
     @Contract(pure = true)
     @Nullable
     public TypeCode getBaseType() {
         return _baseType;
     }
 
+    /**
+     * @return Real name in source code
+     */
     @Contract(pure = true)
     @NotNull
     public String getRealName() {
         return _realName;
     }
 
+    /**
+     * @return Assembly name
+     */
     @Contract(pure = true)
     @NotNull
     public String getAssemblyName() {
         return _assemblyName;
     }
 
+    /**
+     * @return Is an array type or not
+     */
     @Contract(pure = true)
     public boolean isArray() {
         return _baseType != null;
     }
 
+    /**
+     * @return Is an object type or not
+     */
     @Contract(pure = true)
     public boolean isObject() {
         return _baseType == null && !_isPrimitive;
     }
 
+    /**
+     * @return Default value
+     */
     @Contract(pure = true)
     @Nullable
     public Object getDefaultValue() {

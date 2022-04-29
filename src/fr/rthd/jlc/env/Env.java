@@ -121,22 +121,36 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         return s.toString();
     }
 
+    /**
+     * @return Current class
+     */
     @Contract(pure = true)
     @Nullable
     public Class getCurrentClass() {
         return _currentClass;
     }
 
+    /**
+     * Set the new current class
+     * @param c Class to set
+     */
     public void setCurrentClass(@Nullable Class c) {
         _currentClass = c;
     }
 
+    /**
+     * @return Calling class
+     */
     @Contract(pure = true)
     @Nullable
     public Class getCaller() {
         return _callerClass;
     }
 
+    /**
+     * Set the new calling class
+     * @param c Class to set
+     */
     public void setCaller(@Nullable Class c) {
         _callerClass = c;
     }
@@ -275,12 +289,19 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         }
     }
 
+    /**
+     * @return Class methods
+     */
     @Contract(pure = true)
     @NotNull
     public Map<String, Func> getClassFunctions() {
         return _classFuncSignatures;
     }
 
+    /**
+     * Set the class methods
+     * @param fns Class methods
+     */
     public void setClassFunctions(@Nullable Map<String, Func> fns) {
         _classFuncSignatures = Objects.requireNonNullElseGet(
             fns,

@@ -14,9 +14,21 @@ import javalette.Absyn.ListTopDef;
 import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
 import javalette.Absyn.TopDef;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Program signature visitor
+ * @author RomainTHD
+ */
+@NonNls
 class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
+    /**
+     * Check the signature of all the functions, methods and attributes
+     * @param p Program
+     * @param env Environment
+     * @return Program with the signature checked
+     */
     @Override
     public Prog visit(Program p, EnvTypecheck env) {
         ListTopDef listTopDef = p.listtopdef_;

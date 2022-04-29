@@ -6,6 +6,10 @@ import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Prog;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Default visitor
+ * @author RomainTHD
+ */
 public interface Visitor {
     /**
      * Entry point

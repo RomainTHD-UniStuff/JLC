@@ -6,16 +6,29 @@ import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.Void;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Program visitor
+ * @author RomainTHD
+ */
+@NonNls
 class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
+    /**
+     * Program visitor
+     * @param p Program
+     * @param env Environment
+     */
+    @Override
     public Void visit(Program p, EnvCompiler env) {
         env.emit(env.instructionBuilder.newLine());
 
         for (FunType fun : env.getAllFun()) {
             if (fun.isExternal()) {
+                // External functions are not emitted, only declared
                 env.emit(env.instructionBuilder.declareExternalFunction(fun));
             }
         }
@@ -29,6 +42,7 @@ class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
             }
         }
 
+        // FIXME: Sill useful since all functions are now declared as global?
         env.setClassFunctions(classFunctions);
 
         env.emit(env.instructionBuilder.newLine());

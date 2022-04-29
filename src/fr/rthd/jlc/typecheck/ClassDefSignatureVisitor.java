@@ -18,6 +18,7 @@ import javalette.Absyn.FnMember;
 import javalette.Absyn.ListArg;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.Member;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -30,12 +31,17 @@ import java.util.List;
  * @author RomainTHD
  * @see ClassDefOnlySignatureVisitor
  */
+@NonNls
 class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
     /**
      * Only add the constructor to the class
      */
     private final boolean constructorOnly;
 
+    /**
+     * Constructor
+     * @param constructorOnly Constructor only
+     */
     public ClassDefSignatureVisitor(boolean constructorOnly) {
         this.constructorOnly = constructorOnly;
     }
@@ -74,6 +80,12 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         addMethod(c, fdef, true);
     }
 
+    /**
+     * Add a method to the current class
+     * @param c Class
+     * @param f Method
+     * @param override Override or not
+     */
     private void addMethod(
         @NotNull ClassType c,
         @NotNull FnDef f,
@@ -97,6 +109,11 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         ), override);
     }
 
+    /**
+     * Add an attribute to the current class
+     * @param c Class
+     * @param a Attribute
+     */
     private void addAttribute(@NotNull ClassType c, @NotNull AttrMember a) {
         if (c.hasAttribute(a.ident_)) {
             throw new DuplicateFieldException(
@@ -111,6 +128,11 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         ));
     }
 
+    /**
+     * Handle the field definition of the class
+     * @param p Class definition
+     * @param env Environment
+     */
     private void handleFields(@NotNull ClsDef p, @NotNull EnvTypecheck env) {
         ClassType c = env.lookupClass(p.ident_);
         assert c != null;
@@ -128,6 +150,12 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         }
     }
 
+    /**
+     * Class definition
+     * @param p Class definition
+     * @param env Environment
+     */
+    @Override
     public Void visit(ClsDef p, EnvTypecheck env) {
         if (constructorOnly) {
             handleConstructor(p, env);

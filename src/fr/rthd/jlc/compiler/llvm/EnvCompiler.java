@@ -7,6 +7,7 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.Map;
  * @see Env
  * @see Variable
  */
+@NonNls
 public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Indent character
@@ -49,8 +51,11 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     private final List<String> _output;
 
     /**
-     * Variable counter to avoid collisions, like ``` .temp$0 = ... .temp$1 =
-     * ... ```
+     * Variable counter to avoid collisions, like
+     * ```llvm
+     * .temp$0 = 0
+     * .temp$1 = 1
+     * ```
      */
     @NotNull
     private final LinkedList<Map<String, Integer>> _varCount;
@@ -63,8 +68,15 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     private final LinkedList<Map<String, Integer>> _labelCount;
 
     /**
-     * Depth access counter, to avoid collisions between blocks like ``` {
-     * .temp$0 = ... } { .temp$0 = ... ; Different block, but a collision } ```
+     * Depth access counter, to avoid collisions between blocks like
+     * ```llvm
+     * {
+     * .temp$0 = ...
+     * }
+     * {
+     * .temp$0 = ... ; Different block, but a collision
+     * }
+     * ```
      */
     @NotNull
     private final Map<Integer, Integer> _depthAccessCount;
@@ -83,6 +95,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Constructor
      * @param env Parent environment
+     * @param builder Instruction builder
      */
     public EnvCompiler(
         @NotNull Env<?, FunType, ClassType> env,
@@ -121,14 +134,24 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         return res.toString();
     }
 
+    /**
+     * Indent the output
+     */
     public void indent() {
         ++_indentLevel;
     }
 
+    /**
+     * Unindent the output
+     */
     public void unindent() {
         --_indentLevel;
     }
 
+    /**
+     * Get the current indented string
+     * @return Indented string
+     */
     @Contract(pure = true)
     @NotNull
     private String getIndentString() {
@@ -175,6 +198,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     private String getVariableUID(@NotNull String name) {
         Map<String, Integer> scope = _varCount.peek();
         assert scope != null;
+        // Get access count for current scope and increment it
         int count = scope.getOrDefault(name, 0);
         scope.put(name, count + 1);
         return String.format(
@@ -333,8 +357,10 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     @NotNull
     private String getHash(@NotNull String content) {
         if (_hashAlgorithm == null) {
+            // Use default `hashCode` implementation, which isn't recommended
             return String.format("%x", content.hashCode());
         } else {
+            // Use custom hash algorithm in hexadecimal format
             _hashAlgorithm.update(content.getBytes());
             byte[] bytes = _hashAlgorithm.digest();
             BigInteger bi = new BigInteger(1, bytes);

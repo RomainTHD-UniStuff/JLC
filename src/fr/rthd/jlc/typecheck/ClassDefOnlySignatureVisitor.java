@@ -5,6 +5,7 @@ import javalette.Absyn.ClassDef;
 import javalette.Absyn.ClsDef;
 import javalette.Absyn.HBase;
 import javalette.Absyn.HExtends;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * We need to visit the class definition twice: first we list all the classes
@@ -14,7 +15,14 @@ import javalette.Absyn.HExtends;
  * @author RomainTHD
  * @see ClassDefSignatureVisitor
  */
+@NonNls
 class ClassDefOnlySignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
+    /**
+     * Class definition
+     * @param p Class definition
+     * @param env Environment
+     */
+    @Override
     public Void visit(ClsDef p, EnvTypecheck env) {
         String superclass;
         if (p.classinheritance_ instanceof HBase) {

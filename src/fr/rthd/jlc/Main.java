@@ -13,6 +13,7 @@ import javalette.Absyn.Prog;
 import javalette.PrettyPrinter;
 import javalette.Yylex;
 import javalette.parser;
+import org.jetbrains.annotations.Nls;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,8 +26,13 @@ import java.util.Scanner;
 /**
  * Main class of the compiler
  * @author RomainTHD
+ * @see ArgParse
  */
+@Nls
 public class Main {
+    /**
+     * @return Help message
+     */
     private static String getHelp() {
         String[] lines = {
             "JLC - a Java-like compiler",
@@ -61,6 +67,10 @@ public class Main {
             .get();
     }
 
+    /**
+     * Exit the program
+     * @param status Status code
+     */
     private static void exit(int status) {
         if (status == 0) {
             System.err.println("OK");
@@ -71,12 +81,13 @@ public class Main {
 
     /**
      * Main method
-     * @param args Command line arguments. Here, `--backend <Backend>`
+     * @param args Command line arguments
      */
     public static void main(String[] args) {
         ArgParse opt = ArgParse.parse(args);
 
         if (opt.showHelp) {
+            // If help is requested, print it and exit
             System.out.println(getHelp());
             System.exit(0);
         }

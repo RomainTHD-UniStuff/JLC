@@ -59,6 +59,7 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,6 +67,7 @@ import org.jetbrains.annotations.NotNull;
  * custom type annotations
  * @author RomainTHD
  */
+@NonNls
 public class Unannotater implements Visitor {
     @NotNull
     @Override

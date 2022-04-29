@@ -46,14 +46,21 @@ public abstract class OperationItem {
      */
     @Contract(pure = true)
     @NotNull
+    @Override
     public abstract String toString();
 
+    /**
+     * @return Item type
+     */
     @Contract(pure = true)
     @NotNull
     public TypeCode getType() {
         return _type;
     }
 
+    /**
+     * @return Pointer or not
+     */
     @Contract(pure = true)
     public boolean isPointer() {
         return _isPointer;

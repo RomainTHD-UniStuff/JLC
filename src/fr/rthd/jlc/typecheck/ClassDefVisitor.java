@@ -7,11 +7,24 @@ import javalette.Absyn.ClassDef;
 import javalette.Absyn.ClsDef;
 import javalette.Absyn.ListMember;
 import javalette.Absyn.Member;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Class definition visitor
+ * @author RomainTHD
+ */
+@NonNls
 class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
+    /**
+     * Class definition
+     * @param p Class definition
+     * @param env Environment
+     * @return Class definition
+     */
+    @Override
     public ClassDef visit(ClsDef p, EnvTypecheck env) {
         ClassType c = env.lookupClass(p.ident_);
         assert c != null;

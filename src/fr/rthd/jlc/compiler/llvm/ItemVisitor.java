@@ -8,28 +8,58 @@ import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Void;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Declaration visitor
+ * @author RomainTHD
+ */
+@NonNls
 class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
+    /**
+     * Variable type
+     */
     @NotNull
     private final TypeCode _type;
+
+    /**
+     * Should override or not the variable. Used for function arguments?
+     * // FIXME: Clarify this
+     */
     private final boolean _override;
 
+    /**
+     * Constructor
+     * @param type Variable type
+     */
     public ItemVisitor(@NotNull TypeCode type) {
         this(type, false);
     }
 
+    /**
+     * Constructor
+     * @param type Variable type
+     * @param override Should override or not
+     */
     public ItemVisitor(@NotNull TypeCode type, boolean override) {
         _type = type;
         _override = override;
     }
 
+    /**
+     * Declaration only
+     * @param p Declaration
+     * @param env Environment
+     */
+    @Override
     public Void visit(NoInit p, EnvCompiler env) {
         env.insertVar(p.ident_, env.createVar(_type, p.ident_, true));
         env.emit(env.instructionBuilder.declare(
             env.lookupVar(p.ident_)
         ));
         if (_type.isPrimitive()) {
+            // If primitive type, initialize with default value
             env.emit(env.instructionBuilder.store(
                 env.lookupVar(p.ident_),
                 AnnotatedExpr.getDefaultValue(_type)
@@ -40,10 +70,20 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         return null;
     }
 
+    /**
+     * Declaration with initialization
+     * @param p Declaration
+     * @param env Environment
+     */
+    @Override
     public Void visit(Init p, EnvCompiler env) {
         Variable var = env.createVar(_type, p.ident_, true);
         env.emit(env.instructionBuilder.declare(var));
         if (_type.isPrimitive()) {
+            // If primitive type, initialize with default value and store after.
+            //  Indeed, code like `int i = i;` where the right-hand side `i` is
+            //  from a lower scope should be allowed.
+            // FIXME: Is this really the case?
             env.emit(env.instructionBuilder.store(
                 var,
                 p.expr_.accept(new ExprVisitor(), env)
@@ -54,7 +94,8 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
                 env.insertVar(p.ident_, var);
             }
         } else {
-            // FIXME: Ugly
+            // For objects, the variable needs to exist before the
+            //  initialization so that the constructor call can be made
             if (_override) {
                 env.updateVar(p.ident_, var);
             } else {
@@ -64,15 +105,9 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
                 new ExprVisitor(p.ident_),
                 env
             );
-            if (value == null) {
-                // Something like `A a = new A` where we actually call the
-                //  constructor
-                if (!var.getType().isObject()) {
-                    throw new IllegalStateException(
-                        "Error with assignment to object variable"
-                    );
-                }
-            } else {
+
+            if (value != null) {
+                // FIXME: Something like `A a1 = a2` maybe?
                 env.emit(env.instructionBuilder.store(var, value));
             }
         }

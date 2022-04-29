@@ -7,6 +7,8 @@ import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
  * Instruction builder for LLVM
  * @author RomainTHD
  */
+@NonNls
 public class InstructionBuilder {
     /**
      * Output a new line

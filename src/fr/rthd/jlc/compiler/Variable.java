@@ -24,7 +24,7 @@ public class Variable extends OperationItem {
     /**
      * Class variable or not
      */
-    private final boolean _isClassVariable;
+    private final boolean _isClassAttribute;
 
     /**
      * Variable size. Only used for strings for now
@@ -61,32 +61,44 @@ public class Variable extends OperationItem {
         @NotNull TypeCode type,
         @NotNull String name,
         boolean isPointer,
-        boolean isClassVariable,
+        boolean isClassAttribute,
         boolean isGlobal,
         int size
     ) {
         super(type, isPointer);
         _name = name;
-        _isClassVariable = isClassVariable;
+        _isClassAttribute = isClassAttribute;
         _isGlobal = isGlobal;
         _size = size;
     }
 
+    /**
+     * @return Is global variable or not
+     */
     @Contract(pure = true)
     public boolean isGlobal() {
         return _isGlobal;
     }
 
+    /**
+     * @return Is class attribute or not
+     */
     @Contract(pure = true)
-    public boolean isClassVariable() {
-        return _isClassVariable;
+    public boolean isClassAttribute() {
+        return _isClassAttribute;
     }
 
+    /**
+     * @return Variable size
+     */
     @Contract(pure = true)
     public int getSize() {
         return _size;
     }
 
+    /**
+     * @return Variable name
+     */
     @Contract(pure = true)
     @NotNull
     public String getName() {
@@ -97,7 +109,7 @@ public class Variable extends OperationItem {
     @NotNull
     @Override
     public String toString() {
-        // Example: "%tmp"
+        // Globals start with a '@', locals with a '%'
         return String.format(
             "%c%s",
             isGlobal() ? '@' : '%',

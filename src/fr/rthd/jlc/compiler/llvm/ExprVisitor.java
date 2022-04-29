@@ -28,6 +28,7 @@ import javalette.Absyn.Expr;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -39,6 +40,11 @@ import static fr.rthd.jlc.TypeCode.CInt;
 import static fr.rthd.jlc.TypeCode.CString;
 import static fr.rthd.jlc.TypeCode.CVoid;
 
+/**
+ * Expression visitor
+ * @author RomainTHD
+ */
+@NonNls
 class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     /**
      * Used for ENew calls
@@ -46,22 +52,46 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     @Nullable
     private final String _refVar;
 
+    /**
+     * Constructor
+     */
     public ExprVisitor() {
         this(null);
     }
 
+    /**
+     * Constructor
+     * @param refVar Reference variable for ENew calls
+     */
     public ExprVisitor(@Nullable String refVar) {
         _refVar = refVar;
     }
 
+    /**
+     * Null literal
+     * @param p Null literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(ENull p, EnvCompiler env) {
         throw new NotImplementedException();
     }
 
+    /**
+     * Variable literal
+     * @param p Variable literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
         if (var.isPointer() && var.getType().isPrimitive()) {
+            // If the variable is a pointer to a primitive type, we need to
+            //  dereference it using a temp variable to respect our
+            //  convention that all returned values are non-pointer values
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
                 var.getName().replace(EnvCompiler.SEP, '-')
@@ -73,42 +103,88 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
     }
 
+    /**
+     * Integer literal
+     * @param p Integer literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(ELitInt p, EnvCompiler env) {
         return new Literal(CInt, p.integer_);
     }
 
+    /**
+     * Double literal
+     * @param p Double literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(ELitDoub p, EnvCompiler env) {
         return new Literal(CDouble, p.double_);
     }
 
+    /**
+     * Boolean true literal
+     * @param p Boolean true literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(ELitTrue p, EnvCompiler env) {
         return new Literal(CBool, true);
     }
 
+    /**
+     * Boolean false literal
+     * @param p Boolean false literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(ELitFalse p, EnvCompiler env) {
         return new Literal(CBool, false);
     }
 
+    /**
+     * Self expression
+     * @param p Self expression
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(ESelf p, EnvCompiler env) {
         throw new NotImplementedException();
     }
 
+    /**
+     * Function call
+     * @param p Function call
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(EApp p, EnvCompiler env) {
         List<OperationItem> args = new ArrayList<>();
 
         for (Expr expr : p.listexpr_) {
+            // Visit arguments
             args.add(expr.accept(new ExprVisitor(), env));
         }
 
         FunType func = env.lookupFun(p.ident_);
         assert func != null;
-        // `getName` should not be used here, because it contains the logical
-        //  name of the function, not the name of the function in the LLVM IR
+
+        // `getName` should not be used in this visitor because it contains the
+        //  logical name of the function, not the name of the function in the
+        //  LLVM IR
 
         if (func.getRetType() == CVoid) {
             env.emit(env.instructionBuilder.call(p.ident_, args));
             return null;
         } else {
+            // Return value
             Variable out = env.createTempVar(
                 func.getRetType(),
                 "function_call"
@@ -118,12 +194,20 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
     }
 
+    /**
+     * String literal
+     * @param p String literal
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(EString p, EnvCompiler env) {
         String content = p.string_;
         Variable global = env.createGlobalStringLiteral(content);
 
         if (env.lookupVar(global.getName()) == null) {
-            // Avoid loading the same string literal multiple times
+            // Avoid loading the same string literal multiple times by emitting
+            //  a global variable only if it is not already defined
             env.insertVar(global.getName(), global);
             env.emitAtBeginning(env.instructionBuilder.globalStringLiteral(
                 global,
@@ -131,6 +215,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             ));
         }
 
+        // Load the global variable into a local variable
         Variable tmp = env.createTempVar(
             CString,
             "string_literal"
@@ -139,35 +224,41 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         return tmp;
     }
 
+    /**
+     * Method call
+     * @param p Method call
+     * @param env Environment
+     * @return Operation result
+     * @see ExprVisitor#visit(EApp, EnvCompiler)
+     */
+    @Override
     public OperationItem visit(EDot p, EnvCompiler env) {
-        TypeCode left;
-        Expr e = ((AnnotatedExpr<?>) p.expr_).getParentExp();
-        if (e instanceof EVar) {
-            Variable v = env.lookupVar(((EVar) e).ident_);
-            assert v != null;
-            left = v.getType();
-        } else {
-            // FIXME: Avoid a double visit here, but not really portable
-            throw new NotImplementedException(
-                "Dot operator not implemented yet for non-variable expressions"
-            );
-        }
-
-        ClassType c = env.lookupClass(left);
+        TypeCode classType = ((AnnotatedExpr<?>) p.expr_).getType();
+        ClassType c = env.lookupClass(classType);
         assert c != null;
 
+        // Add `this` to the arguments
         ListExpr args = new ListExpr();
         args.add(p.expr_);
 
-        // TODO: Add `this` and change the name of the function
+        // Call the "normal" function call visitor
         return new EApp(
             c.getAssemblyMethodName(p.ident_),
             args
         ).accept(new ExprVisitor(), env);
     }
 
+    /**
+     * Object creation using `new`
+     * @param p Object creation
+     * @param env Environment
+     * @return Operation result
+     * @see ExprVisitor#visit(EDot, EnvCompiler)
+     */
+    @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
         if (_refVar == null) {
+            // Variable created without reference, like `f(new A)`
             // FIXME: Create a new variable instead?
             throw new IllegalStateException(
                 "`new` expressions can only be used with a underlying variable"
@@ -175,21 +266,12 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         Variable ref = env.lookupVar(_refVar);
-        if (ref == null) {
-            throw new IllegalStateException(
-                String.format("Variable `%s` not found", _refVar)
-            );
-        }
-
-        if (ref.getType().isPrimitive()) {
-            throw new IllegalStateException(
-                "Cannot create a new object for a primitive type"
-            );
-        }
+        assert ref != null;
 
         ClassType c = env.lookupClass(ref.getType());
         assert c != null;
 
+        // Call the constructor, which is a method of the object
         return new EDot(
             new AnnotatedExpr<>(ref.getType(), new EVar(_refVar)),
             c.getConstructorName(),
@@ -197,9 +279,18 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         ).accept(new ExprVisitor(), env);
     }
 
+    /**
+     * Mathematical negation
+     * @param p Negation
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(Neg p, EnvCompiler env) {
         OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
         if (expr instanceof Literal) {
+            // `-(5)` is the same as `-5`
+            // FIXME: Should already be handled by the optimizer?
             Literal lit = (Literal) expr;
             assert lit.getValue() != null;
             if (lit.getType() == CInt) {
@@ -216,6 +307,13 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
     }
 
+    /**
+     * Logical negation
+     * @param p Negation
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(Not p, EnvCompiler env) {
         OperationItem expr = p.expr_.accept(new ExprVisitor(), env);
         Variable var = env.createTempVar(expr.getType(), "not");
@@ -223,6 +321,14 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         return var;
     }
 
+    /**
+     * Multiplication-like operation
+     * @param p Multiplication
+     * @param env Environment
+     * @return Operation result
+     * @see MulOpVisitor
+     */
+    @Override
     public OperationItem visit(EMul p, EnvCompiler env) {
         return p.mulop_.accept(new MulOpVisitor(
             p.expr_1.accept(new ExprVisitor(), env),
@@ -230,6 +336,14 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         ), env);
     }
 
+    /**
+     * Addition-like operation
+     * @param p Addition
+     * @param env Environment
+     * @return Operation result
+     * @see AddOpVisitor
+     */
+    @Override
     public OperationItem visit(EAdd p, EnvCompiler env) {
         return p.addop_.accept(new AddOpVisitor(
             p.expr_1.accept(new ExprVisitor(), env),
@@ -237,6 +351,14 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         ), env);
     }
 
+    /**
+     * Logical comparison
+     * @param p Comparison
+     * @param env Environment
+     * @return Operation result
+     * @see RelOpVisitor
+     */
+    @Override
     public OperationItem visit(ERel p, EnvCompiler env) {
         return p.relop_.accept(new RelOpVisitor(
             p.expr_1.accept(new ExprVisitor(), env),
@@ -244,7 +366,15 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         ), env);
     }
 
+    /**
+     * Disjunction
+     * @param p Disjunction
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(EAnd p, EnvCompiler env) {
+        // We need to create a pointer to the result variable
         Variable var = env.createTempVar(CBool, "and_ptr", true);
         env.emit(env.instructionBuilder.declare(var));
 
@@ -291,6 +421,13 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         return tmp;
     }
 
+    /**
+     * Conjunction
+     * @param p Conjunction
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
     public OperationItem visit(EOr p, EnvCompiler env) {
         Variable var = env.createTempVar(CBool, "or_ptr", true);
         env.emit(env.instructionBuilder.declare(var));

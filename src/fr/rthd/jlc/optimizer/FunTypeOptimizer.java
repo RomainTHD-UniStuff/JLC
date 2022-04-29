@@ -1,7 +1,7 @@
 package fr.rthd.jlc.optimizer;
 
-import fr.rthd.jlc.utils.Choice;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.utils.Choice;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -89,6 +89,9 @@ public class FunTypeOptimizer extends FunType {
         setPure(Choice.TRUE);
     }
 
+    /**
+     * Clear the usage set of this function
+     */
     public void clearUsage() {
         _usedBy.clear();
     }

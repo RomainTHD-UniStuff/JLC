@@ -41,12 +41,19 @@ public class FunArg {
         _generatedName = null;
     }
 
+    /**
+     * @return Generated name
+     */
     @Contract(pure = true)
     @Nullable
     public String getGeneratedName() {
         return _generatedName;
     }
 
+    /**
+     * Set the generated name
+     * @param name Generated name
+     */
     public void setGeneratedName(@NotNull String name) {
         _generatedName = name;
     }
@@ -62,12 +69,18 @@ public class FunArg {
         );
     }
 
+    /**
+     * @return Argument type
+     */
     @Contract(pure = true)
     @NotNull
     public TypeCode getType() {
         return _type;
     }
 
+    /**
+     * @return Argument name
+     */
     @Contract(pure = true)
     @NotNull
     public String getName() {

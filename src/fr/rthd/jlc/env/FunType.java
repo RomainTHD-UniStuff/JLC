@@ -62,6 +62,12 @@ public class FunType {
         _isPure = other._isPure;
     }
 
+    /**
+     * Constructor
+     * @param retType Return type
+     * @param name Function name
+     * @param args Arguments
+     */
     public FunType(
         @NotNull TypeCode retType,
         @NotNull String name,
@@ -72,6 +78,12 @@ public class FunType {
         _args = Arrays.asList(args);
     }
 
+    /**
+     * Constructor
+     * @param retType Return type
+     * @param name Function name
+     * @param args Arguments
+     */
     public FunType(
         @NotNull TypeCode retType,
         @NotNull String name,
@@ -97,54 +109,88 @@ public class FunType {
         );
     }
 
+    /**
+     * @return Is main function or not
+     */
     @Contract(pure = true)
     public boolean isMain() {
         return _isMain;
     }
 
+    /**
+     * Set this function as main
+     */
     public void setAsMain() {
         _isMain = true;
     }
 
+    /**
+     * @return Is pure or not
+     */
     @Contract(pure = true)
     @NotNull
     public Choice isPure() {
         return _isPure;
     }
 
+    /**
+     * Set purity status
+     * @param isPure Purity status
+     * @return This
+     */
     @NotNull
     public FunType setPure(@NotNull Choice isPure) {
         _isPure = isPure;
         return this;
     }
 
+    /**
+     * @return Is external or not
+     */
     @Contract(pure = true)
     public boolean isExternal() {
         return _isExternal;
     }
 
+    /**
+     * Set this function as external
+     * @return This
+     */
     @NotNull
     public FunType setExternal() {
         _isExternal = true;
         return this;
     }
 
+    /**
+     * Add an argument to this function in first position
+     * @param arg Argument to add
+     */
     public void addArgFirst(@NotNull FunArg arg) {
         _args.add(0, arg);
     }
 
+    /**
+     * @return All the arguments
+     */
     @Contract(pure = true)
     @NotNull
     public List<FunArg> getArgs() {
         return _args;
     }
 
+    /**
+     * @return Return type
+     */
     @Contract(pure = true)
     @NotNull
     public TypeCode getRetType() {
         return _retType;
     }
 
+    /**
+     * @return Function name
+     */
     @Contract(pure = true)
     @NotNull
     public String getName() {

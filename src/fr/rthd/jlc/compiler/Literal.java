@@ -40,6 +40,9 @@ public class Literal extends OperationItem {
         }
     }
 
+    /**
+     * @return Literal value
+     */
     @Contract(pure = true)
     @Nullable
     public Object getValue() {

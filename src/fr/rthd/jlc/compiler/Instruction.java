@@ -67,11 +67,18 @@ public class Instruction {
         return _commands;
     }
 
+    /**
+     * @return Indentable instruction or not
+     */
     @Contract(pure = true)
     public boolean isIndentable() {
         return _indentable;
     }
 
+    /**
+     * Set the indentable flag
+     * @param indentable Indentable flag
+     */
     public void setIndentable(boolean indentable) {
         _indentable = indentable;
     }

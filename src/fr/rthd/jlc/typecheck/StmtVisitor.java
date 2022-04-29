@@ -4,6 +4,7 @@ import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
+import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidConditionTypeException;
@@ -30,16 +31,45 @@ import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
+import org.jetbrains.annotations.NonNls;
 
+/**
+ * Statement visitor. All the expressions will be replaced by an annotated
+ * expression with its type and eventually additional information
+ * @author RomainTHD
+ * @see AnnotatedExpr
+ */
+@NonNls
 class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
+    /**
+     * Empty statement
+     * @param s Empty statement
+     * @param env Environment
+     * @return Empty statement
+     */
+    @Override
     public Empty visit(Empty s, EnvTypecheck env) {
         return new Empty();
     }
 
+    /**
+     * Block
+     * @param s Block
+     * @param env Environment
+     * @return Block
+     */
+    @Override
     public BStmt visit(BStmt s, EnvTypecheck env) {
         return new BStmt(s.blk_.accept(new BlkVisitor(), env));
     }
 
+    /**
+     * Declaration
+     * @param s Declaration
+     * @param env Environment
+     * @return Declaration
+     */
+    @Override
     public Decl visit(Decl s, EnvTypecheck env) {
         TypeCode type = s.type_.accept(new TypeVisitor(), null);
         if (type == TypeCode.CVoid) {
@@ -61,6 +91,13 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new Decl(s.type_, items);
     }
 
+    /**
+     * Assignment
+     * @param s Assignment
+     * @param env Environment
+     * @return Assignment
+     */
+    @Override
     public Ass visit(Ass s, EnvTypecheck env) {
         TypeCode expectedType = env.lookupVar(s.ident_);
         if (expectedType == null) {
@@ -84,7 +121,7 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             assert expectedClass != null;
             ClassType actualClass = env.lookupClass(exp.getType());
             assert actualClass != null;
-            if (!actualClass.isCastableTo(expectedClass)) {
+            if (!actualClass.isSubclassOf(expectedClass)) {
                 // `B x = new A;`
                 throw e;
             }
@@ -96,6 +133,13 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new Ass(s.ident_, exp);
     }
 
+    /**
+     * Increment
+     * @param s Increment
+     * @param env Environment
+     * @return Increment
+     */
+    @Override
     public Incr visit(Incr s, EnvTypecheck env) {
         TypeCode varType = env.lookupVar(s.ident_);
 
@@ -114,6 +158,13 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new Incr(s.ident_);
     }
 
+    /**
+     * Decrement
+     * @param s Decrement
+     * @param env Environment
+     * @return Decrement
+     */
+    @Override
     public Decr visit(Decr s, EnvTypecheck env) {
         TypeCode varType = env.lookupVar(s.ident_);
 
@@ -132,9 +183,18 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new Decr(s.ident_);
     }
 
+    /**
+     * Return with value
+     * @param s Return with value
+     * @param env Environment
+     * @return Return with value
+     */
+    @Override
     public Ret visit(Ret s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (exp.getType() != env.getCurrentFunction().getRetType()) {
+        FunType f = env.getCurrentFunction();
+        assert f != null;
+        if (exp.getType() != f.getRetType()) {
             throw new InvalidReturnedTypeException(
                 env.getCurrentFunction().getRetType(),
                 exp.getType()
@@ -145,8 +205,17 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new Ret(exp);
     }
 
+    /**
+     * Return without value
+     * @param s Return without value
+     * @param env Environment
+     * @return Return without value
+     */
+    @Override
     public VRet visit(VRet s, EnvTypecheck env) {
-        if (env.getCurrentFunction().getRetType() != TypeCode.CVoid) {
+        FunType f = env.getCurrentFunction();
+        assert f != null;
+        if (f.getRetType() != TypeCode.CVoid) {
             throw new InvalidReturnedTypeException(
                 env.getCurrentFunction().getRetType(),
                 TypeCode.CVoid
@@ -157,6 +226,13 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new VRet();
     }
 
+    /**
+     * If
+     * @param s If
+     * @param env Environment
+     * @return If
+     */
+    @Override
     public Cond visit(Cond s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
         if (exp.getType() != TypeCode.CBool) {
@@ -174,6 +250,13 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new Cond(exp, stmt);
     }
 
+    /**
+     * If-else
+     * @param s If-else
+     * @param env Environment
+     * @return If-else
+     */
+    @Override
     public CondElse visit(CondElse s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
         if (exp.getType() != TypeCode.CBool) {
@@ -200,6 +283,13 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new CondElse(exp, stmt1, stmt2);
     }
 
+    /**
+     * While
+     * @param s While
+     * @param env Environment
+     * @return While
+     */
+    @Override
     public While visit(While s, EnvTypecheck env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
         if (exp.getType() != TypeCode.CBool) {
@@ -217,10 +307,24 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
         return new While(exp, stmt);
     }
 
+    /**
+     * For
+     * @param s For
+     * @param env Environment
+     * @return For
+     */
+    @Override
     public For visit(For p, EnvTypecheck env) {
         throw new NotImplementedException();
     }
 
+    /**
+     * Statement expression, like `f();`
+     * @param s Statement expression
+     * @param env Environment
+     * @return Statement expression
+     */
+    @Override
     public SExp visit(SExp s, EnvTypecheck env) {
         AnnotatedExpr<?> expr = s.expr_.accept(new ExprVisitor(), env);
 

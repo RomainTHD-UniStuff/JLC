@@ -7,8 +7,21 @@ import fr.rthd.jlc.typecheck.exception.NoReturnException;
 import javalette.Absyn.Blk;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
+import org.jetbrains.annotations.NonNls;
 
+/**
+ * Function definition visitor
+ * @author RomainTHD
+ */
+@NonNls
 class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
+    /**
+     * Function definition
+     * @param f Function definition
+     * @param env Environment
+     * @return Function definition
+     */
+    @Override
     public FnDef visit(FnDef f, EnvTypecheck env) {
         FunType func = env.lookupFun(f.ident_);
         assert func != null;

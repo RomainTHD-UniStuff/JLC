@@ -34,6 +34,11 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
     @NotNull
     private final TypeCode _type;
 
+    /**
+     * Constructor
+     * @param expType Expression type
+     * @param parentExp Parent expression
+     */
     public AnnotatedExpr(@NotNull TypeCode expType, @NotNull T parentExp) {
         _type = expType;
         _parentExp = parentExp;
@@ -62,6 +67,14 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
         }
     }
 
+    /**
+     * Accept an expression visitor
+     * @param v Visitor
+     * @param arg Argument
+     * @param <R> Return type
+     * @param <A> Argument type
+     * @return Visitor return value
+     */
     @Nullable
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
@@ -69,12 +82,18 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
         return _parentExp.accept(v, arg);
     }
 
+    /**
+     * @return Parent expression
+     */
     @Contract(pure = true)
     @NotNull
     public T getParentExp() {
         return _parentExp;
     }
 
+    /**
+     * @return Expression type
+     */
     @Contract(pure = true)
     @NotNull
     public TypeCode getType() {
