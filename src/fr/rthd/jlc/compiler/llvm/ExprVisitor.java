@@ -28,6 +28,7 @@ import javalette.Absyn.Expr;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,13 +43,14 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     /**
      * Used for ENew calls
      */
+    @Nullable
     private final String _refVar;
 
     public ExprVisitor() {
         this(null);
     }
 
-    public ExprVisitor(String refVar) {
+    public ExprVisitor(@Nullable String refVar) {
         _refVar = refVar;
     }
 
@@ -58,6 +60,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
+        assert var != null;
         if (var.isPointer() && var.getType().isPrimitive()) {
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
@@ -98,6 +101,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         FunType func = env.lookupFun(p.ident_);
+        assert func != null;
         // `getName` should not be used here, because it contains the logical
         //  name of the function, not the name of the function in the LLVM IR
 
@@ -139,7 +143,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         TypeCode left;
         Expr e = ((AnnotatedExpr<?>) p.expr_).getParentExp();
         if (e instanceof EVar) {
-            left = env.lookupVar(((EVar) e).ident_).getType();
+            Variable v = env.lookupVar(((EVar) e).ident_);
+            assert v != null;
+            left = v.getType();
         } else {
             // FIXME: Avoid a double visit here, but not really portable
             throw new NotImplementedException(
@@ -148,6 +154,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         ClassType c = env.lookupClass(left);
+        assert c != null;
 
         ListExpr args = new ListExpr();
         args.add(p.expr_);
@@ -180,9 +187,12 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             );
         }
 
+        ClassType c = env.lookupClass(ref.getType());
+        assert c != null;
+
         return new EDot(
             new AnnotatedExpr<>(ref.getType(), new EVar(_refVar)),
-            env.lookupClass(ref.getType().getRealName()).getConstructorName(),
+            c.getConstructorName(),
             new ListExpr()
         ).accept(new ExprVisitor(), env);
     }

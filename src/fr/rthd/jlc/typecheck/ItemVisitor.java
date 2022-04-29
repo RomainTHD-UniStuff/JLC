@@ -6,11 +6,13 @@ import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Stmt;
+import org.jetbrains.annotations.NotNull;
 
 class ItemVisitor implements Item.Visitor<Item, EnvTypecheck> {
+    @NotNull
     private final TypeCode _varType;
 
-    public ItemVisitor(TypeCode varType) {
+    public ItemVisitor(@NotNull TypeCode varType) {
         _varType = varType;
     }
 

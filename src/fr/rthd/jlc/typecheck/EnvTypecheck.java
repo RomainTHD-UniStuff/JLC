@@ -4,6 +4,9 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Environment for typechecker
@@ -14,6 +17,7 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
     /**
      * Current function type
      */
+    @Nullable
     private FunType _currentFunction = null;
 
     /**
@@ -21,10 +25,11 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
      */
     private boolean _doesReturn;
 
-    public EnvTypecheck(Env<?, FunType, ClassType> parent) {
+    public EnvTypecheck(@NotNull Env<?, FunType, ClassType> parent) {
         super(parent);
     }
 
+    @Contract(pure = true)
     public boolean doesReturn() {
         return _doesReturn;
     }
@@ -33,11 +38,13 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
         _doesReturn = doesReturn;
     }
 
+    @Contract(pure = true)
+    @Nullable
     public FunType getCurrentFunction() {
         return _currentFunction;
     }
 
-    public void setCurrentFunction(FunType currentFunction) {
+    public void setCurrentFunction(@Nullable FunType currentFunction) {
         _currentFunction = currentFunction;
     }
 }

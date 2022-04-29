@@ -18,6 +18,7 @@ import javalette.Absyn.FnMember;
 import javalette.Absyn.ListArg;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.Member;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -45,8 +46,12 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
      * @param p Class definition
      * @param env Environment
      */
-    private void handleConstructor(ClsDef p, EnvTypecheck env) {
+    private void handleConstructor(
+        @NotNull ClsDef p,
+        @NotNull EnvTypecheck env
+    ) {
         ClassType c = env.lookupClass(p.ident_);
+        assert c != null;
 
         ListStmt body = new ListStmt();
         for (Attribute attr : c.getAllAttributes()) {
@@ -69,7 +74,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         addMethod(c, fdef);
     }
 
-    private void addMethod(ClassType c, FnDef f) {
+    private void addMethod(@NotNull ClassType c, @NotNull FnDef f) {
         List<FunArg> args = new LinkedList<>();
         for (Arg arg : f.listarg_) {
             args.add(arg.accept(new ArgVisitor(), null));
@@ -88,7 +93,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         ));
     }
 
-    private void addAttribute(ClassType c, AttrMember a) {
+    private void addAttribute(@NotNull ClassType c, @NotNull AttrMember a) {
         if (c.hasAttribute(a.ident_)) {
             throw new DuplicateFieldException(
                 a.ident_,
@@ -102,8 +107,9 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         ));
     }
 
-    private void handleFields(ClsDef p, EnvTypecheck env) {
+    private void handleFields(@NotNull ClsDef p, @NotNull EnvTypecheck env) {
         ClassType c = env.lookupClass(p.ident_);
+        assert c != null;
 
         for (Member m : p.listmember_) {
             if (m instanceof FnMember) {

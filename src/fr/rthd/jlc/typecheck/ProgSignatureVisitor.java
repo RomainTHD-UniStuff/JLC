@@ -14,6 +14,7 @@ import javalette.Absyn.ListTopDef;
 import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
 import javalette.Absyn.TopDef;
+import org.jetbrains.annotations.NotNull;
 
 class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
     @Override
@@ -34,7 +35,10 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * @param listTopDef List of top definitions
      * @param env Environment
      */
-    private void listAllClasses(ListTopDef listTopDef, EnvTypecheck env) {
+    private void listAllClasses(
+        @NotNull ListTopDef listTopDef,
+        @NotNull EnvTypecheck env
+    ) {
         for (TopDef def : listTopDef) {
             def.accept(new TopDefClassDefSignatureVisitor(), env);
         }
@@ -44,7 +48,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * Update all the classes' superclass with a java object reference
      * @param env Environment
      */
-    private void updateSuperclasses(EnvTypecheck env) {
+    private void updateSuperclasses(@NotNull EnvTypecheck env) {
         for (ClassType c : env.getAllClass()) {
             if (c.getSuperclassName() == null) {
                 c.updateSuperclass(null);
@@ -62,7 +66,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * Check for cyclic inheritance
      * @param env Environment
      */
-    private void checkCycles(EnvTypecheck env) {
+    private void checkCycles(@NotNull EnvTypecheck env) {
         for (ClassType c : env.getAllClass()) {
             ClassType superclass = c;
             do {
@@ -82,7 +86,10 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * @param listTopDef List of top definitions
      * @param env Environment
      */
-    private void listFunctions(ListTopDef listTopDef, EnvTypecheck env) {
+    private void listFunctions(
+        @NotNull ListTopDef listTopDef,
+        @NotNull EnvTypecheck env
+    ) {
         for (TopDef def : listTopDef) {
             def.accept(new TopDefSignatureVisitor(), env);
         }
@@ -93,7 +100,10 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * @param listTopDef List of top definitions
      * @param env Environment
      */
-    private void addConstructors(ListTopDef listTopDef, EnvTypecheck env) {
+    private void addConstructors(
+        @NotNull ListTopDef listTopDef,
+        @NotNull EnvTypecheck env
+    ) {
         for (TopDef def : listTopDef) {
             def.accept(new TopDefConstructorSignatureVisitor(), env);
         }
@@ -103,7 +113,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * Add the external functions to the environment, like `printInt`
      * @param env Environment
      */
-    private void addExternalFunctions(EnvTypecheck env) {
+    private void addExternalFunctions(@NotNull EnvTypecheck env) {
         env.insertFun(new FunType(
             TypeCode.CVoid,
             "printInt",
@@ -137,7 +147,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * Check everything related to the main function of the program
      * @param env Environment
      */
-    private void checkMain(EnvTypecheck env) {
+    private void checkMain(@NotNull EnvTypecheck env) {
         // Check that main exists
         FunType mainFunc = env.lookupFun("main");
         if (mainFunc == null) {

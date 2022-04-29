@@ -6,6 +6,9 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -25,6 +28,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Indent character
      */
+    @NotNull
     public static final String INDENT = "\t";
 
     /**
@@ -35,34 +39,40 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Instruction builder
      */
+    @NotNull
     public final InstructionBuilder instructionBuilder;
 
     /**
      * Instructions output
      */
+    @NotNull
     private final List<String> _output;
 
     /**
      * Variable counter to avoid collisions, like ``` .temp$0 = ... .temp$1 =
      * ... ```
      */
+    @NotNull
     private final LinkedList<Map<String, Integer>> _varCount;
 
     /**
      * Label counter
      * @see #_varCount
      */
+    @NotNull
     private final LinkedList<Map<String, Integer>> _labelCount;
 
     /**
      * Depth access counter, to avoid collisions between blocks like ``` {
      * .temp$0 = ... } { .temp$0 = ... ; Different block, but a collision } ```
      */
+    @NotNull
     private final Map<Integer, Integer> _depthAccessCount;
 
     /**
      * Hashing algorithm to store strings
      */
+    @Nullable
     private final MessageDigest _hashAlgorithm;
 
     /**
@@ -75,8 +85,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param env Parent environment
      */
     public EnvCompiler(
-        Env<?, FunType, ClassType> env,
-        InstructionBuilder builder
+        @NotNull Env<?, FunType, ClassType> env,
+        @NotNull InstructionBuilder builder
     ) {
         super(env);
         instructionBuilder = builder;
@@ -100,6 +110,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * Output the instructions to a single string
      * @return Assembly string
      */
+    @Contract(pure = true)
+    @NotNull
     public String toAssembly() {
         StringBuilder res = new StringBuilder();
         for (String inst : _output) {
@@ -117,6 +129,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         --_indentLevel;
     }
 
+    @Contract(pure = true)
+    @NotNull
     private String getIndentString() {
         return INDENT.repeat(_indentLevel);
     }
@@ -125,7 +139,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * Emit an instruction
      * @param inst Instruction to emit
      */
-    public void emit(Instruction inst) {
+    public void emit(@NotNull Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
                 _output.add("");
@@ -142,7 +156,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * string literals
      * @param inst Instruction to emit
      */
-    public void emitAtBeginning(Instruction inst) {
+    public void emitAtBeginning(@NotNull Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
                 _output.add(0, "");
@@ -157,7 +171,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param name Variable name
      * @return Variable ID
      */
-    private String getVariableUID(String name) {
+    @NotNull
+    private String getVariableUID(@NotNull String name) {
         Map<String, Integer> scope = _varCount.peek();
         assert scope != null;
         int count = scope.getOrDefault(name, 0);
@@ -177,7 +192,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param ctx Context, like "if", "while", etc
      * @return Temporary variable
      */
-    public Variable createTempVar(TypeCode type, String ctx) {
+    @NotNull
+    public Variable createTempVar(@NotNull TypeCode type, @NotNull String ctx) {
         return createTempVar(type, ctx, false);
     }
 
@@ -189,9 +205,10 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param isPointer Whether the variable is a pointer or not
      * @return Temporary variable
      */
+    @NotNull
     public Variable createTempVar(
-        TypeCode type,
-        String ctx,
+        @NotNull TypeCode type,
+        @NotNull String ctx,
         boolean isPointer
     ) {
         return new Variable(type, String.format(
@@ -211,7 +228,12 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param isPointer Whether the variable is a pointer or not
      * @return Variable
      */
-    public Variable createVar(TypeCode type, String name, boolean isPointer) {
+    @NotNull
+    public Variable createVar(
+        @NotNull TypeCode type,
+        @NotNull String name,
+        boolean isPointer
+    ) {
         return createVar(type, name, isPointer, false);
     }
 
@@ -220,12 +242,14 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param type Variable type
      * @param name Variable name
      * @param isPointer Whether the variable is a pointer or not
-     * @param isClassVariable Whether the variable is a class variable or not
+     * @param isClassVariable Whether the variable is a class variable or
+     *     not
      * @return Variable
      */
+    @NotNull
     public Variable createVar(
-        TypeCode type,
-        String name,
+        @NotNull TypeCode type,
+        @NotNull String name,
         boolean isPointer,
         boolean isClassVariable
     ) {
@@ -242,7 +266,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param content String content
      * @return String literal address
      */
-    public Variable createGlobalStringLiteral(String content) {
+    @NotNull
+    public Variable createGlobalStringLiteral(@NotNull String content) {
         return new Variable(TypeCode.CString, String.format(
             ".string%c%s",
             SEP,
@@ -255,7 +280,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param ctx Label context, like "if_true", "while_loop", etc
      * @return Label
      */
-    public String getNewLabel(String ctx) {
+    @NotNull
+    public String getNewLabel(@NotNull String ctx) {
         Map<String, Integer> scope = _labelCount.peek();
         assert scope != null;
         int count = scope.getOrDefault(ctx, 0);
@@ -304,7 +330,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param content String
      * @return Hash of the string
      */
-    private String getHash(String content) {
+    @NotNull
+    private String getHash(@NotNull String content) {
         if (_hashAlgorithm == null) {
             return String.format("%x", content.hashCode());
         } else {

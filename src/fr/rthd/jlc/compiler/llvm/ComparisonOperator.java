@@ -1,6 +1,8 @@
 package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * LLVM comparison operator. For example, "==" with integers would be translated
@@ -14,8 +16,11 @@ class ComparisonOperator {
     public static final ComparisonOperator LE = new ComparisonOperator("le");
     public static final ComparisonOperator GT = new ComparisonOperator("gt");
     public static final ComparisonOperator GE = new ComparisonOperator("ge");
+
+    @NotNull
     private final String _name;
-    private ComparisonOperator(String name) {
+
+    private ComparisonOperator(@NotNull String name) {
         _name = name;
     }
 
@@ -24,7 +29,12 @@ class ComparisonOperator {
      * @param type Value type
      * @return Operand
      */
-    public static String getOperand(ComparisonOperator op, TypeCode type) {
+    @Contract(pure = true)
+    @NotNull
+    public static String getOperand(
+        @NotNull ComparisonOperator op,
+        @NotNull TypeCode type
+    ) {
         String prefix = "";
 
         if (type == TypeCode.CInt || type == TypeCode.CBool) {

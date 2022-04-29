@@ -8,19 +8,25 @@ import javalette.Absyn.LE;
 import javalette.Absyn.LTH;
 import javalette.Absyn.NE;
 import javalette.Absyn.RelOp;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 class RelOpVisitor implements RelOp.Visitor<String, Void> {
+    @NotNull
     private final TypeCode _left;
+
+    @NotNull
     private final TypeCode _right;
 
-    public RelOpVisitor(TypeCode left, TypeCode right) {
+    public RelOpVisitor(@NotNull TypeCode left, @NotNull TypeCode right) {
         _left = left;
         _right = right;
     }
 
-    private boolean bothTypes(TypeCode... expected) {
+    @Contract(pure = true)
+    private boolean bothTypes(@NotNull TypeCode... expected) {
         return _left == _right && Arrays.asList(expected).contains(_left);
     }
 

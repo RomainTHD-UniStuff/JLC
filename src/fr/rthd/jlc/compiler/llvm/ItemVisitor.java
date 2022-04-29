@@ -8,16 +8,18 @@ import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.NoInit;
 import javalette.Absyn.Void;
+import org.jetbrains.annotations.NotNull;
 
 class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
+    @NotNull
     private final TypeCode _type;
     private final boolean _override;
 
-    public ItemVisitor(TypeCode type) {
+    public ItemVisitor(@NotNull TypeCode type) {
         this(type, false);
     }
 
-    public ItemVisitor(TypeCode type, boolean override) {
+    public ItemVisitor(@NotNull TypeCode type, boolean override) {
         _type = type;
         _override = override;
     }
