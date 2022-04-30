@@ -45,7 +45,7 @@ public class Instruction {
      * Add an instruction
      * @param inst Instruction
      */
-    protected void add(@NotNull Instruction inst) {
+    public void add(@NotNull Instruction inst) {
         _commands.addAll(inst.emit());
     }
 
@@ -53,7 +53,7 @@ public class Instruction {
      * Add a command
      * @param command Command
      */
-    protected void add(@NotNull String command) {
+    public void add(@NotNull String command) {
         _commands.add(command);
     }
 

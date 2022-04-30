@@ -8,7 +8,6 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,10 +39,17 @@ public class InstructionBuilder {
 
     /**
      * No-op
+     * @param noopLabel Label for a noop instruction
      * @return Instruction
      */
-    public Instruction noop() {
-        throw new UnsupportedOperationException("Noop is not supported by LLVM");
+    public Instruction noop(String noopLabel) {
+        // There is no noop in LLVM, so we make one ourselves by using a label
+        //  and a jump to it, without any operation in between. The LLVM
+        //  optimizer will hopefully be smart enough to remove this fake noop
+        Instruction i = new Instruction();
+        i.add(jump(noopLabel));
+        i.add(label(noopLabel));
+        return i;
     }
 
     /**
