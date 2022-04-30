@@ -240,6 +240,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         // Add `this` to the arguments
         ListExpr args = new ListExpr();
         args.add(p.expr_);
+        args.addAll(p.listexpr_);
 
         // Call the "normal" function call visitor
         return new EApp(
