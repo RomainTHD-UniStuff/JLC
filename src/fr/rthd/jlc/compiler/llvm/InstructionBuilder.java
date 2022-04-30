@@ -8,6 +8,8 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +24,7 @@ public class InstructionBuilder {
      * Output a new line
      * @return Instruction
      */
+    @NotNull
     public Instruction newLine() {
         return new Instruction("");
     }
@@ -31,7 +34,8 @@ public class InstructionBuilder {
      * @param comment Comment to add
      * @return Instruction
      */
-    public Instruction comment(String comment) {
+    @NotNull
+    public Instruction comment(@NotNull String comment) {
         return new Instruction(
             String.format("; %s", comment)
         );
@@ -42,7 +46,8 @@ public class InstructionBuilder {
      * @param noopLabel Label for a noop instruction
      * @return Instruction
      */
-    public Instruction noop(String noopLabel) {
+    @NotNull
+    public Instruction noop(@NotNull String noopLabel) {
         // There is no noop in LLVM, so we make one ourselves by using a label
         //  and a jump to it, without any operation in between. The LLVM
         //  optimizer will hopefully be smart enough to remove this fake noop
@@ -58,7 +63,11 @@ public class InstructionBuilder {
      * @param src Value
      * @return Instruction
      */
-    public Instruction store(Variable dst, OperationItem src) {
+    @NotNull
+    public Instruction store(
+        @NotNull Variable dst,
+        @NotNull OperationItem src
+    ) {
         return new Instruction(String.format(
             "store %s %s, %s* %s",
             src.getType(),
@@ -74,7 +83,8 @@ public class InstructionBuilder {
      * @param src Source variable
      * @return Instruction
      */
-    public Instruction load(Variable dst, Variable src) {
+    @NotNull
+    public Instruction load(@NotNull Variable dst, @NotNull Variable src) {
         return new Instruction(String.format(
             "%s = load %s, %s* %s",
             dst,
@@ -90,9 +100,10 @@ public class InstructionBuilder {
      * @param arg Attribute location
      * @return Instruction
      */
+    @NotNull
     public Instruction loadAttribute(
-        Variable dst,
-        Variable thisVar,
+        @NotNull Variable dst,
+        @NotNull Variable thisVar,
         int arg
     ) {
         // FIXME: Ugly use of int
@@ -111,7 +122,8 @@ public class InstructionBuilder {
      * @param dst Destination variable
      * @return Instruction
      */
-    public Instruction declare(Variable dst) {
+    @NotNull
+    public Instruction declare(@NotNull Variable dst) {
         return new Instruction(String.format(
             "%s = alloca %s",
             dst,
@@ -125,9 +137,10 @@ public class InstructionBuilder {
      * @param func Function to declare
      * @return Instruction
      */
+    @NotNull
     public Instruction functionDeclarationStart(
-        ClassType parentClass,
-        FunType func
+        @Nullable ClassType parentClass,
+        @NotNull FunType func
     ) {
         return new Instruction(String.format(
             "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
@@ -154,6 +167,7 @@ public class InstructionBuilder {
      * End a function declaration
      * @return Instruction
      */
+    @NotNull
     public Instruction functionDeclarationEnd() {
         return new Instruction("}");
     }
@@ -163,7 +177,8 @@ public class InstructionBuilder {
      * @param func External function to declare
      * @return Instruction
      */
-    public Instruction declareExternalFunction(FunType func) {
+    @NotNull
+    public Instruction declareExternalFunction(@NotNull FunType func) {
         return new Instruction(String.format(
             "declare %s @%s(%s)",
             func.getRetType(),
@@ -186,9 +201,10 @@ public class InstructionBuilder {
      * @param args Arguments
      * @return Instruction
      */
+    @NotNull
     public Instruction call(
-        String funcName,
-        List<OperationItem> args
+        @NotNull String funcName,
+        @NotNull List<OperationItem> args
     ) {
         return call(null, funcName, args);
     }
@@ -200,10 +216,11 @@ public class InstructionBuilder {
      * @param args Arguments
      * @return Instruction
      */
+    @NotNull
     public Instruction call(
-        Variable dst,
-        String funcName,
-        List<OperationItem> args
+        @Nullable Variable dst,
+        @NotNull String funcName,
+        @NotNull List<OperationItem> args
     ) {
         return new Instruction(String.format(
             "%scall %s @%s(%s)",
@@ -227,7 +244,8 @@ public class InstructionBuilder {
      * @param labelName Label name
      * @return Instruction
      */
-    public Instruction label(String labelName) {
+    @NotNull
+    public Instruction label(@NotNull String labelName) {
         Instruction i = new Instruction(String.format("%s:", labelName));
         i.setIndentable(false);
         return i;
@@ -240,10 +258,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction add(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = %sadd %s %s, %s",
@@ -261,9 +280,10 @@ public class InstructionBuilder {
      * @param src Input variable
      * @return Instruction
      */
+    @NotNull
     public Instruction increment(
-        Variable dst,
-        Variable src
+        @NotNull Variable dst,
+        @NotNull Variable src
     ) {
         return add(dst, src, new Literal(src.getType(), 1));
     }
@@ -275,10 +295,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction subtract(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = %ssub %s %s, %s",
@@ -296,9 +317,10 @@ public class InstructionBuilder {
      * @param src Input variable
      * @return Instruction
      */
+    @NotNull
     public Instruction decrement(
-        Variable dst,
-        Variable src
+        @NotNull Variable dst,
+        @NotNull Variable src
     ) {
         return subtract(dst, src, new Literal(src.getType(), 1));
     }
@@ -310,10 +332,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction multiply(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = %smul %s %s, %s",
@@ -332,10 +355,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction divide(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = %cdiv %s %s, %s",
@@ -354,10 +378,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction modulo(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = srem %s %s, %s",
@@ -376,11 +401,12 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction compare(
-        Variable dst,
-        OperationItem left,
-        ComparisonOperator operator,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull ComparisonOperator operator,
+        @NotNull OperationItem right
     ) {
         // Example: "%temp = fcmp oeq double %x, %y"
         return new Instruction(String.format(
@@ -399,7 +425,8 @@ public class InstructionBuilder {
      * @param label Label name
      * @return Instruction
      */
-    public Instruction jump(String label) {
+    @NotNull
+    public Instruction jump(@NotNull String label) {
         return new Instruction(String.format("br label %%%s", label));
     }
 
@@ -410,10 +437,11 @@ public class InstructionBuilder {
      * @param labelFalse Label name if condition is false
      * @return Instruction
      */
+    @NotNull
     public Instruction conditionalJump(
-        OperationItem condition,
-        String labelTrue,
-        String labelFalse
+        @NotNull OperationItem condition,
+        @NotNull String labelTrue,
+        @NotNull String labelFalse
     ) {
         return new Instruction(String.format(
             "br i1 %s, label %%%s, label %%%s",
@@ -427,6 +455,7 @@ public class InstructionBuilder {
      * Void return
      * @return Instruction
      */
+    @NotNull
     public Instruction ret() {
         return new Instruction("ret void");
     }
@@ -436,7 +465,8 @@ public class InstructionBuilder {
      * @param returned Returned value
      * @return Instruction
      */
-    public Instruction ret(OperationItem returned) {
+    @NotNull
+    public Instruction ret(@NotNull OperationItem returned) {
         return new Instruction(String.format(
             "ret %s %s",
             returned.getType(),
@@ -451,10 +481,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction and(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = and %s %s, %s",
@@ -472,10 +503,11 @@ public class InstructionBuilder {
      * @param right Right value
      * @return Instruction
      */
+    @NotNull
     public Instruction or(
-        Variable dst,
-        OperationItem left,
-        OperationItem right
+        @NotNull Variable dst,
+        @NotNull OperationItem left,
+        @NotNull OperationItem right
     ) {
         return new Instruction(String.format(
             "%s = or %s %s, %s",
@@ -492,9 +524,10 @@ public class InstructionBuilder {
      * @param src Source value
      * @return Instruction
      */
+    @NotNull
     public Instruction not(
-        Variable dst,
-        OperationItem src
+        @NotNull Variable dst,
+        @NotNull OperationItem src
     ) {
         return new Instruction(String.format(
             "%s = xor %s %s, 1",
@@ -510,9 +543,10 @@ public class InstructionBuilder {
      * @param src Source value
      * @return Instruction
      */
+    @NotNull
     public Instruction neg(
-        Variable dst,
-        Variable src
+        @NotNull Variable dst,
+        @NotNull Variable src
     ) {
         if (src.getType() == TypeCode.CDouble) {
             return new Instruction(String.format(
@@ -536,9 +570,10 @@ public class InstructionBuilder {
      * @param content String content
      * @return Instruction
      */
+    @NotNull
     public Instruction globalStringLiteral(
-        Variable global,
-        String content
+        @NotNull Variable global,
+        @NotNull String content
     ) {
         return new Instruction(String.format(
             "%s = private unnamed_addr constant [%d x i8] c\"%s\\00\", align 1",
@@ -548,9 +583,16 @@ public class InstructionBuilder {
         ));
     }
 
+    /**
+     * Load a string literal
+     * @param dst Destination temp variable
+     * @param global Global variable
+     * @return Instruction
+     */
+    @NotNull
     public Instruction loadStringLiteral(
-        Variable dst,
-        Variable global
+        @NotNull Variable dst,
+        @NotNull Variable global
     ) {
         return new Instruction(String.format(
             "%s = getelementptr inbounds [%d x i8], [%d x i8]* %s, i32 0, i32 0",
@@ -561,7 +603,17 @@ public class InstructionBuilder {
         ));
     }
 
-    public Instruction classDef(String className, List<TypeCode> members) {
+    /**
+     * Class definition
+     * @param className Class name
+     * @param members Class members
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction classDef(
+        @NotNull String className,
+        @NotNull List<TypeCode> members
+    ) {
         return new Instruction(String.format(
             "%%%s = type { %s }",
             className,
