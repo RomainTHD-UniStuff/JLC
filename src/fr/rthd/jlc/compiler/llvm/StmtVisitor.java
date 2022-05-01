@@ -10,6 +10,7 @@ import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
+import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
@@ -75,7 +76,10 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         assert dst != null;
         assert dst.isPointer();
 
-        OperationItem value = p.expr_.accept(new ExprVisitor(p.ident_), env);
+        OperationItem value = p.expr_.accept(
+            new ExprVisitor(p.ident_),
+            env
+        );
         if (value == null) {
             // The value can only be null if the variable is an object, like
             //  `a = new A`, because we actually only call the constructor
@@ -98,7 +102,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Incr p, EnvCompiler env) {
-        Variable orig = env.lookupVar(p.ident_);
+        OperationItem orig = new EVar(p.ident_).accept(new ExprVisitor(), env);
         assert orig != null;
         Variable incr = env.createTempVar(orig.getType(), "incr");
         env.emit(env.instructionBuilder.increment(incr, orig));
@@ -112,7 +116,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decr p, EnvCompiler env) {
-        Variable orig = env.lookupVar(p.ident_);
+        OperationItem orig = new EVar(p.ident_).accept(new ExprVisitor(), env);
         assert orig != null;
         Variable decr = env.createTempVar(orig.getType(), "decr");
         env.emit(env.instructionBuilder.decrement(decr, orig));

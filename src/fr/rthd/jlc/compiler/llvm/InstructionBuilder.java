@@ -283,7 +283,7 @@ public class InstructionBuilder {
     @NotNull
     public Instruction increment(
         @NotNull Variable dst,
-        @NotNull Variable src
+        @NotNull OperationItem src
     ) {
         return add(dst, src, new Literal(src.getType(), 1));
     }
@@ -320,7 +320,7 @@ public class InstructionBuilder {
     @NotNull
     public Instruction decrement(
         @NotNull Variable dst,
-        @NotNull Variable src
+        @NotNull OperationItem src
     ) {
         return subtract(dst, src, new Literal(src.getType(), 1));
     }
