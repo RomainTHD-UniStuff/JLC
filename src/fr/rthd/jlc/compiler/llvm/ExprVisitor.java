@@ -98,7 +98,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
         if ((var.getType().isObject() && isAssignment()) ||
-            (var.getType().isPrimitive()) && var.isPointer()) {
+            (var.getType().isPrimitive() && var.isPointer())) {
             // If the variable is a pointer to a primitive type, we need to
             //  dereference it using a temp variable to respect our
             //  convention that all returned values are non-pointer values. We
