@@ -10,4 +10,4 @@ llc -filetype=obj $fileName.ll -o $fileName.o || exit;
 clang $fileName.o runtime.o -o $fileName || exit;
 timeout 3 ./$fileName || >&2 echo Failure or interrupt.
 "
-Write-Host "Done." -ForegroundColor Green
+Write-Output "Done."
