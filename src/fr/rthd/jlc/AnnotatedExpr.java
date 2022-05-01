@@ -8,7 +8,6 @@ import javalette.Absyn.Expr;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static fr.rthd.jlc.TypeCode.CBool;
 import static fr.rthd.jlc.TypeCode.CDouble;
