@@ -55,13 +55,13 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
     @Override
     public Void visit(NoInit p, EnvCompiler env) {
         env.insertVar(p.ident_, env.createVar(_type, p.ident_, true));
-        env.emit(env.instructionBuilder.declare(
-            env.lookupVar(p.ident_)
-        ));
+        Variable v = env.lookupVar(p.ident_);
+        assert v != null;
+        env.emit(env.instructionBuilder.declare(v));
         if (_type.isPrimitive()) {
             // If primitive type, initialize with default value
             env.emit(env.instructionBuilder.store(
-                env.lookupVar(p.ident_),
+                v,
                 AnnotatedExpr.getDefaultValue(_type)
                              .accept(new ExprVisitor(), env)
             ));

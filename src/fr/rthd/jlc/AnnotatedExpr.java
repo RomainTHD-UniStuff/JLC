@@ -75,7 +75,6 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
      * @param <A> Argument type
      * @return Visitor return value
      */
-    @Nullable
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
         // Call the parent accept method
