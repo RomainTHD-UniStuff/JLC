@@ -111,8 +111,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
             dst,
-            thisVar.getType(),
-            thisVar.getType(),
+            thisVar.getType().getAssemblyNameNonPointer(),
+            thisVar.getType().getAssemblyNameNonPointer(),
             thisVar,
             arg
         ));
@@ -152,11 +152,8 @@ public class InstructionBuilder {
             func.getArgs()
                 .stream()
                 .map(arg -> String.format(
-                    "%s%s %%%s",
+                    "%s %%%s",
                     arg.getType(),
-                    arg.getType().isPrimitive() ? "" : "*",
-                    // FIXME: Shouldn't be used, will not work with
-                    //  primitive pointers
                     arg.getGeneratedName()
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))

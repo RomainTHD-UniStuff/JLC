@@ -187,7 +187,7 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                "%" + realName,
+                "%" + realName + "*",
                 null,
                 0,
                 false,
@@ -228,6 +228,21 @@ public class TypeCode {
     @Override
     public String toString() {
         return _assemblyName;
+    }
+
+    /**
+     * Get the assembly name, without the pointer suffix. Will equal `toString`
+     * for primitive types.
+     * @return Assembly name without pointer
+     */
+    @Contract(pure = true)
+    @NotNull
+    public String getAssemblyNameNonPointer() {
+        if (isPrimitive()) {
+            return toString();
+        } else {
+            return _assemblyName.substring(0, _assemblyName.length() - 1);
+        }
     }
 
     @Contract(pure = true)
