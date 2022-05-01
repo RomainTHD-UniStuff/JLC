@@ -89,8 +89,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = load %s, %s* %s",
             dst,
-            dst.getType(),
-            dst.getType(),
+            dst.getType().getRealAssemblyName(),
+            dst.getType().getRealAssemblyName(),
             src
         ));
     }
@@ -111,8 +111,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
             dst,
-            thisVar.getType().getAssemblyNameNonPointer(),
-            thisVar.getType().getAssemblyNameNonPointer(),
+            thisVar.getType().getRealAssemblyName(),
+            thisVar.getType().getRealAssemblyName(),
             thisVar,
             arg
         ));
@@ -128,7 +128,7 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = alloca %s",
             dst,
-            dst.getType()
+            dst.getType().getRealAssemblyName()
         ));
     }
 
@@ -228,7 +228,7 @@ public class InstructionBuilder {
             args.stream()
                 .map(arg -> String.format(
                     "%s%s %s",
-                    arg.getType(),
+                    arg.getType().getRealAssemblyName(),
                     arg.isPointer() ? "*" : "",
                     arg
                 ))

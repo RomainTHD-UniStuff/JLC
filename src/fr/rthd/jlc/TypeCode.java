@@ -237,7 +237,7 @@ public class TypeCode {
      */
     @Contract(pure = true)
     @NotNull
-    public String getAssemblyNameNonPointer() {
+    public String getRealAssemblyName() {
         if (isPrimitive()) {
             return toString();
         } else {
