@@ -96,6 +96,23 @@ public class InstructionBuilder {
     }
 
     /**
+     * Load a double pointer in memory to a single pointer variable
+     * @param dst Destination variable
+     * @param src Source variable
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction loadDeref(@NotNull Variable dst, @NotNull Variable src) {
+        return new Instruction(String.format(
+            "%s = load %s*, %s** %s",
+            dst,
+            dst.getType().getRealAssemblyName(),
+            dst.getType().getRealAssemblyName(),
+            src
+        ));
+    }
+
+    /**
      * Load a class attribute in memory
      * @param dst Destination variable
      * @param arg Attribute location

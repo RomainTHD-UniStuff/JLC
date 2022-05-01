@@ -95,6 +95,13 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                 Variable thisVar = env.lookupVar("this");
                 assert thisVar != null;
                 env.emit(env.instructionBuilder.loadAttribute(v, thisVar, i));
+                if (!v.getType().isPrimitive()) {
+                    // Object fields are already pointers, so we would get
+                    //  a double pointer, which is painful to handle
+                    Variable deref = env.createDerefVar(v, true);
+                    env.emit(env.instructionBuilder.loadDeref(deref, v));
+                    env.updateVar(a.getName(), deref);
+                }
             }
         }
 

@@ -211,6 +211,22 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     }
 
     /**
+     * Create a dereference variable
+     * @param orig Reference variable
+     * @param isPointer If the original variable was a double pointer or
+     *     more
+     * @return Dereferenced variable
+     */
+    @NotNull
+    public Variable createDerefVar(@NotNull Variable orig, boolean isPointer) {
+        return new Variable(
+            orig.getType(),
+            orig.getName() + SEP + "deref",
+            isPointer
+        );
+    }
+
+    /**
      * Create a temporary variable
      * @param type Variable type
      * @param ctx Context, like "if", "while", etc
