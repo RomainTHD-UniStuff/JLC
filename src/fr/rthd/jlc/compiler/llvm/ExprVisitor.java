@@ -311,7 +311,8 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             } else if (lit.getType() == CDouble) {
                 return new Literal(CDouble, -(double) lit.getValue());
             } else {
-                throw new RuntimeException("Unsupported type for negation");
+                throw new IllegalArgumentException(
+                    "Unsupported type for negation");
             }
         } else {
             Variable var = env.createTempVar(expr.getType(), "neg");
