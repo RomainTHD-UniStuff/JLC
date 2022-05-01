@@ -2,11 +2,6 @@ package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
-import javalette.Absyn.ELitDoub;
-import javalette.Absyn.ELitFalse;
-import javalette.Absyn.ELitInt;
-import javalette.Absyn.ELitTrue;
-import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
