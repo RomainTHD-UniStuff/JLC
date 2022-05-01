@@ -10,10 +10,14 @@ import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
+import javalette.Absyn.EAdd;
+import javalette.Absyn.ELitInt;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
+import javalette.Absyn.Minus;
+import javalette.Absyn.Plus;
 import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
@@ -102,11 +106,14 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Incr p, EnvCompiler env) {
-        OperationItem orig = new EVar(p.ident_).accept(new ExprVisitor(), env);
-        assert orig != null;
-        Variable incr = env.createTempVar(orig.getType(), "incr");
-        env.emit(env.instructionBuilder.increment(incr, orig));
-        return null;
+        return new Ass(
+            p.ident_,
+            new EAdd(
+                new EVar(p.ident_),
+                new Plus(),
+                new ELitInt(1)
+            )
+        ).accept(new StmtVisitor(), env);
     }
 
     /**
@@ -116,11 +123,14 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decr p, EnvCompiler env) {
-        OperationItem orig = new EVar(p.ident_).accept(new ExprVisitor(), env);
-        assert orig != null;
-        Variable decr = env.createTempVar(orig.getType(), "decr");
-        env.emit(env.instructionBuilder.decrement(decr, orig));
-        return null;
+        return new Ass(
+            p.ident_,
+            new EAdd(
+                new EVar(p.ident_),
+                new Minus(),
+                new ELitInt(1)
+            )
+        ).accept(new StmtVisitor(), env);
     }
 
     /**

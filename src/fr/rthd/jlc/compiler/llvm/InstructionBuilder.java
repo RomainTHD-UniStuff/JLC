@@ -7,6 +7,7 @@ import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,16 +277,14 @@ public class InstructionBuilder {
 
     /**
      * Increment a variable
-     * @param dst Destination temp variable
      * @param src Input variable
      * @return Instruction
      */
     @NotNull
     public Instruction increment(
-        @NotNull Variable dst,
-        @NotNull OperationItem src
+        @NotNull Variable src
     ) {
-        return add(dst, src, new Literal(src.getType(), 1));
+        throw new NotImplementedException("Instruction not supported yet");
     }
 
     /**
@@ -313,16 +312,14 @@ public class InstructionBuilder {
 
     /**
      * Decrement a variable
-     * @param dst Destination temp variable
      * @param src Input variable
      * @return Instruction
      */
     @NotNull
     public Instruction decrement(
-        @NotNull Variable dst,
-        @NotNull OperationItem src
+        @NotNull Variable src
     ) {
-        return subtract(dst, src, new Literal(src.getType(), 1));
+        throw new NotImplementedException("Instruction not supported yet");
     }
 
     /**
