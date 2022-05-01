@@ -84,7 +84,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENull p, EnvCompiler env) {
-        throw new NotImplementedException();
+        return new Literal(TypeCode.forClass(p.ident_), null, true);
     }
 
     /**

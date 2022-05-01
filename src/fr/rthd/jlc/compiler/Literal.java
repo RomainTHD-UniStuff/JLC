@@ -25,7 +25,21 @@ public class Literal extends OperationItem {
      * @param value Value
      */
     public Literal(@NotNull TypeCode type, @Nullable Object value) {
-        super(type);
+        this(type, value, false);
+    }
+
+    /**
+     * Constructor
+     * @param type Literal type
+     * @param value Value
+     * @param isPointer Pointer literal or not. Only used for `null`
+     */
+    public Literal(
+        @NotNull TypeCode type,
+        @Nullable Object value,
+        boolean isPointer
+    ) {
+        super(type, isPointer);
         _value = value;
     }
 
