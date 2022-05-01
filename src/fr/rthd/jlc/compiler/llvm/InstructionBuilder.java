@@ -407,11 +407,12 @@ public class InstructionBuilder {
     ) {
         // Example: "%temp = fcmp oeq double %x, %y"
         return new Instruction(String.format(
-            "%s = %ccmp %s %s %s, %s",
+            "%s = %ccmp %s %s%s %s, %s",
             dst,
             left.getType() == TypeCode.CDouble ? 'f' : 'i',
             ComparisonOperator.getOperand(operator, left.getType()),
             left.getType(),
+            left.isPointer() ? "*" : "",
             left,
             right
         ));
