@@ -314,7 +314,7 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      * @return For
      */
     @Override
-    public For visit(For p, EnvTypecheck env) {
+    public For visit(For s, EnvTypecheck env) {
         throw new NotImplementedException();
     }
 
