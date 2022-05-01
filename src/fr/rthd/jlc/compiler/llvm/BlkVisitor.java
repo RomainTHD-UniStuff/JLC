@@ -3,7 +3,6 @@ package fr.rthd.jlc.compiler.llvm;
 import javalette.Absyn.Blk;
 import javalette.Absyn.Block;
 import javalette.Absyn.Stmt;
-import javalette.Absyn.Void;
 import org.jetbrains.annotations.NonNls;
 
 /**

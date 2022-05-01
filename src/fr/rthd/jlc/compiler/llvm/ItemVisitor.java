@@ -7,7 +7,6 @@ import fr.rthd.jlc.compiler.Variable;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.NoInit;
-import javalette.Absyn.Void;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

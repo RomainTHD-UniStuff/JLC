@@ -5,7 +5,6 @@ import javalette.Absyn.Class;
 import javalette.Absyn.Doub;
 import javalette.Absyn.Int;
 import javalette.Absyn.Type;
-import javalette.Absyn.Void;
 import org.jetbrains.annotations.NonNls;
 
 import static fr.rthd.jlc.TypeCode.CBool;
@@ -28,7 +27,7 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void> {
      */
     public static Type fromTypecode(TypeCode t) throws IllegalArgumentException {
         if (CVoid.equals(t)) {
-            return new Void();
+            return new javalette.Absyn.Void();
         } else if (CBool.equals(t)) {
             return new Bool();
         } else if (CInt.equals(t)) {

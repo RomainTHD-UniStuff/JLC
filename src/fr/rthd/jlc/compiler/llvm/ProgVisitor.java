@@ -5,7 +5,6 @@ import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Prog;
 import javalette.Absyn.Program;
 import javalette.Absyn.TopDef;
-import javalette.Absyn.Void;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;

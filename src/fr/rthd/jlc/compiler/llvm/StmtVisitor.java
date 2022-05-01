@@ -22,7 +22,6 @@ import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.VRet;
-import javalette.Absyn.Void;
 import javalette.Absyn.While;
 import org.jetbrains.annotations.NonNls;
 
