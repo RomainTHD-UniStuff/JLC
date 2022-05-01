@@ -92,11 +92,9 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                     true
                 );
                 env.insertVar(a.getName(), v);
-                env.emit(env.instructionBuilder.loadAttribute(
-                    v,
-                    env.lookupVar("this"),
-                    i
-                ));
+                Variable thisVar = env.lookupVar("this");
+                assert thisVar != null;
+                env.emit(env.instructionBuilder.loadAttribute(v, thisVar, i));
             }
         }
 

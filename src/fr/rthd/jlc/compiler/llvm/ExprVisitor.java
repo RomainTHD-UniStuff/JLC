@@ -426,7 +426,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         env.unindent();
         env.emit(env.instructionBuilder.label(endLabel));
-        env.emit(env.instructionBuilder.comment("endand"));
+        env.emit(env.instructionBuilder.comment("end and"));
         env.emit(env.instructionBuilder.newLine());
 
         Variable tmp = env.createTempVar(var.getType(), "and");
@@ -480,7 +480,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         env.unindent();
         env.emit(env.instructionBuilder.label(endLabel));
-        env.emit(env.instructionBuilder.comment("endor"));
+        env.emit(env.instructionBuilder.comment("end or"));
         env.emit(env.instructionBuilder.newLine());
 
         Variable tmp = env.createTempVar(var.getType(), "or");

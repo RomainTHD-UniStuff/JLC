@@ -89,10 +89,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
             //  `a = new A`, because we actually only call the constructor
             assert dst.getType().isObject();
         } else {
-            env.emit(env.instructionBuilder.store(
-                env.lookupVar(p.ident_),
-                value
-            ));
+            env.emit(env.instructionBuilder.store(dst, value));
         }
 
         env.emit(env.instructionBuilder.newLine());
@@ -274,7 +271,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         env.unindent();
 
         env.emit(env.instructionBuilder.label(endLabel));
-        env.emit(env.instructionBuilder.comment("endwhile"));
+        env.emit(env.instructionBuilder.comment("end while"));
 
         env.emit(env.instructionBuilder.newLine());
         return null;
