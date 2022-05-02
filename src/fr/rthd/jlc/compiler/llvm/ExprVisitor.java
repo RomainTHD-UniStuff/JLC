@@ -240,7 +240,12 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
         TypeCode classType = p.type_.accept(new TypeVisitor(), null);
-        Variable ref = env.createTempVar(classType, "new", 2);
+        Variable ref = env.createTempVar(
+            classType,
+            "new_" + classType.getRealName(),
+            1
+        );
+        env.emit(env.instructionBuilder.declare(ref));
 
         ClassType c = env.lookupClass(classType);
         assert c != null;

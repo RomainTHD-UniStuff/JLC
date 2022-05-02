@@ -251,8 +251,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         int pointerLevel
     ) {
         return new Variable(type, String.format(
-            ".temp%s%c%s%c%s",
-            pointerLevel == 0 ? "" : "_ptr",
+            ".temp%c%s%c%s",
             SEP,
             ctx,
             SEP,
