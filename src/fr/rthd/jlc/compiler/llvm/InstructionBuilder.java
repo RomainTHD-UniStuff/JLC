@@ -662,7 +662,7 @@ public class InstructionBuilder {
         List<OperationItem> args = new ArrayList<>();
         args.add(new Literal(TypeCode.CInt, c.getSize()));
         i.add(call(tmp, "malloc", args));
-        i.add(cast(dst, tmp, c.getName()));
+        i.add(cast(dst, tmp, c.getType()));
         return i;
     }
 
@@ -670,21 +670,22 @@ public class InstructionBuilder {
      * Cast a value to a type
      * @param dst Destination variable
      * @param src Source value
-     * @param className Class name
+     * @param classType Class type
      * @return Instruction
      */
     @NotNull
     public Instruction cast(
         @NotNull Variable dst,
-        @NotNull Variable src,
-        @NotNull String className
+        @NotNull OperationItem src,
+        @NotNull TypeCode classType
     ) {
         return new Instruction(String.format(
-            "%s = bitcast %s %s to %%%s*",
+            "%s = bitcast %s%s %s to %s*",
             dst,
             src.getType(),
+            "*".repeat(src.getPointerLevel()),
             src,
-            className
+            classType
         ));
     }
 }

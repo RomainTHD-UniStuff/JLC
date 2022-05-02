@@ -2,6 +2,7 @@ package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
@@ -86,10 +87,28 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             _type.isPrimitive() ? 1 : 2
         );
         env.emit(env.instructionBuilder.declare(var));
-        env.emit(env.instructionBuilder.store(
-            var,
-            p.expr_.accept(new ExprVisitor(), env)
-        ));
+        OperationItem value = p.expr_.accept(new ExprVisitor(), env);
+
+        // FIXME: Clearly duplicated code
+        OperationItem src;
+        if (value.getType().equals(var.getType())) {
+            src = value;
+        } else {
+            // Cast needed, for object types only, like `Object a = new Animal;`
+            Variable tmp = env.createTempVar(
+                var.getType(),
+                "cast",
+                value.getPointerLevel()
+            );
+            env.emit(env.instructionBuilder.cast(
+                tmp,
+                value,
+                tmp.getType()
+            ));
+            src = tmp;
+        }
+
+        env.emit(env.instructionBuilder.store(var, src));
         if (_override) {
             env.updateVar(p.ident_, var);
         } else {

@@ -80,7 +80,26 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
 
         OperationItem value = p.expr_.accept(new ExprVisitor(), env);
         assert value != null;
-        env.emit(env.instructionBuilder.store(dst, value));
+
+        OperationItem src;
+        if (value.getType().equals(dst.getType())) {
+            src = value;
+        } else {
+            // Cast needed, for object types only, like `Object a = new Animal;`
+            Variable tmp = env.createTempVar(
+                dst.getType(),
+                "cast",
+                value.getPointerLevel()
+            );
+            env.emit(env.instructionBuilder.cast(
+                tmp,
+                value,
+                tmp.getType()
+            ));
+            src = tmp;
+        }
+
+        env.emit(env.instructionBuilder.store(dst, src));
         return null;
     }
 
