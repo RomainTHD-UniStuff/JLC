@@ -213,16 +213,15 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Create a dereference variable
      * @param orig Reference variable
-     * @param isPointer If the original variable was a double pointer or
-     *     more
+     * @param pointerLevel Pointer level
      * @return Dereferenced variable
      */
     @NotNull
-    public Variable createDerefVar(@NotNull Variable orig, boolean isPointer) {
+    public Variable createDerefVar(@NotNull Variable orig, int pointerLevel) {
         return new Variable(
             orig.getType(),
             orig.getName() + SEP + "deref",
-            isPointer
+            pointerLevel
         );
     }
 
@@ -234,7 +233,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      */
     @NotNull
     public Variable createTempVar(@NotNull TypeCode type, @NotNull String ctx) {
-        return createTempVar(type, ctx, false);
+        return createTempVar(type, ctx, 0);
     }
 
     /**
@@ -242,46 +241,46 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param type Variable type
      * @param ctx Context, like "if", "while", etc. Only used here for `and`
      *     and `or`
-     * @param isPointer Whether the variable is a pointer or not
+     * @param pointerLevel Pointer level
      * @return Temporary variable
      */
     @NotNull
     public Variable createTempVar(
         @NotNull TypeCode type,
         @NotNull String ctx,
-        boolean isPointer
+        int pointerLevel
     ) {
         return new Variable(type, String.format(
             ".temp%s%c%s%c%s",
-            isPointer ? "_ptr" : "",
+            pointerLevel == 0 ? "" : "_ptr",
             SEP,
             ctx,
             SEP,
             getVariableUID(ctx)
-        ), isPointer);
+        ), pointerLevel);
     }
 
     /**
      * Create a variable
      * @param type Variable type
      * @param name Variable name
-     * @param isPointer Whether the variable is a pointer or not
+     * @param pointerLevel Pointer level
      * @return Variable
      */
     @NotNull
     public Variable createVar(
         @NotNull TypeCode type,
         @NotNull String name,
-        boolean isPointer
+        int pointerLevel
     ) {
-        return createVar(type, name, isPointer, false);
+        return createVar(type, name, pointerLevel, false);
     }
 
     /**
      * Create a variable
      * @param type Variable type
      * @param name Variable name
-     * @param isPointer Whether the variable is a pointer or not
+     * @param pointerLevel Pointer level
      * @param isClassVariable Whether the variable is a class variable or
      *     not
      * @return Variable
@@ -290,7 +289,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     public Variable createVar(
         @NotNull TypeCode type,
         @NotNull String name,
-        boolean isPointer,
+        int pointerLevel,
         boolean isClassVariable
     ) {
         return new Variable(type, String.format(
@@ -298,7 +297,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
             name,
             SEP,
             getVariableUID(name)
-        ), isPointer, isClassVariable);
+        ), pointerLevel, isClassVariable);
     }
 
     /**
@@ -312,7 +311,8 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
             ".string%c%s",
             SEP,
             getHash(content)
-        ), false, false, true, content.length() + 1);
+        ), 1, false, true, content.length() + 1);
+        // FIXME: This pointer level isn't even used
     }
 
     /**

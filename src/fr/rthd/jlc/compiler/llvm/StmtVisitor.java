@@ -77,20 +77,11 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
     public Void visit(Ass p, EnvCompiler env) {
         Variable dst = env.lookupVar(p.ident_);
         assert dst != null;
-        assert dst.isPointer();
+        assert dst.getPointerLevel() != 0;
 
-        OperationItem value = p.expr_.accept(
-            new ExprVisitor(p.ident_),
-            env
-        );
-        if (value == null) {
-            // The value can only be null if the variable is an object, like
-            //  `a = new A`, because we actually only call the constructor
-            assert dst.getType().isObject();
-        } else {
-            env.emit(env.instructionBuilder.store(dst, value));
-        }
-
+        OperationItem value = p.expr_.accept(new ExprVisitor(), env);
+        assert value != null;
+        env.emit(env.instructionBuilder.store(dst, value));
         env.emit(env.instructionBuilder.newLine());
         return null;
     }

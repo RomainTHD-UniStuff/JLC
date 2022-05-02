@@ -54,7 +54,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             Variable var = env.createVar(
                 arg.getType(),
                 arg.getName(),
-                !arg.getType().isPrimitive()
+                arg.getType().isPrimitive() ? 0 : 1
                 // Primitive types are passed by value
             );
             env.insertVar(arg.getName(), var);
@@ -67,9 +67,10 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         for (FunArg arg : func.getArgs()) {
             Variable v = env.lookupVar(arg.getName());
             assert v != null;
-            if (!v.isPointer()) {
+            if (v.getPointerLevel() == 0) {
                 // Arguments are passed by value, so we load them to respect the
-                //  convention that all variables are pointers
+                //  convention that all variables are pointers. Otherwise, the
+                //  following code would fail: `void f(int x) { x++; }`
                 new Init(
                     arg.getName(),
                     new EVar(arg.getName())
@@ -88,20 +89,13 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                 Variable v = env.createVar(
                     a.getType(),
                     a.getName(),
-                    true,
+                    a.getType().isPrimitive() ? 1 : 2,
                     true
                 );
                 env.insertVar(a.getName(), v);
                 Variable thisVar = env.lookupVar("this");
                 assert thisVar != null;
                 env.emit(env.instructionBuilder.loadAttribute(v, thisVar, i));
-                if (!v.getType().isPrimitive()) {
-                    // Object fields are already pointers, so we would get
-                    //  a double pointer, which is painful to handle
-                    Variable deref = env.createDerefVar(v, true);
-                    env.emit(env.instructionBuilder.loadDeref(deref, v));
-                    env.updateVar(a.getName(), deref);
-                }
             }
         }
 

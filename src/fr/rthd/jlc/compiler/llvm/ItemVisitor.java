@@ -23,8 +23,9 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
     private final TypeCode _type;
 
     /**
-     * Should override or not the variable. Used for function arguments?
-     * // FIXME: Clarify this
+     * Should override or not the variable. Used for function arguments, since
+     * they are passed by value, and we need to do things like
+     * `void f(x) { x++; }`
      */
     private final boolean _override;
 
@@ -53,7 +54,11 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(NoInit p, EnvCompiler env) {
-        env.insertVar(p.ident_, env.createVar(_type, p.ident_, true));
+        env.insertVar(
+            p.ident_,
+            env.createVar(_type, p.ident_, _type.isPrimitive() ? 1 : 2)
+        );
+        // FIXME: Why lookup here?
         Variable v = env.lookupVar(p.ident_);
         assert v != null;
         env.emit(env.instructionBuilder.declare(v));
@@ -76,7 +81,11 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Init p, EnvCompiler env) {
-        Variable var = env.createVar(_type, p.ident_, true);
+        Variable var = env.createVar(
+            _type,
+            p.ident_,
+            _type.isPrimitive() ? 1 : 2
+        );
         env.emit(env.instructionBuilder.declare(var));
         if (_type.isPrimitive()) {
             // If primitive type, initialize with default value and store after.
@@ -100,10 +109,7 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             } else {
                 env.insertVar(p.ident_, var);
             }
-            OperationItem value = p.expr_.accept(
-                new ExprVisitor(p.ident_),
-                env
-            );
+            OperationItem value = p.expr_.accept(new ExprVisitor(), env);
 
             if (value != null) {
                 // FIXME: Something like `A a1 = a2` maybe?

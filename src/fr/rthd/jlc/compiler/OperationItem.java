@@ -20,24 +20,24 @@ public abstract class OperationItem {
     /**
      * Pointer or not
      */
-    private final boolean _isPointer;
+    private final int _pointerLevel;
 
     /**
      * Constructor
      * @param type Item type
      */
     public OperationItem(@NotNull TypeCode type) {
-        this(type, false);
+        this(type, 0);
     }
 
     /**
      * Constructor
      * @param type Item type
-     * @param isPointer Pointer or not
+     * @param pointerLevel Pointer level
      */
-    public OperationItem(@NotNull TypeCode type, boolean isPointer) {
+    public OperationItem(@NotNull TypeCode type, int pointerLevel) {
         _type = type;
-        _isPointer = isPointer;
+        _pointerLevel = pointerLevel;
     }
 
     /**
@@ -62,7 +62,7 @@ public abstract class OperationItem {
      * @return Pointer or not
      */
     @Contract(pure = true)
-    public boolean isPointer() {
-        return _isPointer;
+    public int getPointerLevel() {
+        return _pointerLevel;
     }
 }

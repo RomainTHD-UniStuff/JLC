@@ -2,6 +2,7 @@ package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
@@ -47,36 +48,6 @@ import static fr.rthd.jlc.TypeCode.CVoid;
 @NonNls
 class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     /**
-     * Used for ENew calls
-     */
-    @Nullable
-    private final String _refVar;
-
-    /**
-     * Constructor
-     */
-    public ExprVisitor() {
-        this(null);
-    }
-
-    /**
-     * Constructor
-     * @param refVar Reference variable for ENew calls
-     */
-    public ExprVisitor(@Nullable String refVar) {
-        _refVar = refVar;
-    }
-
-    /**
-     * Is used in an assignment or not. Used to dereference object pointers if
-     * needed
-     * @return Is assignment or not
-     */
-    private boolean isAssignment() {
-        return _refVar != null;
-    }
-
-    /**
      * Null literal
      * @param p Null literal
      * @param env Environment
@@ -84,7 +55,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENull p, EnvCompiler env) {
-        return new Literal(TypeCode.forClass(p.ident_), null, true);
+        return new Literal(TypeCode.forClass(p.ident_), null, 2);
     }
 
     /**
@@ -97,8 +68,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
-        if ((var.getType().isObject() && isAssignment()) ||
-            (var.getType().isPrimitive() && var.isPointer())) {
+        if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)) {
             // If the variable is a pointer to a primitive type, we need to
             //  dereference it using a temp variable to respect our
             //  convention that all returned values are non-pointer values. We
@@ -270,26 +240,22 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
-        if (_refVar == null) {
-            // Variable created without reference, like `f(new A)`
-            // FIXME: Create a new variable instead?
-            throw new IllegalStateException(
-                "`new` expressions can only be used with a underlying variable"
-            );
-        }
+        TypeCode classType = p.type_.accept(new TypeVisitor(), null);
+        Variable ref = env.createTempVar(classType, "new", 2);
 
-        Variable ref = env.lookupVar(_refVar);
-        assert ref != null;
-
-        ClassType c = env.lookupClass(ref.getType());
+        ClassType c = env.lookupClass(classType);
         assert c != null;
 
+        env.insertVar(ref.getName(), ref);
+
         // Call the constructor, which is a method of the object
-        return new EDot(
-            new AnnotatedExpr<>(ref.getType(), new EVar(_refVar)),
+        new EDot(
+            new AnnotatedExpr<>(classType, new EVar(ref.getName())),
             c.getConstructorName(),
             new ListExpr()
         ).accept(new ExprVisitor(), env);
+
+        return ref;
     }
 
     /**
@@ -389,7 +355,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     @Override
     public OperationItem visit(EAnd p, EnvCompiler env) {
         // We need to create a pointer to the result variable
-        Variable var = env.createTempVar(CBool, "and_ptr", true);
+        Variable var = env.createTempVar(CBool, "and_ptr", 1);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("and_true");
@@ -443,7 +409,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EOr p, EnvCompiler env) {
-        Variable var = env.createTempVar(CBool, "or_ptr", true);
+        Variable var = env.createTempVar(CBool, "or_ptr", 1);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("or_true");

@@ -245,8 +245,8 @@ public class InstructionBuilder {
             args.stream()
                 .map(arg -> String.format(
                     "%s%s %s",
-                    arg.getType().getRealAssemblyName(),
-                    arg.isPointer() ? "*" : "",
+                    arg.getType(),
+                    "*".repeat(arg.getPointerLevel()),
                     arg
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
@@ -426,7 +426,7 @@ public class InstructionBuilder {
             left.getType() == TypeCode.CDouble ? 'f' : 'i',
             ComparisonOperator.getOperand(operator, left.getType()),
             left.getType(),
-            left.isPointer() ? "*" : "",
+            "*".repeat(left.getPointerLevel()),
             left,
             right
         ));

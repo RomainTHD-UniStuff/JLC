@@ -37,9 +37,9 @@ public class Variable extends OperationItem {
     public Variable(
         @NotNull TypeCode type,
         @NotNull String name,
-        boolean isPointer
+        int pointerLevel
     ) {
-        this(type, name, isPointer, false, false, 1);
+        this(type, name, pointerLevel, false, false, 1);
     }
 
     /**
@@ -48,10 +48,10 @@ public class Variable extends OperationItem {
     public Variable(
         @NotNull TypeCode type,
         @NotNull String name,
-        boolean isPointer,
+        int pointerLevel,
         boolean isClassVariable
     ) {
-        this(type, name, isPointer, isClassVariable, false, 1);
+        this(type, name, pointerLevel, isClassVariable, false, 1);
     }
 
     /**
@@ -60,12 +60,12 @@ public class Variable extends OperationItem {
     public Variable(
         @NotNull TypeCode type,
         @NotNull String name,
-        boolean isPointer,
+        int pointerLevel,
         boolean isClassAttribute,
         boolean isGlobal,
         int size
     ) {
-        super(type, isPointer);
+        super(type, pointerLevel);
         _name = name;
         _isClassAttribute = isClassAttribute;
         _isGlobal = isGlobal;

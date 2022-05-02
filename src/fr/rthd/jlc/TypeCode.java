@@ -62,7 +62,7 @@ public class TypeCode {
     @NotNull
     public static final TypeCode CString = TypeCode.fromPrimitive(
         "string",
-        "i8*"
+        "i8*" // TODO: Use pointer level
     );
 
     /**
@@ -187,7 +187,7 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                "%" + realName + "*",
+                "%" + realName,
                 null,
                 0,
                 false,
