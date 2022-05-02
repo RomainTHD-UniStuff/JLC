@@ -4,7 +4,6 @@ import fr.rthd.jlc.TypeCode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Function argument
@@ -25,12 +24,6 @@ public class FunArg {
     private final String _name;
 
     /**
-     * Argument generated name, like `x$0$0` for `f(x)`
-     */
-    @Nullable
-    private String _generatedName;
-
-    /**
      * Constructor
      * @param type Argument type
      * @param name Argument name
@@ -38,24 +31,6 @@ public class FunArg {
     public FunArg(@NotNull TypeCode type, @NotNull String name) {
         _type = type;
         _name = name;
-        _generatedName = null;
-    }
-
-    /**
-     * @return Generated name
-     */
-    @Contract(pure = true)
-    @Nullable
-    public String getGeneratedName() {
-        return _generatedName;
-    }
-
-    /**
-     * Set the generated name
-     * @param name Generated name
-     */
-    public void setGeneratedName(@NotNull String name) {
-        _generatedName = name;
     }
 
     @Contract(pure = true)

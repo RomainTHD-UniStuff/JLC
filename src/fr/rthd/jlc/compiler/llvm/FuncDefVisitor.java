@@ -13,6 +13,7 @@ import javalette.Absyn.FuncDef;
 import javalette.Absyn.Init;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,6 +51,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             func.addArgFirst(new FunArg(c.getType(), "this"));
         }
 
+        List<Variable> args = new ArrayList<>();
         func.getArgs().forEach(arg -> {
             Variable var = env.createVar(
                 arg.getType(),
@@ -58,10 +60,15 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                 // Primitive types are passed by value
             );
             env.insertVar(arg.getName(), var);
-            arg.setGeneratedName(var.getName());
+            args.add(var);
         });
 
-        env.emit(env.instructionBuilder.functionDeclarationStart(c, func));
+        env.emit(env.instructionBuilder.functionDeclarationStart(
+            c,
+            func.getRetType(),
+            func.getName(),
+            args
+        ));
         env.emit(env.instructionBuilder.label("entry"));
 
         for (FunArg arg : func.getArgs()) {

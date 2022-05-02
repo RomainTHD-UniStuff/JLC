@@ -89,8 +89,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = load %s, %s* %s",
             dst,
-            dst.getType().getRealAssemblyName(),
-            dst.getType().getRealAssemblyName(),
+            dst.getType(),
+            dst.getType(),
             src
         ));
     }
@@ -106,8 +106,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = load %s*, %s** %s",
             dst,
-            dst.getType().getRealAssemblyName(),
-            dst.getType().getRealAssemblyName(),
+            dst.getType(),
+            dst.getType(),
             src
         ));
     }
@@ -128,8 +128,8 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
             dst,
-            thisVar.getType().getRealAssemblyName(),
-            thisVar.getType().getRealAssemblyName(),
+            thisVar.getType(),
+            thisVar.getType(),
             thisVar,
             arg
         ));
@@ -145,33 +145,37 @@ public class InstructionBuilder {
         return new Instruction(String.format(
             "%s = alloca %s",
             dst,
-            dst.getType().getRealAssemblyName()
+            dst.getType()
         ));
     }
 
     /**
      * Start a function declaration
      * @param parentClass Parent class or null
-     * @param func Function to declare
+     * @param retType Return type
+     * @param funcName Function name
+     * @param args Arguments
      * @return Instruction
      */
     @NotNull
     public Instruction functionDeclarationStart(
         @Nullable ClassType parentClass,
-        @NotNull FunType func
+        @NotNull TypeCode retType,
+        @NotNull String funcName,
+        @NotNull List<Variable> args
     ) {
         return new Instruction(String.format(
             "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
-            func.getRetType(),
+            retType,
             parentClass == null
-            ? func.getName()
-            : parentClass.getAssemblyMethodName(func.getName()),
-            func.getArgs()
-                .stream()
+            ? funcName
+            : parentClass.getAssemblyMethodName(funcName),
+            args.stream()
                 .map(arg -> String.format(
-                    "%s %%%s",
+                    "%s%s %%%s",
                     arg.getType(),
-                    arg.getGeneratedName()
+                    "*".repeat(arg.getPointerLevel()),
+                    arg.getName()
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
                 .orElse("")
@@ -203,7 +207,7 @@ public class InstructionBuilder {
                 .map(arg -> String.format(
                     "%s %%%s",
                     arg.getType(),
-                    arg.getGeneratedName()
+                    arg.getName()
                 ))
                 .reduce((a, b) -> String.format("%s, %s", a, b))
                 .orElse("")
@@ -295,9 +299,7 @@ public class InstructionBuilder {
      * @return Instruction
      */
     @NotNull
-    public Instruction increment(
-        @NotNull Variable src
-    ) {
+    public Instruction increment(@NotNull Variable src) {
         throw new NotImplementedException("Instruction not supported yet");
     }
 
@@ -330,9 +332,7 @@ public class InstructionBuilder {
      * @return Instruction
      */
     @NotNull
-    public Instruction decrement(
-        @NotNull Variable src
-    ) {
+    public Instruction decrement(@NotNull Variable src) {
         throw new NotImplementedException("Instruction not supported yet");
     }
 
