@@ -23,8 +23,6 @@ class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Program p, EnvCompiler env) {
-        env.emit(env.instructionBuilder.newLine());
-
         for (FunType fun : env.getAllFun()) {
             if (fun.isExternal()) {
                 // External functions are not emitted, only declared
