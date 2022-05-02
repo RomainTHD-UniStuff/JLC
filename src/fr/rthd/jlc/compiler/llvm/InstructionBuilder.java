@@ -636,7 +636,7 @@ public class InstructionBuilder {
             "%%%s = type { %s }",
             className,
             members.stream()
-                   .map(TypeCode::toString)
+                   .map(t -> t.toString() + (t.isPrimitive() ? "" : "*"))
                    .collect(Collectors.joining(", "))
         ));
     }
