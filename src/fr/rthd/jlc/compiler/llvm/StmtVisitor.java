@@ -50,7 +50,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
     @Override
     public Void visit(BStmt p, EnvCompiler env) {
         p.blk_.accept(new BlkVisitor(), env);
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -82,7 +81,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         OperationItem value = p.expr_.accept(new ExprVisitor(), env);
         assert value != null;
         env.emit(env.instructionBuilder.store(dst, value));
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -130,7 +128,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.ret(
             p.expr_.accept(new ExprVisitor(), env)
         ));
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -142,7 +139,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
     @Override
     public Void visit(VRet p, EnvCompiler env) {
         env.emit(env.instructionBuilder.ret());
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -179,7 +175,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.label(endLabel));
         env.emit(env.instructionBuilder.comment("endif"));
 
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -224,7 +219,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.label(endLabel));
         env.emit(env.instructionBuilder.comment("endif"));
 
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -263,7 +257,6 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.label(endLabel));
         env.emit(env.instructionBuilder.comment("end while"));
 
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 

@@ -25,6 +25,7 @@ class BlkVisitor implements Blk.Visitor<Void, EnvCompiler> {
         for (Stmt s : p.liststmt_) {
             // Accept all statements
             s.accept(new StmtVisitor(), env);
+            env.emit(env.instructionBuilder.newLine());
         }
         env.leaveScope();
 
