@@ -30,7 +30,6 @@ import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +54,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENull p, EnvCompiler env) {
-        return new Literal(TypeCode.forClass(p.ident_), null, 2);
+        return new Literal(TypeCode.forClass(p.ident_), null, 1);
     }
 
     /**

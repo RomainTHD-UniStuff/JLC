@@ -70,10 +70,12 @@ public class InstructionBuilder {
         @NotNull OperationItem src
     ) {
         return new Instruction(String.format(
-            "store %s %s, %s* %s",
+            "store %s%s %s, %s%s %s",
             src.getType(),
+            "*".repeat(src.getPointerLevel()),
             src,
             src.getType(),
+            "*".repeat(dst.getPointerLevel()),
             dst
         ));
     }
@@ -142,10 +144,12 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction declare(@NotNull Variable dst) {
+        assert dst.getPointerLevel() != 0;
         return new Instruction(String.format(
-            "%s = alloca %s",
+            "%s = alloca %s%s",
             dst,
-            dst.getType()
+            dst.getType(),
+            "*".repeat(dst.getPointerLevel() - 1)
         ));
     }
 
