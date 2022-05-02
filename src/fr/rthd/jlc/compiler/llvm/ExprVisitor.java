@@ -132,7 +132,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ESelf p, EnvCompiler env) {
-        throw new NotImplementedException();
+        Variable v = env.lookupVar("self");
+        assert v != null;
+        return v;
     }
 
     /**

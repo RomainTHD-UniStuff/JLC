@@ -47,8 +47,8 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         env.resetScope();
 
         if (c != null) {
-            // `this` is the first argument for methods
-            func.addArgFirst(new FunArg(c.getType(), "this"));
+            // `self` is the first argument for methods
+            func.addArgFirst(new FunArg(c.getType(), "self"));
         }
 
         List<Variable> args = new ArrayList<>();
@@ -100,9 +100,9 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                     true
                 );
                 env.insertVar(a.getName(), v);
-                Variable thisVar = env.lookupVar("this");
-                assert thisVar != null;
-                env.emit(env.instructionBuilder.loadAttribute(v, thisVar, i));
+                Variable selfVar = env.lookupVar("self");
+                assert selfVar != null;
+                env.emit(env.instructionBuilder.loadAttribute(v, selfVar, i));
             }
         }
 
