@@ -3,6 +3,7 @@ package fr.rthd.jlc.compiler;
 import fr.rthd.jlc.TypeCode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Variable
@@ -15,6 +16,12 @@ public class Variable extends OperationItem {
      */
     @NotNull
     private final String _name;
+
+    /**
+     * Variable name in source code
+     */
+    @NotNull
+    private final String _sourceName;
 
     /**
      * Global or not
@@ -37,9 +44,10 @@ public class Variable extends OperationItem {
     public Variable(
         @NotNull TypeCode type,
         @NotNull String name,
+        @Nullable String sourceName,
         int pointerLevel
     ) {
-        this(type, name, pointerLevel, false, false, 1);
+        this(type, name, sourceName, pointerLevel, false, false, 1);
     }
 
     /**
@@ -48,10 +56,11 @@ public class Variable extends OperationItem {
     public Variable(
         @NotNull TypeCode type,
         @NotNull String name,
+        @Nullable String sourceName,
         int pointerLevel,
         boolean isClassVariable
     ) {
-        this(type, name, pointerLevel, isClassVariable, false, 1);
+        this(type, name, sourceName, pointerLevel, isClassVariable, false, 1);
     }
 
     /**
@@ -60,6 +69,7 @@ public class Variable extends OperationItem {
     public Variable(
         @NotNull TypeCode type,
         @NotNull String name,
+        @Nullable String sourceName,
         int pointerLevel,
         boolean isClassAttribute,
         boolean isGlobal,
@@ -67,6 +77,7 @@ public class Variable extends OperationItem {
     ) {
         super(type, pointerLevel);
         _name = name;
+        _sourceName = sourceName == null ? name : sourceName;
         _isClassAttribute = isClassAttribute;
         _isGlobal = isGlobal;
         _size = size;
@@ -103,6 +114,15 @@ public class Variable extends OperationItem {
     @NotNull
     public String getName() {
         return _name;
+    }
+
+    /**
+     * @return Variable name in source code
+     */
+    @Contract(pure = true)
+    @NotNull
+    public String getSourceName() {
+        return _sourceName;
     }
 
     @Contract(pure = true)

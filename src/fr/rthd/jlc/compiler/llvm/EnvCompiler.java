@@ -211,21 +211,6 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     }
 
     /**
-     * Create a dereference variable
-     * @param orig Reference variable
-     * @param pointerLevel Pointer level
-     * @return Dereferenced variable
-     */
-    @NotNull
-    public Variable createDerefVar(@NotNull Variable orig, int pointerLevel) {
-        return new Variable(
-            orig.getType(),
-            orig.getName() + SEP + "deref",
-            pointerLevel
-        );
-    }
-
-    /**
      * Create a temporary variable
      * @param type Variable type
      * @param ctx Context, like "if", "while", etc
@@ -256,7 +241,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
             ctx,
             SEP,
             getVariableUID(ctx)
-        ), pointerLevel);
+        ), null, pointerLevel);
     }
 
     /**
@@ -296,7 +281,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
             name,
             SEP,
             getVariableUID(name)
-        ), pointerLevel, isClassVariable);
+        ), name, pointerLevel, isClassVariable);
     }
 
     /**
@@ -310,7 +295,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
             ".string%c%s",
             SEP,
             getHash(content)
-        ), 1, false, true, content.length() + 1);
+        ), null, 1, false, true, content.length() + 1);
         // FIXME: This pointer level isn't even used
     }
 
