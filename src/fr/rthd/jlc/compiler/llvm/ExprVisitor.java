@@ -242,12 +242,17 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             "new_" + classType.getRealName(),
             1
         );
-        env.emit(env.instructionBuilder.declare(ref));
+
+        Variable tmp = env.createTempVar(
+            TypeCode.CRawPointer,
+            "malloc_" + classType.getRealName()
+        );
 
         ClassType c = env.lookupClass(classType);
         assert c != null;
 
         env.insertVar(ref.getName(), ref);
+        env.emit(env.instructionBuilder.newObject(ref, tmp, c));
 
         // Call the constructor, which is a method of the object
         new EDot(

@@ -22,7 +22,7 @@ public class TypeCode {
         "int",
         "i32",
         0,
-        1
+        4
     );
 
     /**
@@ -33,7 +33,7 @@ public class TypeCode {
         "double",
         "double",
         0.0,
-        2
+        8
     );
 
     /**
@@ -64,6 +64,20 @@ public class TypeCode {
         "string",
         "i8*" // TODO: Use pointer level
     );
+
+    /**
+     * Raw pointer type code
+     */
+    @NotNull
+    public static final TypeCode CRawPointer = TypeCode.fromPrimitive(
+        "raw_pointer",
+        "i8*" // TODO: Use pointer level
+    );
+
+    /**
+     * Pointer size
+     */
+    private final static int POINTER_SIZE = 8;
 
     /**
      * Type code pool, to avoid problems with class and array type comparison,
@@ -250,7 +264,11 @@ public class TypeCode {
      */
     @Contract(pure = true)
     public int getSize() {
-        return _size;
+        if (isPrimitive()) {
+            return _size;
+        } else {
+            return POINTER_SIZE;
+        }
     }
 
     /**

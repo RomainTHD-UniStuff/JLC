@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -641,6 +642,49 @@ public class InstructionBuilder {
             members.stream()
                    .map(t -> t.toString() + (t.isPrimitive() ? "" : "*"))
                    .collect(Collectors.joining(", "))
+        ));
+    }
+
+    /**
+     * `new` call, using malloc
+     * @param dst Destination variable
+     * @param tmp Temporary variable
+     * @param c Class
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction newObject(
+        @NotNull Variable dst,
+        @NotNull Variable tmp,
+        @NotNull ClassType c
+    ) {
+        Instruction i = new Instruction();
+        List<OperationItem> args = new ArrayList<>();
+        args.add(new Literal(TypeCode.CInt, c.getSize()));
+        i.add(call(tmp, "malloc", args));
+        i.add(cast(dst, tmp, c.getName()));
+        return i;
+    }
+
+    /**
+     * Cast a value to a type
+     * @param dst Destination variable
+     * @param src Source value
+     * @param className Class name
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction cast(
+        @NotNull Variable dst,
+        @NotNull Variable src,
+        @NotNull String className
+    ) {
+        return new Instruction(String.format(
+            "%s = bitcast %s %s to %%%s*",
+            dst,
+            src.getType(),
+            src,
+            className
         ));
     }
 }

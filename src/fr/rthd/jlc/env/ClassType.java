@@ -278,4 +278,15 @@ public class ClassType {
     public String getAssemblyMethodName(@NotNull String funcName) {
         return _name + "$" + funcName;
     }
+
+    /**
+     * @return Class size
+     */
+    public int getSize() {
+        int size = 0;
+        for (Attribute a : getAllAttributes()) {
+            size += a.getType().getSize();
+        }
+        return size;
+    }
 }
