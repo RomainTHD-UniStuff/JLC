@@ -89,10 +89,12 @@ public class InstructionBuilder {
     @NotNull
     public Instruction load(@NotNull Variable dst, @NotNull Variable src) {
         return new Instruction(String.format(
-            "%s = load %s, %s* %s",
+            "%s = load %s%s, %s%s %s",
             dst,
             dst.getType(),
+            "*".repeat(dst.getPointerLevel()),
             dst.getType(),
+            "*".repeat(dst.getPointerLevel() + 1),
             src
         ));
     }

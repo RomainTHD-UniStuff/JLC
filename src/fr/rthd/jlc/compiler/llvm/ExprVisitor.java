@@ -67,16 +67,12 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
-        if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)) {
-            // If the variable is a pointer to a primitive type, we need to
-            //  dereference it using a temp variable to respect our
-            //  convention that all returned values are non-pointer values. We
-            //  also want to dereference if we are in an assignment with
-            //  objects, to respect code like `Object a = b`
+        if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
+            || (var.getType().isObject()) && var.getPointerLevel() > 1) {
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
                 var.getName().replace(EnvCompiler.SEP, '-')
-            ));
+            ), var.getPointerLevel() - 1);
             env.emit(env.instructionBuilder.load(tmp, var));
             return tmp;
         } else {
