@@ -115,7 +115,8 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         } else {
             env.emit(env.instructionBuilder.ret(new Literal(
                 func.getRetType(),
-                func.getRetType().getDefaultValue()
+                func.getRetType().getDefaultValue(),
+                func.getRetType().isPrimitive() ? 0 : 1
             )));
         }
 

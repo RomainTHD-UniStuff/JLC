@@ -164,7 +164,8 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             // Return value
             Variable out = env.createTempVar(
                 func.getRetType(),
-                "function_call"
+                "function_call",
+                func.getRetType().isPrimitive() ? 0 : 1
             );
             env.emit(env.instructionBuilder.call(out, p.ident_, args));
             return out;

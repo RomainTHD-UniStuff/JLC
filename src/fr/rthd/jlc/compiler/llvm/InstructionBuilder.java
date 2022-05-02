@@ -171,8 +171,9 @@ public class InstructionBuilder {
         @NotNull List<Variable> args
     ) {
         return new Instruction(String.format(
-            "define %s @%s(%s) nounwind \"nosync\" \"nofree\" {",
+            "define %s%s @%s(%s) nounwind \"nosync\" \"nofree\" {",
             retType,
+            (retType.isPrimitive() ? "" : "*"),
             parentClass == null
             ? funcName
             : parentClass.getAssemblyMethodName(funcName),
@@ -248,9 +249,10 @@ public class InstructionBuilder {
         @NotNull List<OperationItem> args
     ) {
         return new Instruction(String.format(
-            "%scall %s @%s(%s)",
+            "%scall %s%s @%s(%s)",
             dst == null ? "" : dst + " = ",
             dst == null ? TypeCode.CVoid : dst.getType(),
+            dst == null ? "" : "*".repeat(dst.getPointerLevel()),
             funcName,
             args.stream()
                 .map(arg -> String.format(
@@ -486,8 +488,9 @@ public class InstructionBuilder {
     @NotNull
     public Instruction ret(@NotNull OperationItem returned) {
         return new Instruction(String.format(
-            "ret %s %s",
+            "ret %s%s %s",
             returned.getType(),
+            "*".repeat(returned.getPointerLevel()),
             returned
         ));
     }
