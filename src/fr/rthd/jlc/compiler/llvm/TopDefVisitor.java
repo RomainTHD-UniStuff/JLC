@@ -12,13 +12,30 @@ import org.jetbrains.annotations.NonNls;
 @NonNls
 class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
     /**
+     * Visit only classes or only functions. Used to ensure that a function
+     * defined before a class don't call class methods
+     */
+    private final boolean _classOnly;
+
+    /**
+     * Constructor
+     * @param classOnly Class only or method only
+     */
+    public TopDefVisitor(boolean classOnly) {
+        _classOnly = classOnly;
+    }
+
+    /**
      * Top function definition
      * @param p Top function definition
      * @param env Environment
      */
     @Override
     public Void visit(TopFnDef p, EnvCompiler env) {
-        return p.funcdef_.accept(new FuncDefVisitor(), env);
+        if (!_classOnly) {
+            p.funcdef_.accept(new FuncDefVisitor(), env);
+        }
+        return null;
     }
 
     /**
@@ -28,6 +45,9 @@ class TopDefVisitor implements TopDef.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(TopClsDef p, EnvCompiler env) {
-        return p.classdef_.accept(new ClassDefVisitor(), env);
+        if (_classOnly) {
+            p.classdef_.accept(new ClassDefVisitor(), env);
+        }
+        return null;
     }
 }

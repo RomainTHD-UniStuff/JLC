@@ -45,7 +45,11 @@ class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.newLine());
 
         for (TopDef topdef : p.listtopdef_) {
-            topdef.accept(new TopDefVisitor(), env);
+            topdef.accept(new TopDefVisitor(true), env);
+        }
+
+        for (TopDef topdef : p.listtopdef_) {
+            topdef.accept(new TopDefVisitor(false), env);
         }
 
         env.setClassFunctions(null);

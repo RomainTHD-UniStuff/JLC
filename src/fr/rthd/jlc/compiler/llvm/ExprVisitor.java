@@ -161,7 +161,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             OperationItem value = expr.accept(new ExprVisitor(), env);
 
             if (!func.getName().equals(ClassType.getConstructorName())) {
-                // FIXME: Truly awful hack for a bug fix
+                // FIXME: Truly awful hack, the constructor's `self` sometimes
+                //  doesn't have the right type. Is is ok-ish to just ignore it
+                //  for now, because constructors don't need casting
 
                 if (value.getType() != arg.getType()) {
                     value = LLVMCompiler.castTo(
