@@ -71,7 +71,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
 
         FnDef fdef = new FnDef(
             new javalette.Absyn.Void(),
-            c.getConstructorName(),
+            ClassType.CONSTRUCTOR_NAME,
             new ListArg(),
             new Block(body)
         );

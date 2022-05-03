@@ -19,6 +19,12 @@ import java.util.Map;
 @NonNls
 public class ClassType {
     /**
+     * Constructor name
+     */
+    @NotNull
+    public static final String CONSTRUCTOR_NAME = "__constructor";
+
+    /**
      * Class name
      */
     @NotNull
@@ -63,15 +69,6 @@ public class ClassType {
         _superclassName = superclassName;
         _methods = new HashMap<>();
         _attributes = new HashMap<>();
-    }
-
-    /**
-     * @return Constructor name
-     */
-    @NotNull
-    @Contract(pure = true)
-    public static String getConstructorName() {
-        return "__constructor";
     }
 
     /**

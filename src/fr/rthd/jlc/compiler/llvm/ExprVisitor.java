@@ -160,7 +160,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             FunArg arg = func.getArgs().get(i);
             OperationItem value = expr.accept(new ExprVisitor(), env);
 
-            if (!func.getName().equals(ClassType.getConstructorName())) {
+            if (!func.getName().equals(ClassType.CONSTRUCTOR_NAME)) {
                 // FIXME: Truly awful hack, the constructor's `self` sometimes
                 //  doesn't have the right type. Is is ok-ish to just ignore it
                 //  for now, because constructors don't need casting
@@ -282,7 +282,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         // Call the constructor, which is a method of the object
         new EDot(
             new AnnotatedExpr<>(classType, new EVar(ref.getName())),
-            c.getConstructorName(),
+            ClassType.CONSTRUCTOR_NAME,
             new ListExpr()
         ).accept(new ExprVisitor(), env);
 
