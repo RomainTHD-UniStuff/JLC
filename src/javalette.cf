@@ -62,6 +62,7 @@ VRet.      Stmt ::= "return" ";" ;
 
 Cond.      Stmt ::= "if" "(" Expr ")" Stmt ;
 
+-- Shift-reduce
 CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt ;
 
 While.     Stmt ::= "while" "(" Expr ")" Stmt ;
@@ -80,7 +81,8 @@ Bool.      Type ::= "boolean" ;
 
 Void.      Type ::= "void" ;
 
--- Array.     Type ::= Type [Dim] ;
+-- Shift-reduce
+Array.     Type ::= Type [Dim] ;
 
 Class.     Type ::= Ident ;
 
@@ -88,6 +90,7 @@ Class.     Type ::= Ident ;
 
 -- Expressions ---------------------------------------------
 
+-- Shift-reduce
 ENull.     Expr7 ::= "(" Ident ")" "null" ;
 
 EVar.      Expr6 ::= Ident ;
@@ -139,9 +142,9 @@ separator  Expr "," ;
 
 -- separator  Index "" ;
 
--- SDim.      Dim ::= "[" "]" ;
+SDim.      Dim ::= "[" "]" ;
 
--- separator  Dim "" ;
+separator nonempty Dim "" ;
 
 -- operators -----------------------------------------------
 
