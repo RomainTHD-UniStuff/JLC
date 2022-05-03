@@ -1,77 +1,167 @@
 package fr.rthd.jlc;
 
-import fr.rthd.jlc.compiler.Compiler;
-import fr.rthd.jlc.compiler.llvm.LLVMInstructionBuilder;
+import fr.rthd.jlc.compiler.llvm.LLVMCompiler;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
+import fr.rthd.jlc.internal.Unannotater;
 import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typecheck.TypeChecker;
 import fr.rthd.jlc.typecheck.exception.TypeException;
 import javalette.Absyn.Prog;
+import javalette.PrettyPrinter;
 import javalette.Yylex;
 import javalette.parser;
+import org.jetbrains.annotations.Nls;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
  * Main class of the compiler
  * @author RomainTHD
+ * @see ArgParse
  */
+@Nls
 public class Main {
     /**
-     * Main method
-     * @param args Command line arguments. Here, `--backend <Backend>`
+     * @return Help message
      */
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            System.err.println("Usage: fr.rthd.jlc.Main --backend <Backend>");
-            System.exit(1);
+    private static String getHelp() {
+        String[] lines = {
+            "JLC - a Java-like compiler",
+            "By RomainTHD, 2022, under GPLv3",
+            "",
+            "Usage: jlc [<file>]",
+            "\t[-o|--output <file>]",
+            "\t[-b|--backend x86 | amd64|x86_64|x64 | llvm | riscv]",
+            "\t([-q|--quiet] | [--error] | [--warn] | [-v|--info|--verbose] | [-vv|--debug|--very-verbose])",
+            "\t([-Oz] | [-Os] | [-0|--O0] | [-1|--O1] | [-2|--O2] | [-3|--O3])",
+            "\t[-t|--typecheck-only|--typecheck]",
+            "\t[-h|--help]",
+            "",
+            "Options:",
+            "\t-o, --output <file>\t\t\tOutput file name",
+            "\t-b, --backend x86 | amd64|x86_64|x64 | llvm | jvm|java | riscv\tBackend to use",
+            "\t-q, --quiet\t\t\t\tQuiet mode",
+            "\t--error\t\t\t\t\tOnly show errors",
+            "\t--warn\t\t\t\t\tShow warnings",
+            "\t-v, --info, --verbose\t\t\tShow info",
+            "\t-vv, --debug, --very-verbose\t\tShow debug",
+            "\t-t, --typecheck-only, --typecheck\tOnly typecheck",
+            "\t--ast, --ast-only\t\t\t\tOnly print AST",
+            "\t-h, --help\t\t\t\tShow this help",
+            "\t-Oz, -Os, -0, --O0, --O1, --O2, --O3\tOptimization level",
+            "",
+        };
+
+        return Arrays
+            .stream(lines)
+            .reduce((a, b) -> a + "\n" + b)
+            .get();
+    }
+
+    /**
+     * Exit the program
+     * @param status Status code
+     */
+    private static void exit(int status) {
+        if (status == 0) {
+            System.err.println("OK");
         }
 
-        String backend = args[1].toLowerCase().replaceAll("-+", "");
+        System.exit(status);
+    }
 
-        StringBuilder input = new StringBuilder();
-        Scanner sc = new Scanner(System.in);
-        while (sc.hasNextLine()) {
-            input.append(sc.nextLine()).append("\n");
+    /**
+     * Main method
+     * @param args Command line arguments
+     */
+    public static void main(String[] args) {
+        ArgParse opt = ArgParse.parse(args);
+
+        if (opt.showHelp) {
+            // If help is requested, print it and exit
+            System.out.println(getHelp());
+            System.exit(0);
         }
 
         Yylex lex = null;
+
+        if (opt.inputFile != null) {
+            try {
+                lex = new Yylex(new FileReader(opt.inputFile));
+            } catch (FileNotFoundException ignored) {
+                // TODO: Log this error
+            }
+        }
+
+        if (lex == null) {
+            StringBuilder input = new StringBuilder();
+            Scanner sc = new Scanner(System.in);
+            while (sc.hasNextLine()) {
+                input.append(sc.nextLine()).append("\n");
+            }
+            lex = new Yylex(new StringReader(input.toString()));
+        }
+
         try {
             // Parse
-            lex = new Yylex(new StringReader(input.toString()));
             parser p = new parser(lex);
             Prog tree = p.pProg();
 
             // Type check
-            Env<?, FunType> env = new Env<>();
-            tree = new TypeChecker().typecheck(tree, env);
-            tree = new Optimizer().optimize(tree, env);
-            System.out.println(new Compiler(
-                new LLVMInstructionBuilder()
-            ).compile(tree, env));
-            System.err.println("OK");
+            Env<?, FunType, ClassType> env = new Env<>();
+            tree = new TypeChecker().accept(tree, env);
+
+            if (opt.typecheckOnly) {
+                exit(0);
+            }
+
+            if (opt.optimizationLevel != 0) {
+                tree = new Optimizer(opt.optimizationLevel).accept(tree, env);
+            }
+
+            if (opt.printAST) {
+                // TODO: Respect the -o flag
+                System.out.println(PrettyPrinter.print(new Unannotater().accept(
+                    tree,
+                    env
+                )));
+                exit(0);
+            }
+
+            if (opt.backend == ArgParse.Backend.LLVM) {
+                tree = new LLVMCompiler(opt.outputFile).accept(tree, env);
+            } else {
+                throw new UnsupportedOperationException(
+                    "Backend not supported yet"
+                );
+            }
+
+            exit(0);
         } catch (TypeException e) {
             System.err.println("ERROR");
             System.err.println("Type error: " + e.getMessage());
-            System.exit(1);
+            exit(1);
         } catch (EnvException e) {
             System.err.println("ERROR");
             System.err.println("Environment error: " + e.getMessage());
-            System.exit(1);
+            exit(1);
         } catch (RuntimeException | StackOverflowError e) {
             e.printStackTrace();
-            System.exit(-1);
+            exit(-1);
         } catch (IOException e) {
             System.err.println("ERROR");
             System.err.println("IO error: " + e.getMessage());
-            System.exit(1);
+            exit(1);
         } catch (Throwable e) {
-            assert lex != null;
             System.err.println("ERROR");
             System.err.println(
                 "Syntax error at line " +
@@ -81,7 +171,7 @@ public class Main {
                 "\" :"
             );
             System.err.println("     " + e.getMessage());
-            System.exit(1);
+            exit(1);
         }
     }
 

@@ -4,9 +4,29 @@ entrypoints Prog ;
 
 Program.   Prog ::= [TopDef] ;
 
-FnDef.	   TopDef ::= Type Ident "(" [Arg] ")" Blk ;
+TopFnDef.  TopDef ::= FuncDef ;
+
+TopClsDef. TopDef ::= ClassDef ;
 
 separator nonempty TopDef "" ;
+
+-- classes -------------------------------------------------
+
+ClsDef.    ClassDef ::= "class" Ident ClassInheritance "{" [Member] "}" ;
+
+HBase.     ClassInheritance ::= ;
+
+HExtends.  ClassInheritance ::= "extends" Ident ;
+
+FnMember.  Member ::= FuncDef ;
+
+AttrMember. Member ::= Type Ident ";" ;
+
+separator Member "" ;
+
+-- functions -----------------------------------------------
+
+FnDef.     FuncDef ::= Type Ident "(" [Arg] ")" Blk ;
 
 Argument.  Arg ::= Type Ident;
 
@@ -40,13 +60,15 @@ Ret.       Stmt ::= "return" Expr ";" ;
 
 VRet.      Stmt ::= "return" ";" ;
 
-Cond.      Stmt ::= "if" "(" Expr ")" Stmt  ;
+Cond.      Stmt ::= "if" "(" Expr ")" Stmt ;
 
-CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt  ;
+CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt ;
 
 While.     Stmt ::= "while" "(" Expr ")" Stmt ;
 
-SExp.      Stmt ::= Expr  ";" ;
+For.       Stmt ::= "for" "(" Type Ident ":" Expr ")" Stmt ;
+
+SExp.      Stmt ::= Expr ";" ;
 
 -- Types ---------------------------------------------------
 
@@ -58,9 +80,15 @@ Bool.      Type ::= "boolean" ;
 
 Void.      Type ::= "void" ;
 
-separator  Type "," ;
+-- Array.     Type ::= Type [Dim] ;
+
+Class.     Type ::= Ident ;
+
+-- separator  Type "," ;
 
 -- Expressions ---------------------------------------------
+
+ENull.     Expr7 ::= "(" Ident ")" "null" ;
 
 EVar.      Expr6 ::= Ident ;
 
@@ -72,9 +100,20 @@ ELitTrue.  Expr6 ::= "true" ;
 
 ELitFalse. Expr6 ::= "false" ;
 
+ESelf.     Expr6 ::= "self" ;
+
 EApp.      Expr6 ::= Ident "(" [Expr] ")" ;
 
 EString.   Expr6 ::= String ;
+
+-- Works because we don't allow raw access to class attributes, only function
+--  calls are allowed
+EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
+
+-- EIndex.    Expr6 ::= Expr6 [Index] ;
+
+ENew.      Expr6 ::= "new" Type ;
+-- ENew.      Expr6 ::= "new" Type [Index] ;
 
 Neg.       Expr5 ::= "-" Expr6 ;
 
@@ -90,9 +129,19 @@ EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 
 EOr.       Expr ::= Expr1 "||" Expr ;
 
-coercions  Expr 6 ;
+coercions  Expr 7 ;
 
 separator  Expr "," ;
+
+-- dimensions ----------------------------------------------
+
+-- SIndex.    Index ::= "[" Expr "]" ;
+
+-- separator  Index "" ;
+
+-- SDim.      Dim ::= "[" "]" ;
+
+-- separator  Dim "" ;
 
 -- operators -----------------------------------------------
 

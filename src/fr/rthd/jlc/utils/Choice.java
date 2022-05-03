@@ -1,4 +1,4 @@
-package fr.rthd.jlc;
+package fr.rthd.jlc.utils;
 
 /**
  * Choice, like a boolean with true / false / unset

@@ -1,8 +1,12 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Environment for the optimizer
@@ -11,11 +15,12 @@ import fr.rthd.jlc.env.FunType;
  * @see AnnotatedExpr
  * @see FunTypeOptimizer
  */
-class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
+class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassType> {
     /**
      * Current function
      */
-    private FunTypeOptimizer _currentFunction;
+    @Nullable
+    private FunTypeOptimizer _currentFunction = null;
 
     /**
      * Number of passes
@@ -31,18 +36,20 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
      * Constructor
      * @param env Parent environment
      */
-    public EnvOptimizer(Env<?, FunType> env) {
+    public EnvOptimizer(@NotNull Env<?, FunType, ClassType> env) {
         super();
         for (FunType funType : env.getAllFun()) {
             // We receive `FunType` objects but need to store `FunTypeOptimizer`
             //  objects
-            this.insertFun(new FunTypeOptimizer(funType));
+            insertFun(new FunTypeOptimizer(funType));
         }
     }
 
     /**
      * @return Current function
      */
+    @Contract(pure = true)
+    @Nullable
     public FunTypeOptimizer getCurrentFunction() {
         return _currentFunction;
     }
@@ -51,13 +58,14 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
      * Set the current function
      * @param funType Current function
      */
-    public void setCurrentFunction(FunTypeOptimizer funType) {
+    public void setCurrentFunction(@Nullable FunTypeOptimizer funType) {
         _currentFunction = funType;
     }
 
     /**
      * Increment the pass count
      */
+    @Contract(pure = true)
     public void newPass() {
         ++_pass;
     }
@@ -65,6 +73,7 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer> {
     /**
      * @return Pass count
      */
+    @Contract(pure = true)
     public int getPassCount() {
         return _pass;
     }

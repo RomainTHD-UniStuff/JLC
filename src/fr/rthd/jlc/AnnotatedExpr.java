@@ -5,26 +5,42 @@ import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.EString;
 import javalette.Absyn.Expr;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import static fr.rthd.jlc.TypeCode.CBool;
+import static fr.rthd.jlc.TypeCode.CDouble;
+import static fr.rthd.jlc.TypeCode.CInt;
+import static fr.rthd.jlc.TypeCode.CString;
 
 /**
  * Annotated expression
  * @param <T> Parent expression type
  * @author RomainTHD
  */
+@NonNls
 public class AnnotatedExpr<T extends Expr> extends Expr {
     /**
      * Parent expression
      */
-    public final T parentExp;
+    @NotNull
+    private final T _parentExp;
 
     /**
      * Expression type
      */
-    public TypeCode type;
+    @NotNull
+    private final TypeCode _type;
 
-    public AnnotatedExpr(TypeCode expType, T parentExp) {
-        this.type = expType;
-        this.parentExp = parentExp;
+    /**
+     * Constructor
+     * @param expType Expression type
+     * @param parentExp Parent expression
+     */
+    public AnnotatedExpr(@NotNull TypeCode expType, @NotNull T parentExp) {
+        _type = expType;
+        _parentExp = parentExp;
     }
 
     /**
@@ -32,28 +48,53 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
      * @param type Expression type
      * @return Default expression
      */
-    public static AnnotatedExpr<Expr> getDefaultValue(TypeCode type) {
-        switch (type) {
-            case CInt:
-                return new AnnotatedExpr<>(type, new ELitInt(0));
-            case CDouble:
-                return new AnnotatedExpr<>(type, new ELitDoub(0.0));
-            case CBool:
-                return new AnnotatedExpr<>(type, new ELitFalse());
-            case CString:
-                return new AnnotatedExpr<>(type, new EString(""));
-            case CVoid:
-            default:
-                throw new IllegalArgumentException(
-                    "Unhandled type: " +
-                    type
-                );
+    @NotNull
+    public static AnnotatedExpr<Expr> getDefaultValue(@NotNull TypeCode type) {
+        if (CInt.equals(type)) {
+            return new AnnotatedExpr<>(type, new ELitInt(0));
+        } else if (CDouble.equals(type)) {
+            return new AnnotatedExpr<>(type, new ELitDoub(0.0));
+        } else if (CBool.equals(type)) {
+            return new AnnotatedExpr<>(type, new ELitFalse());
+        } else if (CString.equals(type)) {
+            return new AnnotatedExpr<>(type, new EString(""));
+        } else {
+            throw new IllegalArgumentException(
+                "Unhandled type: " +
+                type.getRealName()
+            );
         }
     }
 
+    /**
+     * Accept an expression visitor
+     * @param v Visitor
+     * @param arg Argument
+     * @param <R> Return type
+     * @param <A> Argument type
+     * @return Visitor return value
+     */
     @Override
     public <R, A> R accept(Visitor<R, A> v, A arg) {
         // Call the parent accept method
-        return parentExp.accept(v, arg);
+        return _parentExp.accept(v, arg);
+    }
+
+    /**
+     * @return Parent expression
+     */
+    @Contract(pure = true)
+    @NotNull
+    public T getParentExp() {
+        return _parentExp;
+    }
+
+    /**
+     * @return Expression type
+     */
+    @Contract(pure = true)
+    @NotNull
+    public TypeCode getType() {
+        return _type;
     }
 }

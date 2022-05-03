@@ -2,5 +2,5 @@
 $testPath = $args[0]
 wsl.exe sh -c "
 export CLASSPATH=.:./lib/JLex.jar:./lib/cup.jar;
-cat $testPath | ./jlc;
+./jlc $testPath;
 "

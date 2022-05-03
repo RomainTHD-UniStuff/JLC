@@ -17,8 +17,8 @@ public class InvalidAssignmentTypeException extends TypeException {
             "Invalid assignment to %s `%s` from type `%s` to type `%s`",
             isVar ? "variable" : "argument",
             varName,
-            actual,
-            expected
+            actual.getRealName(),
+            expected.getRealName()
         ));
     }
 

@@ -1,5 +1,9 @@
 package fr.rthd.jlc.compiler;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,55 +11,75 @@ import java.util.List;
  * Instruction
  * @author RomainTHD
  */
+@NonNls
 public class Instruction {
     /**
      * List of commands
      */
+    @NotNull
     private final List<String> _commands;
 
     /**
      * Indentable instruction or not
      */
-    public boolean indentable;
+    private boolean _indentable;
 
     /**
      * Constructor
      */
     public Instruction() {
-        this._commands = new ArrayList<>();
-        this.indentable = true;
+        _commands = new ArrayList<>();
+        _indentable = true;
     }
 
     /**
      * Constructor
      * @param command Command
      */
-    public Instruction(String command) {
+    public Instruction(@NotNull String command) {
         this();
-        this.add(command);
+        add(command);
     }
 
     /**
      * Add an instruction
      * @param inst Instruction
      */
-    protected void add(Instruction inst) {
-        this._commands.addAll(inst.emit());
+    public void add(@NotNull Instruction inst) {
+        _commands.addAll(inst.emit());
     }
 
     /**
      * Add a command
      * @param command Command
      */
-    protected void add(String command) {
-        this._commands.add(command);
+    public void add(@NotNull String command) {
+        _commands.add(command);
     }
 
     /**
      * Emit the instruction
-     * @return Instruction as string
+     * @return List of instructions
      */
+    @Contract(pure = true)
+    @NotNull
     public List<String> emit() {
         return _commands;
+    }
+
+    /**
+     * @return Indentable instruction or not
+     */
+    @Contract(pure = true)
+    public boolean isIndentable() {
+        return _indentable;
+    }
+
+    /**
+     * Set the indentable flag
+     * @param indentable Indentable flag
+     */
+    public void setIndentable(boolean indentable) {
+        _indentable = indentable;
     }
 }

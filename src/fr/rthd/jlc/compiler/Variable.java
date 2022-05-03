@@ -1,6 +1,9 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Variable
@@ -11,68 +14,126 @@ public class Variable extends OperationItem {
     /**
      * Variable name
      */
-    public final String name;
+    @NotNull
+    private final String _name;
+
+    /**
+     * Variable name in source code
+     */
+    @NotNull
+    private final String _sourceName;
 
     /**
      * Global or not
      */
-    private boolean _isGlobal;
+    private final boolean _isGlobal;
 
     /**
-     * Pointer or not
+     * Class variable or not
      */
-    private boolean _isPointer;
+    private final boolean _isClassAttribute;
 
     /**
      * Variable size. Only used for strings for now
      */
-    private int _size;
+    private final int _size;
 
     /**
      * Constructor
-     * @param type Variable type
-     * @param name Variable name
-     * @param isPointer Is a pointer or not
      */
-    public Variable(TypeCode type, String name, boolean isPointer) {
-        super(type);
-        this.name = name;
-        this._isGlobal = false;
-        this._isPointer = isPointer;
-        this._size = 1;
+    public Variable(
+        @NotNull TypeCode type,
+        @NotNull String name,
+        @Nullable String sourceName,
+        int pointerLevel
+    ) {
+        this(type, name, sourceName, pointerLevel, false, false, 1);
     }
 
+    /**
+     * Constructor
+     */
+    public Variable(
+        @NotNull TypeCode type,
+        @NotNull String name,
+        @Nullable String sourceName,
+        int pointerLevel,
+        boolean isClassVariable
+    ) {
+        this(type, name, sourceName, pointerLevel, isClassVariable, false, 1);
+    }
+
+    /**
+     * Constructor
+     */
+    public Variable(
+        @NotNull TypeCode type,
+        @NotNull String name,
+        @Nullable String sourceName,
+        int pointerLevel,
+        boolean isClassAttribute,
+        boolean isGlobal,
+        int size
+    ) {
+        super(type, pointerLevel);
+        _name = name;
+        _sourceName = sourceName == null ? name : sourceName;
+        _isClassAttribute = isClassAttribute;
+        _isGlobal = isGlobal;
+        _size = size;
+    }
+
+    /**
+     * @return Is global variable or not
+     */
+    @Contract(pure = true)
     public boolean isGlobal() {
-        return this._isGlobal;
+        return _isGlobal;
     }
 
-    public void setGlobal() {
-        this._isGlobal = true;
+    /**
+     * @return Is class attribute or not
+     */
+    @Contract(pure = true)
+    public boolean isClassAttribute() {
+        return _isClassAttribute;
     }
 
-    public boolean isPointer() {
-        return this._isPointer;
-    }
-
-    public void setPointerStatus(boolean isPointer) {
-        this._isPointer = isPointer;
-    }
-
+    /**
+     * @return Variable size
+     */
+    @Contract(pure = true)
     public int getSize() {
-        return this._size;
+        return _size;
     }
 
-    public void setSize(int size) {
-        this._size = size;
+    /**
+     * @return Variable name
+     */
+    @Contract(pure = true)
+    @NotNull
+    public String getName() {
+        return _name;
     }
 
+    /**
+     * @return Variable name in source code
+     */
+    @Contract(pure = true)
+    @NotNull
+    public String getSourceName() {
+        return _sourceName;
+    }
+
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
-        // Example: "%tmp"
+        // Globals start with a '@', locals with a '%'
         return String.format(
             "%c%s",
-            this.isGlobal() ? '@' : '%',
-            name
+            isGlobal() ? '@' : '%',
+            _name
         );
     }
 }

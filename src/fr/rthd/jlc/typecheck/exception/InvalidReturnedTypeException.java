@@ -10,8 +10,8 @@ public class InvalidReturnedTypeException extends TypeException {
     public InvalidReturnedTypeException(TypeCode expected, TypeCode actual) {
         super(String.format(
             "Invalid return type, expected `%s`, found `%s`",
-            expected,
-            actual
+            expected.getRealName(),
+            actual.getRealName()
         ));
     }
 
@@ -23,8 +23,8 @@ public class InvalidReturnedTypeException extends TypeException {
         super(String.format(
             "Invalid return type in %s, expected `%s`, found `%s`",
             funcName,
-            expected,
-            actual
+            expected.getRealName(),
+            actual.getRealName()
         ));
     }
 }

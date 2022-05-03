@@ -10,8 +10,8 @@ public class InvalidExpressionTypeException extends TypeException {
     public InvalidExpressionTypeException(TypeCode actual, TypeCode expected) {
         super(String.format(
             "Invalid expression type `%s`, expected `%s`",
-            actual,
-            expected
+            actual.getRealName(),
+            expected.getRealName()
         ));
     }
 }
