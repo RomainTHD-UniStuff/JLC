@@ -135,7 +135,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             // Might happen for class methods
             ClassType c = env.getCaller();
             if (c != null) {
-                funcType = c.getMethod(e.ident_);
+                funcType = c.getMethod(e.ident_, true);
             }
         }
 

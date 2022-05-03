@@ -7,8 +7,8 @@ import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
+import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
-import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -145,19 +145,35 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EApp p, EnvCompiler env) {
-        List<OperationItem> args = new ArrayList<>();
-
-        for (Expr expr : p.listexpr_) {
-            // Visit arguments
-            args.add(expr.accept(new ExprVisitor(), env));
-        }
-
         FunType func = env.lookupFun(p.ident_);
         assert func != null;
 
         // `getName` should not be used in this visitor because it contains the
         //  logical name of the function, not the name of the function in the
         //  LLVM IR
+
+        List<OperationItem> args = new ArrayList<>();
+
+        for (int i = 0; i < p.listexpr_.size(); i++) {
+            // Visit arguments
+            Expr expr = p.listexpr_.get(i);
+            FunArg arg = func.getArgs().get(i);
+            OperationItem value = expr.accept(new ExprVisitor(), env);
+
+            if (!func.getName().equals(ClassType.getConstructorName())) {
+                // FIXME: Truly awful hack for a bug fix
+
+                if (value.getType() != arg.getType()) {
+                    value = LLVMCompiler.castTo(
+                        arg.getType(),
+                        value,
+                        env
+                    );
+                }
+            }
+
+            args.add(value);
+        }
 
         if (func.getRetType() == CVoid) {
             env.emit(env.instructionBuilder.call(p.ident_, args));
@@ -216,6 +232,11 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         TypeCode classType = ((AnnotatedExpr<?>) p.expr_).getType();
         ClassType c = env.lookupClass(classType);
         assert c != null;
+
+        while (c.getMethod(p.ident_, false) == null) {
+            c = c.getSuperclass();
+            assert c != null;
+        }
 
         // Add `this` to the arguments
         ListExpr args = new ListExpr();

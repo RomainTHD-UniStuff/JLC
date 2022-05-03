@@ -39,7 +39,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             // Look for method
             // FIXME: Should already be resolved since ProgVisitor adds all
             //  methods to the global environment
-            func = c.getMethod(p.ident_);
+            func = c.getMethod(p.ident_, true);
         }
 
         assert func != null;

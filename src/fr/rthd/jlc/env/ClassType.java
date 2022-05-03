@@ -66,6 +66,15 @@ public class ClassType {
     }
 
     /**
+     * @return Constructor name
+     */
+    @NotNull
+    @Contract(pure = true)
+    public static String getConstructorName() {
+        return "__constructor";
+    }
+
+    /**
      * Add a method to the class
      * @param f Method to add
      * @param override Whether the method is an override or not. Ony used
@@ -102,14 +111,15 @@ public class ClassType {
     /**
      * Get a single method, possibly from the superclass
      * @param name Method name
+     * @param recurse Whether to search in the superclass or not
      * @return Method or null
      */
     @Nullable
-    public FunType getMethod(@NotNull String name) {
+    public FunType getMethod(@NotNull String name, boolean recurse) {
         if (_methods.containsKey(name)) {
             return _methods.get(name);
-        } else if (_superclass != null) {
-            return _superclass.getMethod(name);
+        } else if (recurse && _superclass != null) {
+            return _superclass.getMethod(name, true);
         } else {
             return null;
         }
@@ -232,15 +242,6 @@ public class ClassType {
                ", attributes=" +
                _attributes +
                "}";
-    }
-
-    /**
-     * @return Constructor name
-     */
-    @NotNull
-    @Contract(pure = true)
-    public String getConstructorName() {
-        return "__constructor";
     }
 
     /**

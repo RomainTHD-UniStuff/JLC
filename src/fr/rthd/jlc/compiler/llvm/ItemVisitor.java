@@ -94,18 +94,7 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         if (value.getType().equals(var.getType())) {
             src = value;
         } else {
-            // Cast needed, for object types only, like `Object a = new Animal;`
-            Variable tmp = env.createTempVar(
-                var.getType(),
-                "cast",
-                value.getPointerLevel()
-            );
-            env.emit(env.instructionBuilder.cast(
-                tmp,
-                value,
-                tmp.getType()
-            ));
-            src = tmp;
+            src = LLVMCompiler.castTo(var.getType(), value, env);
         }
 
         env.emit(env.instructionBuilder.store(var, src));

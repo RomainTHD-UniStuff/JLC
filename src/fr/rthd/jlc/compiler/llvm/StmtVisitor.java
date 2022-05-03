@@ -85,18 +85,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         if (value.getType().equals(dst.getType())) {
             src = value;
         } else {
-            // Cast needed, for object types only, like `Object a = new Animal;`
-            Variable tmp = env.createTempVar(
-                dst.getType(),
-                "cast",
-                value.getPointerLevel()
-            );
-            env.emit(env.instructionBuilder.cast(
-                tmp,
-                value,
-                tmp.getType()
-            ));
-            src = tmp;
+            src = LLVMCompiler.castTo(dst.getType(), value, env);
         }
 
         env.emit(env.instructionBuilder.store(dst, src));
