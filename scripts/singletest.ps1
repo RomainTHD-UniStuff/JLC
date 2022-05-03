@@ -3,11 +3,11 @@ $testPath = $args[0]
 $fileName = "test"
 wsl.exe sh -c "
 export CLASSPATH=.:./lib/JLex.jar:./lib/cup.jar;
-cat $testPath | ./jlc > tmp/$fileName.ll;
+./jlc $testPath -o tmp/$fileName.ll;
 llc -filetype=obj lib/runtime.ll -o tmp/runtime.o || exit;
 cd tmp;
 llc -filetype=obj $fileName.ll -o $fileName.o || exit;
 clang $fileName.o runtime.o -o $fileName || exit;
 timeout 3 ./$fileName || >&2 echo Failure or interrupt.
 "
-Write-Host "Done." -ForegroundColor Green
+Write-Output "Done."

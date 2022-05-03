@@ -7,7 +7,7 @@ import fr.rthd.jlc.TypeCode;
  * @author RomainTHD
  */
 public class InvalidOperationException extends TypeException {
-    private final String message;
+    private final String _message;
 
     public InvalidOperationException(
         String operationName,
@@ -42,7 +42,7 @@ public class InvalidOperationException extends TypeException {
             }
         }
 
-        this.message = String.format(
+        _message = String.format(
             "Type mismatch in %s between `%s` and %s",
             operationName,
             actual.getRealName(),
@@ -52,6 +52,6 @@ public class InvalidOperationException extends TypeException {
 
     @Override
     public String getMessage() {
-        return this.message;
+        return _message;
     }
 }

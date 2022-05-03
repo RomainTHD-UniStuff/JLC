@@ -1,30 +1,65 @@
 package fr.rthd.jlc.compiler;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Literal
  * @author RomainTHD
  * @see OperationItem
  */
+@NonNls
 public class Literal extends OperationItem {
     /**
      * Value
      */
-    public final Object value;
+    @Nullable
+    private final Object _value;
 
     /**
      * Constructor
      * @param type Literal type
      * @param value Value
      */
-    public Literal(TypeCode type, Object value) {
-        super(type);
-        this.value = value;
+    public Literal(@NotNull TypeCode type, @Nullable Object value) {
+        this(type, value, 0);
     }
 
+    /**
+     * Constructor
+     * @param type Literal type
+     * @param value Value
+     * @param pointerLevel Pointer level
+     */
+    public Literal(
+        @NotNull TypeCode type,
+        @Nullable Object value,
+        int pointerLevel
+    ) {
+        super(type, pointerLevel);
+        _value = value;
+    }
+
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
-        return value.toString();
+        if (_value == null) {
+            return "null";
+        } else {
+            return _value.toString();
+        }
+    }
+
+    /**
+     * @return Literal value
+     */
+    @Contract(pure = true)
+    @Nullable
+    public Object getValue() {
+        return _value;
     }
 }

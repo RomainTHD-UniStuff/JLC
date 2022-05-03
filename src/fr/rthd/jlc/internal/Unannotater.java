@@ -59,15 +59,19 @@ import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Debug class to recreate an AST as expected by PrettyPrinter, without our
  * custom type annotations
  * @author RomainTHD
  */
+@NonNls
 public class Unannotater implements Visitor {
+    @NotNull
     @Override
-    public Prog accept(Prog p, Env<?, FunType, ClassType> ignored) {
+    public Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> ignored) {
         return p.accept(new ProgVisitor(), null);
     }
 
@@ -185,10 +189,6 @@ public class Unannotater implements Visitor {
             );
         }
 
-        public EIndex visit(EIndex p, Void ignored) {
-            return p;
-        }
-
         public ENew visit(ENew p, Void ignored) {
             return p;
         }
@@ -236,19 +236,6 @@ public class Unannotater implements Visitor {
             return new EOr(
                 p.expr_1.accept(new ExprVisitor(), null),
                 p.expr_2.accept(new ExprVisitor(), null)
-            );
-        }
-    }
-
-    private static class ConstructorVisitor implements Constructor.Visitor<Constructor, Void> {
-        public TypeCon visit(TypeCon p, Void ignored) {
-            return p;
-        }
-
-        public ArrayCon visit(ArrayCon p, Void ignored) {
-            return new ArrayCon(
-                p.constructor_.accept(new ConstructorVisitor(), null),
-                p.expr_.accept(new ExprVisitor(), null)
             );
         }
     }

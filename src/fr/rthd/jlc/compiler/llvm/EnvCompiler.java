@@ -1,9 +1,15 @@
-package fr.rthd.jlc.compiler;
+package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.Instruction;
+import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -19,10 +25,12 @@ import java.util.Map;
  * @see Env
  * @see Variable
  */
-class EnvCompiler extends Env<Variable, FunType, ClassType> {
+@NonNls
+public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Indent character
      */
+    @NotNull
     public static final String INDENT = "\t";
 
     /**
@@ -31,31 +39,52 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
     public static final char SEP = '$';
 
     /**
+     * Instruction builder
+     */
+    @NotNull
+    public final InstructionBuilder instructionBuilder;
+
+    /**
      * Instructions output
      */
+    @NotNull
     private final List<String> _output;
 
     /**
-     * Variable counter to avoid collisions, like ``` .temp$0 = ... .temp$1 =
-     * ... ```
+     * Variable counter to avoid collisions, like
+     * ```llvm
+     * .temp$0 = 0
+     * .temp$1 = 1
+     * ```
      */
+    @NotNull
     private final LinkedList<Map<String, Integer>> _varCount;
 
     /**
      * Label counter
      * @see #_varCount
      */
+    @NotNull
     private final LinkedList<Map<String, Integer>> _labelCount;
 
     /**
-     * Depth access counter, to avoid collisions between blocks like ``` {
-     * .temp$0 = ... } { .temp$0 = ... ; Different block, but a collision } ```
+     * Depth access counter, to avoid collisions between blocks like
+     * ```llvm
+     * {
+     * .temp$0 = ...
+     * }
+     * {
+     * .temp$0 = ... ; Different block, but a collision
+     * }
+     * ```
      */
+    @NotNull
     private final Map<Integer, Integer> _depthAccessCount;
 
     /**
      * Hashing algorithm to store strings
      */
+    @Nullable
     private final MessageDigest _hashAlgorithm;
 
     /**
@@ -66,15 +95,20 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Constructor
      * @param env Parent environment
+     * @param builder Instruction builder
      */
-    public EnvCompiler(Env<?, FunType, ClassType> env) {
+    public EnvCompiler(
+        @NotNull Env<?, FunType, ClassType> env,
+        @NotNull InstructionBuilder builder
+    ) {
         super(env);
-        this._output = new ArrayList<>();
-        this._varCount = new LinkedList<>();
-        this._labelCount = new LinkedList<>();
-        this._depthAccessCount = new HashMap<>();
-        this._depthAccessCount.put(getScopeDepth(), 0);
-        this._indentLevel = 0;
+        instructionBuilder = builder;
+        _output = new ArrayList<>();
+        _varCount = new LinkedList<>();
+        _labelCount = new LinkedList<>();
+        _depthAccessCount = new HashMap<>();
+        _depthAccessCount.put(getScopeDepth(), 0);
+        _indentLevel = 0;
 
         MessageDigest md = null;
         try {
@@ -82,13 +116,15 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
         } catch (Exception ignored) {
             // MD5 not supported, use native `hashCode` instead
         }
-        this._hashAlgorithm = md;
+        _hashAlgorithm = md;
     }
 
     /**
      * Output the instructions to a single string
      * @return Assembly string
      */
+    @Contract(pure = true)
+    @NotNull
     public String toAssembly() {
         StringBuilder res = new StringBuilder();
         for (String inst : _output) {
@@ -98,14 +134,26 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
         return res.toString();
     }
 
+    /**
+     * Indent the output
+     */
     public void indent() {
-        ++this._indentLevel;
+        ++_indentLevel;
     }
 
+    /**
+     * Unindent the output
+     */
     public void unindent() {
-        --this._indentLevel;
+        --_indentLevel;
     }
 
+    /**
+     * Get the current indented string
+     * @return Indented string
+     */
+    @Contract(pure = true)
+    @NotNull
     private String getIndentString() {
         return INDENT.repeat(_indentLevel);
     }
@@ -114,11 +162,11 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * Emit an instruction
      * @param inst Instruction to emit
      */
-    public void emit(Instruction inst) {
+    public void emit(@NotNull Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
                 _output.add("");
-            } else if (inst.indentable) {
+            } else if (inst.isIndentable()) {
                 _output.add(getIndentString() + emitted);
             } else {
                 _output.add(emitted);
@@ -131,7 +179,7 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * string literals
      * @param inst Instruction to emit
      */
-    public void emitAtBeginning(Instruction inst) {
+    public void emitAtBeginning(@NotNull Instruction inst) {
         for (String emitted : inst.emit()) {
             if (emitted.isEmpty()) {
                 _output.add(0, "");
@@ -146,9 +194,11 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param name Variable name
      * @return Variable ID
      */
-    private String getVariableUID(String name) {
+    @NotNull
+    private String getVariableUID(@NotNull String name) {
         Map<String, Integer> scope = _varCount.peek();
         assert scope != null;
+        // Get access count for current scope and increment it
         int count = scope.getOrDefault(name, 0);
         scope.put(name, count + 1);
         return String.format(
@@ -166,8 +216,9 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param ctx Context, like "if", "while", etc
      * @return Temporary variable
      */
-    public Variable createTempVar(TypeCode type, String ctx) {
-        return createTempVar(type, ctx, false);
+    @NotNull
+    public Variable createTempVar(@NotNull TypeCode type, @NotNull String ctx) {
+        return createTempVar(type, ctx, 0);
     }
 
     /**
@@ -175,38 +226,62 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param type Variable type
      * @param ctx Context, like "if", "while", etc. Only used here for `and`
      *     and `or`
-     * @param isPointer Whether the variable is a pointer or not
+     * @param pointerLevel Pointer level
      * @return Temporary variable
      */
+    @NotNull
     public Variable createTempVar(
-        TypeCode type,
-        String ctx,
-        boolean isPointer
+        @NotNull TypeCode type,
+        @NotNull String ctx,
+        int pointerLevel
     ) {
         return new Variable(type, String.format(
-            ".temp%s%c%s%c%s",
-            isPointer ? "_ptr" : "",
+            ".temp%c%s%c%s",
             SEP,
             ctx,
             SEP,
             getVariableUID(ctx)
-        ), isPointer);
+        ), null, pointerLevel);
     }
 
     /**
      * Create a variable
      * @param type Variable type
      * @param name Variable name
-     * @param isPointer Whether the variable is a pointer or not
+     * @param pointerLevel Pointer level
      * @return Variable
      */
-    public Variable createVar(TypeCode type, String name, boolean isPointer) {
+    @NotNull
+    public Variable createVar(
+        @NotNull TypeCode type,
+        @NotNull String name,
+        int pointerLevel
+    ) {
+        return createVar(type, name, pointerLevel, false);
+    }
+
+    /**
+     * Create a variable
+     * @param type Variable type
+     * @param name Variable name
+     * @param pointerLevel Pointer level
+     * @param isClassVariable Whether the variable is a class variable or
+     *     not
+     * @return Variable
+     */
+    @NotNull
+    public Variable createVar(
+        @NotNull TypeCode type,
+        @NotNull String name,
+        int pointerLevel,
+        boolean isClassVariable
+    ) {
         return new Variable(type, String.format(
             "%s%c%s",
             name,
             SEP,
             getVariableUID(name)
-        ), isPointer);
+        ), name, pointerLevel, isClassVariable);
     }
 
     /**
@@ -214,15 +289,14 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param content String content
      * @return String literal address
      */
-    public Variable createGlobalStringLiteral(String content) {
-        Variable var = new Variable(TypeCode.CString, String.format(
+    @NotNull
+    public Variable createGlobalStringLiteral(@NotNull String content) {
+        return new Variable(TypeCode.CString, String.format(
             ".string%c%s",
             SEP,
             getHash(content)
-        ), false);
-        var.setGlobal();
-        var.setSize(content.length() + 1);
-        return var;
+        ), null, 1, false, true, content.length() + 1);
+        // FIXME: This pointer level isn't even used
     }
 
     /**
@@ -230,7 +304,8 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param ctx Label context, like "if_true", "while_loop", etc
      * @return Label
      */
-    public String getNewLabel(String ctx) {
+    @NotNull
+    public String getNewLabel(@NotNull String ctx) {
         Map<String, Integer> scope = _labelCount.peek();
         assert scope != null;
         int count = scope.getOrDefault(ctx, 0);
@@ -279,10 +354,13 @@ class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param content String
      * @return Hash of the string
      */
-    private String getHash(String content) {
+    @NotNull
+    private String getHash(@NotNull String content) {
         if (_hashAlgorithm == null) {
+            // Use default `hashCode` implementation, which isn't recommended
             return String.format("%x", content.hashCode());
         } else {
+            // Use custom hash algorithm in hexadecimal format
             _hashAlgorithm.update(content.getBytes());
             byte[] bytes = _hashAlgorithm.digest();
             BigInteger bi = new BigInteger(1, bytes);

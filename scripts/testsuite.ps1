@@ -8,4 +8,4 @@ cd ./tester;
 export CLASSPATH=.:./lib/JLex.jar:./lib/cup.jar:../lib/JLex.jar:../lib/cup.jar;
 python3 ./testing.py ../$filename --llvm -x objects1;
 "
-Write-Host "Done." -ForegroundColor Green
+Write-Output "Done."

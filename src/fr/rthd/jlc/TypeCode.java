@@ -1,5 +1,10 @@
 package fr.rthd.jlc;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,21 +12,34 @@ import java.util.Map;
  * Type code
  * @author RomainTHD
  */
+@NonNls
 public class TypeCode {
+    /**
+     * Integer type code
+     */
+    @NotNull
     public static final TypeCode CInt = TypeCode.fromPrimitive(
         "int",
         "i32",
         0,
-        1
+        4
     );
 
+    /**
+     * Double type code
+     */
+    @NotNull
     public static final TypeCode CDouble = TypeCode.fromPrimitive(
         "double",
         "double",
         0.0,
-        2
+        8
     );
 
+    /**
+     * Boolean type code
+     */
+    @NotNull
     public static final TypeCode CBool = TypeCode.fromPrimitive(
         "boolean",
         "i1",
@@ -29,36 +47,62 @@ public class TypeCode {
         1
     );
 
+    /**
+     * Void type code
+     */
+    @NotNull
     public static final TypeCode CVoid = TypeCode.fromPrimitive(
         "void",
         "void"
     );
 
+    /**
+     * String type code
+     */
+    @NotNull
     public static final TypeCode CString = TypeCode.fromPrimitive(
         "string",
-        "i8*"
+        "i8*" // TODO: Use pointer level
     );
+
+    /**
+     * Raw pointer type code
+     */
+    @NotNull
+    public static final TypeCode CRawPointer = TypeCode.fromPrimitive(
+        "raw_pointer",
+        "i8*" // TODO: Use pointer level
+    );
+
+    /**
+     * Pointer size
+     */
+    private final static int POINTER_SIZE = 8;
 
     /**
      * Type code pool, to avoid problems with class and array type comparison,
      * like `Dog == Dog` or `Dog[] == Dog[]`, because they might be different
      * instances.
      */
+    @NotNull
     private static final Map<String, TypeCode> _pool = new HashMap<>();
 
     /**
      * Real name in source code
      */
+    @NotNull
     private final String _realName;
 
     /**
      * Assembly name
      */
+    @NotNull
     private final String _assemblyName;
 
     /**
      * Default value
      */
+    @Nullable
     private final Object _defaultValue;
 
     /**
@@ -74,28 +118,47 @@ public class TypeCode {
     /**
      * Base type for arrays
      */
+    @Nullable
     private final TypeCode _baseType;
 
+    /**
+     * Constructor
+     * @param realName Real name in source code
+     * @param assemblyName Assembly name
+     * @param defaultValue Default value
+     * @param size Size
+     * @param isPrimitive Primitive type or not
+     * @param baseType Base type for arrays
+     */
     private TypeCode(
-        String realName,
-        String assemblyName,
-        Object defaultValue,
+        @NotNull String realName,
+        @NotNull String assemblyName,
+        @Nullable Object defaultValue,
         int size,
         boolean isPrimitive,
-        TypeCode baseType
+        @Nullable TypeCode baseType
     ) {
-        this._realName = realName;
-        this._assemblyName = assemblyName;
-        this._defaultValue = defaultValue;
-        this._size = size;
-        this._isPrimitive = isPrimitive;
-        this._baseType = baseType;
+        _realName = realName;
+        _assemblyName = assemblyName;
+        _defaultValue = defaultValue;
+        _size = size;
+        _isPrimitive = isPrimitive;
+        _baseType = baseType;
     }
 
+    /**
+     * Create a type code from a primitive type
+     * @param realName Real name in source code
+     * @param assemblyName Assembly name
+     * @param defaultValue Default value
+     * @param size Size
+     * @return Type code
+     */
+    @NotNull
     private static TypeCode fromPrimitive(
-        String realName,
-        String assemblyName,
-        Object defaultValue,
+        @NotNull String realName,
+        @NotNull String assemblyName,
+        @Nullable Object defaultValue,
         int size
     ) {
         return new TypeCode(
@@ -108,9 +171,16 @@ public class TypeCode {
         );
     }
 
+    /**
+     * Create a type code from a primitive type
+     * @param realName Real name in source code
+     * @param assemblyName Assembly name
+     * @return Type code
+     */
+    @NotNull
     private static TypeCode fromPrimitive(
-        String realName,
-        String assemblyName
+        @NotNull String realName,
+        @NotNull String assemblyName
     ) {
         return fromPrimitive(
             realName,
@@ -120,12 +190,18 @@ public class TypeCode {
         );
     }
 
-    public static TypeCode forClass(String realName) {
+    /**
+     * Create a type code for a class
+     * @param realName Real class name in source code
+     * @return Type code
+     */
+    @NotNull
+    public static TypeCode forClass(@NotNull String realName) {
         TypeCode typeCode = _pool.get(realName);
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                "(TBD)",
+                "%" + realName,
                 null,
                 0,
                 false,
@@ -137,7 +213,13 @@ public class TypeCode {
         return typeCode;
     }
 
-    public static TypeCode forArray(TypeCode baseType) {
+    /**
+     * Create a type code for an array
+     * @param baseType Array base type
+     * @return Type code
+     */
+    @NotNull
+    public static TypeCode forArray(@NotNull TypeCode baseType) {
         String realName = baseType._realName + "[]";
         TypeCode typeCode = _pool.get(realName);
         if (typeCode == null) {
@@ -155,53 +237,96 @@ public class TypeCode {
         return typeCode;
     }
 
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
-        return this._assemblyName;
+        return _assemblyName;
     }
 
+    @Contract(pure = true)
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == null) {
             return false;
         } else if (obj == this) {
             return true;
         } else if (obj instanceof TypeCode) {
             TypeCode other = (TypeCode) obj;
-            return this._realName.equals(other._realName);
+            return _realName.equals(other._realName);
         } else {
             return false;
         }
     }
 
+    /**
+     * @return Type size
+     */
+    @Contract(pure = true)
     public int getSize() {
-        return _size;
+        if (isPrimitive()) {
+            return _size;
+        } else {
+            return POINTER_SIZE;
+        }
     }
 
+    /**
+     * @return Is a primitive type or not
+     */
+    @Contract(pure = true)
     public boolean isPrimitive() {
         return _isPrimitive;
     }
 
+    /**
+     * @return Array base type
+     */
+    @Contract(pure = true)
+    @Nullable
     public TypeCode getBaseType() {
         return _baseType;
     }
 
+    /**
+     * @return Real name in source code
+     */
+    @Contract(pure = true)
+    @NotNull
     public String getRealName() {
         return _realName;
     }
 
+    /**
+     * @return Assembly name
+     */
+    @Contract(pure = true)
+    @NotNull
     public String getAssemblyName() {
         return _assemblyName;
     }
 
+    /**
+     * @return Is an array type or not
+     */
+    @Contract(pure = true)
     public boolean isArray() {
         return _baseType != null;
     }
 
-    public boolean isClass() {
+    /**
+     * @return Is an object type or not
+     */
+    @Contract(pure = true)
+    public boolean isObject() {
         return _baseType == null && !_isPrimitive;
     }
 
+    /**
+     * @return Default value
+     */
+    @Contract(pure = true)
+    @Nullable
     public Object getDefaultValue() {
         return _defaultValue;
     }

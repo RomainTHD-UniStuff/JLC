@@ -3,4 +3,4 @@ wsl.exe sh -c "
 export CLASSPATH=.:./lib/JLex.jar:./lib/cup.jar;
 make;
 "
-Write-Host "Done." -ForegroundColor Green
+Write-Output "Done."

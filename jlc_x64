@@ -1,3 +1,2 @@
 #!/bin/sh
-dir=$(dirname "$0")
-exec java -cp "$dir/build:$CLASSPATH" fr.rthd.jlc.Main --backend x64
+./jlc --backend x68_64

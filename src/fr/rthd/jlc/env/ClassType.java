@@ -1,40 +1,59 @@
 package fr.rthd.jlc.env;
 
+import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Class representation
  * @author RomainTHD
  */
+@NonNls
 public class ClassType {
+    /**
+     * Constructor name
+     */
+    @NotNull
+    public static final String CONSTRUCTOR_NAME = "__constructor";
+
     /**
      * Class name
      */
-    public final String name;
+    @NotNull
+    private final String _name;
 
     /**
      * Superclass name or null
      * @see #_superclass
      */
-    public final String superclassName;
+    @Nullable
+    private final String _superclassName;
 
     /**
      * List of defined methods
      */
+    @NotNull
     private final Map<String, FunType> _methods;
 
     /**
      * List of defined fields
      */
+    @NotNull
     private final Map<String, Attribute> _attributes;
 
     /**
      * Superclass or null. Will be definer later on, when all classes have been
      * discovered
      */
+    @Nullable
     private ClassType _superclass = null;
 
     /**
@@ -43,98 +62,157 @@ public class ClassType {
      * @param superclassName Superclass name or null
      */
     public ClassType(
-        String name,
-        String superclassName
+        @NotNull String name,
+        @Nullable String superclassName
     ) {
-        this.name = name;
-        this.superclassName = superclassName;
-        this._methods = new HashMap<>();
-        this._attributes = new HashMap<>();
+        _name = name;
+        _superclassName = superclassName;
+        _methods = new HashMap<>();
+        _attributes = new HashMap<>();
     }
 
-    public void addMethod(FunType f) {
-        this._methods.put(f.name, f);
+    /**
+     * Add a method to the class
+     * @param f Method to add
+     * @param override Whether the method is an override or not. Ony used
+     *     for constructors for now
+     */
+    public void addMethod(@NotNull FunType f, boolean override) {
+        if (override || !_methods.containsKey(f.getName())) {
+            _methods.put(f.getName(), f);
+        }
     }
 
+    /**
+     * Get the class own methods
+     * @return List of methods
+     */
+    @NotNull
     public Collection<FunType> getOwnMethods() {
-        return this._methods.values();
+        return _methods.values();
     }
 
+    /**
+     * Get all the methods of the class and its superclasses
+     * @return List of methods
+     */
+    @NotNull
     public Collection<FunType> getAllMethods() {
-        Collection<FunType> methods = new ArrayList<>(this.getOwnMethods());
-        if (this.superclassName != null) {
-            methods.addAll(this.getSuperclass().getAllMethods());
+        Collection<FunType> methods = new ArrayList<>(getOwnMethods());
+        if (_superclass != null) {
+            methods.addAll(_superclass.getAllMethods());
         }
         return methods;
     }
 
-    public FunType getMethod(String name) {
-        if (this._methods.containsKey(name)) {
-            return this._methods.get(name);
-        } else if (this.superclassName != null) {
-            return this.getSuperclass().getMethod(name);
+    /**
+     * Get a single method, possibly from the superclass
+     * @param name Method name
+     * @param recurse Whether to search in the superclass or not
+     * @return Method or null
+     */
+    @Nullable
+    public FunType getMethod(@NotNull String name, boolean recurse) {
+        if (_methods.containsKey(name)) {
+            return _methods.get(name);
+        } else if (recurse && _superclass != null) {
+            return _superclass.getMethod(name, true);
         } else {
             return null;
         }
     }
 
-    public void addAttribute(Attribute a) {
-        this._attributes.put(a.name, a);
+    /**
+     * Add an attribute to the class
+     * @param a Attribute to add
+     */
+    public void addAttribute(@NotNull Attribute a) {
+        _attributes.put(a.getName(), a);
     }
 
+    /**
+     * Get the class own attributes
+     * @return List of attributes
+     */
+    @NotNull
     public Collection<Attribute> getOwnAttributes() {
-        return this._attributes.values();
+        return _attributes.values();
     }
 
-    public Collection<Attribute> getAllAttributes() {
-        Collection<Attribute> attrs = new ArrayList<>(this.getOwnAttributes());
-        if (this.superclassName != null) {
-            attrs.addAll(this.getSuperclass().getAllAttributes());
+    /**
+     * Get all the attributes of the class and its superclasses
+     * @return List of attributes
+     */
+    @NotNull
+    public List<Attribute> getAllAttributes() {
+        List<Attribute> attrs = new ArrayList<>();
+        if (_superclass != null) {
+            attrs.addAll(_superclass.getAllAttributes());
         }
+        attrs.addAll(getOwnAttributes());
         return attrs;
     }
 
-    public boolean hasAttribute(String name) {
-        if (this._attributes.containsKey(name)) {
+    /**
+     * @param name Attribute name
+     * @return If the class or a superclass has an attribute with the given name
+     */
+    public boolean hasAttribute(@NotNull String name) {
+        if (_attributes.containsKey(name)) {
             return true;
-        } else if (this.superclassName != null) {
-            return this.getSuperclass().hasAttribute(name);
+        } else if (_superclass != null) {
+            return _superclass.hasAttribute(name);
         } else {
             return false;
         }
     }
 
-    public boolean hasMethod(String name) {
-        if (this._methods.containsKey(name)) {
+    /**
+     * @param name Method name
+     * @return If the class or a superclass has a method with the given name
+     */
+    public boolean hasMethod(@NotNull String name) {
+        if (_methods.containsKey(name)) {
             return true;
-        } else if (this.superclassName != null) {
-            return this.getSuperclass().hasMethod(name);
+        } else if (_superclass != null) {
+            return _superclass.hasMethod(name);
         } else {
             return false;
         }
     }
 
-    public void updateSuperclass(ClassType c) {
-        this._superclass = c;
+    /**
+     * Update the class with the given superclass
+     * @param c Superclass
+     */
+    public void updateSuperclass(@Nullable ClassType c) {
+        _superclass = c;
     }
 
+    /**
+     * @return The superclass of the class
+     */
+    @Nullable
     public ClassType getSuperclass() {
         return _superclass;
     }
 
-    public boolean isCastableTo(ClassType c) {
-        if (this.equals(c)) {
+    /**
+     * @param c Class to check
+     * @return If the class is a subclass of the given class
+     */
+    public boolean isSubclassOf(@NotNull ClassType c) {
+        if (equals(c)) {
             return true;
         }
-        if (this.superclassName == null) {
+        if (_superclass == null) {
             return false;
         }
-        ClassType superclass = this.getSuperclass();
-        return superclass.isCastableTo(c);
+        return _superclass.isSubclassOf(c);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj == null) {
             return false;
         } else if (obj == this) {
@@ -143,21 +221,70 @@ public class ClassType {
             return false;
         } else {
             ClassType c = (ClassType) obj;
-            return this.name.equals(c.name);
+            return _name.equals(c._name);
         }
     }
 
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String toString() {
         return "ClassType{" +
                "name=" +
-               name +
+               _name +
                ", superclass=" +
-               superclassName +
+               (_superclass == null ? "null" : _superclass.getName()) +
                ", methods=" +
                _methods +
                ", attributes=" +
                _attributes +
                "}";
+    }
+
+    /**
+     * @return Type of the class
+     */
+    @NotNull
+    public TypeCode getType() {
+        return TypeCode.forClass(_name);
+    }
+
+    /**
+     * @return Name of the class
+     */
+    @NotNull
+    @Contract(pure = true)
+    public String getName() {
+        return _name;
+    }
+
+    /**
+     * @return Superclass name
+     */
+    @Nullable
+    @Contract(pure = true)
+    public String getSuperclassName() {
+        return _superclassName;
+    }
+
+    /**
+     * @param funcName Function name
+     * @return Function name with the class name prepended
+     */
+    @NotNull
+    @Contract(pure = true)
+    public String getAssemblyMethodName(@NotNull String funcName) {
+        return _name + "$" + funcName;
+    }
+
+    /**
+     * @return Class size
+     */
+    public int getSize() {
+        int size = 0;
+        for (Attribute a : getAllAttributes()) {
+            size += a.getType().getSize();
+        }
+        return size;
     }
 }
