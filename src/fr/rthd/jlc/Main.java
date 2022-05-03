@@ -113,7 +113,7 @@ public class Main {
 
         try {
             // Parse
-            parser p = new parser(lex, lex.getSymbolFactory());
+            parser p = new parser(lex);
             Prog tree = p.pProg();
 
             // Type check
