@@ -6,6 +6,7 @@ import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidMethodCallException;
@@ -19,6 +20,7 @@ import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -232,6 +234,17 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
                 ((EApp) app.getParentExp()).listexpr_
             )
         );
+    }
+
+    /**
+     * Index expression, like `t[0]`
+     * @param e Index expression
+     * @param env Environment
+     * @return Annotated expression
+     */
+    @Override
+    public AnnotatedExpr<EIndex> visit(EIndex e, EnvTypecheck env) {
+        throw new NotImplementedException();
     }
 
     /**

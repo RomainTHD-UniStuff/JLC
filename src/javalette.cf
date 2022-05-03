@@ -91,32 +91,31 @@ Class.     Type ::= Ident ;
 -- Expressions ---------------------------------------------
 
 -- Shift-reduce
-ENull.     Expr7 ::= "(" Ident ")" "null" ;
+ENull.     Expr8 ::= "(" Ident ")" "null" ;
 
-EVar.      Expr6 ::= Ident ;
+EVar.      Expr7 ::= Ident ;
 
-ELitInt.   Expr6 ::= Integer ;
+ELitInt.   Expr7 ::= Integer ;
 
-ELitDoub.  Expr6 ::= Double;
+ELitDoub.  Expr7 ::= Double;
 
-ELitTrue.  Expr6 ::= "true" ;
+ELitTrue.  Expr7 ::= "true" ;
 
-ELitFalse. Expr6 ::= "false" ;
+ELitFalse. Expr7 ::= "false" ;
 
-ESelf.     Expr6 ::= "self" ;
+ESelf.     Expr7 ::= "self" ;
 
-EApp.      Expr6 ::= Ident "(" [Expr] ")" ;
+EApp.      Expr7 ::= Ident "(" [Expr] ")" ;
 
-EString.   Expr6 ::= String ;
+EString.   Expr7 ::= String ;
 
 -- Works because we don't allow raw access to class attributes, only function
 --  calls are allowed
 EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
 
--- EIndex.    Expr6 ::= Expr6 [Index] ;
+EIndex.    Expr6 ::= Expr7 Index [Index] ;
 
-ENew.      Expr6 ::= "new" Type ;
--- ENew.      Expr6 ::= "new" Type [Index] ;
+ENew.      Expr6 ::= "new" Type [Index] ;
 
 Neg.       Expr5 ::= "-" Expr6 ;
 
@@ -132,17 +131,18 @@ EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 
 EOr.       Expr ::= Expr1 "||" Expr ;
 
-coercions  Expr 7 ;
+coercions  Expr 8 ;
 
 separator  Expr "," ;
 
 -- dimensions ----------------------------------------------
 
--- SIndex.    Index ::= "[" Expr "]" ;
+SIndex.    Index ::= "[" Expr "]" ;
 
--- separator  Index "" ;
+separator  Index "" ;
 
-SDim.      Dim ::= "[" "]" ;
+-- FIXME: Oddly enough, "[" "]" will create a shift reduce
+SDim.      Dim ::= "[]" ;
 
 separator nonempty Dim "" ;
 

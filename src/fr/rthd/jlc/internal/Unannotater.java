@@ -19,6 +19,7 @@ import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -187,6 +188,11 @@ public class Unannotater implements Visitor {
                 p.ident_,
                 exprs
             );
+        }
+
+        @Override
+        public Expr visit(EIndex p, Void arg) {
+            throw new NotImplementedException();
         }
 
         public ENew visit(ENew p, Void ignored) {

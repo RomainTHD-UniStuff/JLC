@@ -9,10 +9,12 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -250,6 +252,17 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             c.getAssemblyMethodName(p.ident_),
             args
         ).accept(new ExprVisitor(), env);
+    }
+
+    /**
+     * Array access, like `t[0]`
+     * @param p Array access
+     * @param env Environment
+     * @return Operation result
+     */
+    @Override
+    public OperationItem visit(EIndex p, EnvCompiler env) {
+        throw new NotImplementedException();
     }
 
     /**

@@ -7,6 +7,7 @@ import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -90,6 +91,10 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<? extends Expr> visit(EDot p, EnvOptimizer env) {
+        throw new NotImplementedException();
+    }
+
+    public AnnotatedExpr<? extends Expr> visit(EIndex p, EnvOptimizer env) {
         throw new NotImplementedException();
     }
 

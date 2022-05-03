@@ -1,5 +1,7 @@
 package fr.rthd.jlc;
 
+import fr.rthd.jlc.internal.NotImplementedException;
+import javalette.Absyn.Array;
 import javalette.Absyn.Bool;
 import javalette.Absyn.Class;
 import javalette.Absyn.Doub;
@@ -83,6 +85,17 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void> {
      */
     public TypeCode visit(javalette.Absyn.Void t, Void ignored) {
         return CVoid;
+    }
+
+    /**
+     * Array type
+     * @param t Array type
+     * @param ignored Unused, visitor pattern artifact
+     * @return TODO: Documentation
+     */
+    @Override
+    public TypeCode visit(Array t, Void ignored) {
+        throw new NotImplementedException();
     }
 
     /**
