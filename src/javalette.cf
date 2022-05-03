@@ -109,11 +109,11 @@ EApp.      Expr7 ::= Ident "(" [Expr] ")" ;
 
 EString.   Expr7 ::= String ;
 
--- Works because we don't allow raw access to class attributes, only function
---  calls are allowed
-EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
+EIndex.    Expr7 ::= Expr7 Index ;
+-- EIndex.    Expr6 ::= Expr7 Index [Index] ;
 
-EIndex.    Expr6 ::= Expr7 Index [Index] ;
+-- Hack since only function calls are allowed
+EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
 
 ENew.      Expr6 ::= "new" Type [Index] ;
 
