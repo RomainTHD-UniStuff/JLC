@@ -1,6 +1,7 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
@@ -8,7 +9,6 @@ import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.typecheck.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typecheck.exception.InvalidAssignmentTypeException;
-import fr.rthd.jlc.typecheck.exception.InvalidMethodCallException;
 import fr.rthd.jlc.typecheck.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typecheck.exception.InvalidOperationException;
 import fr.rthd.jlc.typecheck.exception.NoSuchClassException;
@@ -18,7 +18,6 @@ import fr.rthd.jlc.typecheck.exception.SelfOutOfClassException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
-import javalette.Absyn.EDot;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -28,7 +27,6 @@ import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
-import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
@@ -54,9 +52,18 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
      */
     @Override
     public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
-        TypeCode varType = env.lookupVar(e.ident_);
+        AnnotatedLValue<?> v = e.lvalue_.accept(new LValueVisitor(), env);
+
+        if (v.getBaseName().equals("self")) {
+            ClassType c = env.getCurrentClass();
+            if (c == null) {
+                throw new SelfOutOfClassException();
+            }
+        }
+
+        TypeCode varType = env.lookupVar(v.getBaseName());
         if (varType == null) {
-            throw new NoSuchVariableException(e.ident_);
+            throw new NoSuchVariableException(v.getBaseName());
         }
 
         return new AnnotatedExpr<>(varType, e);
@@ -107,22 +114,6 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     }
 
     /**
-     * Self reference
-     * @param e Self reference
-     * @param env Environment
-     * @return Annotated expression
-     */
-    @Override
-    public AnnotatedExpr<ESelf> visit(ESelf e, EnvTypecheck env) {
-        ClassType c = env.getCurrentClass();
-        if (c == null) {
-            throw new SelfOutOfClassException();
-        }
-
-        return new AnnotatedExpr<>(c.getType(), e);
-    }
-
-    /**
      * Function call
      * @param e Function call
      * @param env Environment
@@ -130,22 +121,26 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
      */
     @Override
     public AnnotatedExpr<EApp> visit(EApp e, EnvTypecheck env) {
-        FunType funcType = env.lookupFun(e.ident_);
+        AnnotatedLValue<?> v = e.lvalue_.accept(new LValueVisitor(), env);
+
+        FunType funcType = env.lookupFun(v.getBaseName());
         if (funcType == null) {
-            // Might happen for class methods
-            ClassType c = env.getCaller();
+            // Class method or unknown function
+            TypeCode classType = env.lookupVar(v.getBaseName());
+            assert classType != null;
+            ClassType c = env.lookupClass(classType);
             if (c != null) {
-                funcType = c.getMethod(e.ident_, true);
+                funcType = c.getMethod(v.getMethodName(), true);
             }
         }
 
         if (funcType == null) {
-            throw new NoSuchFunctionException(e.ident_);
+            throw new NoSuchFunctionException(v.getMethodName());
         }
 
         if (e.listexpr_.size() != funcType.getArgs().size()) {
             throw new InvalidArgumentCountException(
-                e.ident_,
+                v.getMethodName(),
                 funcType.getArgs().size(),
                 e.listexpr_.size()
             );
@@ -174,7 +169,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
         return new AnnotatedExpr<>(
             funcType.getRetType(),
-            new EApp(e.ident_, exps)
+            new EApp(e.lvalue_, exps)
         );
     }
 
@@ -187,51 +182,6 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     @Override
     public AnnotatedExpr<EString> visit(EString e, EnvTypecheck env) {
         return new AnnotatedExpr<>(TypeCode.CString, e);
-    }
-
-    /**
-     * Method call
-     * @param p Method call
-     * @param env Environment
-     * @return Annotated expression
-     * @see ExprVisitor#visit(EApp, EnvTypecheck)
-     */
-    @Override
-    public AnnotatedExpr<EDot> visit(EDot p, EnvTypecheck env) {
-        AnnotatedExpr<?> expr = p.expr_.accept(
-            new ExprVisitor(),
-            env
-        );
-
-        if (!expr.getType().isObject()) {
-            throw new InvalidMethodCallException(expr.getType());
-        }
-
-        ClassType c = env.lookupClass(expr.getType());
-        if (c == null) {
-            // It should be impossible to get here, since it would mean we
-            //  created a variable with a type that doesn't exist
-            throw new IllegalStateException("Class not found");
-        }
-
-        env.setCaller(c);
-
-        // Method calls and function calls work the same way
-        AnnotatedExpr<?> app = new EApp(
-            p.ident_,
-            p.listexpr_
-        ).accept(new ExprVisitor(), env);
-
-        env.setCaller(null);
-
-        return new AnnotatedExpr<>(
-            app.getType(),
-            new EDot(
-                expr,
-                p.ident_,
-                ((EApp) app.getParentExp()).listexpr_
-            )
-        );
     }
 
     /**

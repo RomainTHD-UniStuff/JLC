@@ -1,6 +1,7 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
@@ -99,14 +100,18 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      */
     @Override
     public Ass visit(Ass s, EnvTypecheck env) {
-        TypeCode expectedType = env.lookupVar(s.ident_);
+        AnnotatedLValue<?> v = s.lvalue_.accept(new LValueVisitor(), env);
+
+        // FIXME: Check that there are no conflicts with `.length` or a method
+
+        TypeCode expectedType = env.lookupVar(v.getBaseName());
         if (expectedType == null) {
-            throw new NoSuchVariableException(s.ident_);
+            throw new NoSuchVariableException(v.getBaseName());
         }
 
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
         TypeException e = new InvalidAssignmentTypeException(
-            s.ident_,
+            v.getBaseName(),
             expectedType,
             exp.getType()
         );
@@ -130,7 +135,7 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             throw e;
         }
 
-        return new Ass(s.ident_, exp);
+        return new Ass(v, exp);
     }
 
     /**

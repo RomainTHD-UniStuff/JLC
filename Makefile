@@ -50,7 +50,7 @@ build/javalette/Yylex $(CUPFILE) src/javalette/Test.java: src/javalette.cf
 
 # Create parser and move it to the correct location
 src/javalette/parser.java src/javalette/sym.java: $(CUPFILE)
-	$(java) java_cup.Main -expect 2 -package javalette $<
+	$(java) java_cup.Main -expect 3 -package javalette $<
 	mv parser.java sym.java src/javalette/
 
 # Create lexer

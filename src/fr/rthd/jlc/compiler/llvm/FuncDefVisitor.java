@@ -11,6 +11,8 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.Init;
+import javalette.Absyn.LValueV;
+import javalette.Absyn.ListIndex;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -80,7 +82,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                 //  following code would fail: `void f(int x) { x++; }`
                 new Init(
                     arg.getName(),
-                    new EVar(arg.getName())
+                    new EVar(new LValueV(arg.getName(), new ListIndex()))
                 ).accept(new ItemVisitor(
                     arg.getType(),
                     true
