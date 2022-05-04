@@ -283,7 +283,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         Variable tmp = env.createTempVar(
             TypeCode.CRawPointer,
-            "malloc_" + classType.getRealName()
+            "calloc_" + classType.getRealName()
         );
 
         ClassType c = env.lookupClass(classType);

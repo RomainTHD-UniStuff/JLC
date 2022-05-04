@@ -156,7 +156,7 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
 
         env.insertFun(new FunType(
             TypeCode.CRawPointer,
-            "malloc",
+            "calloc",
             new FunArg(TypeCode.CInt, "size")
         ).setExternal().setPure(Choice.FALSE));
     }
