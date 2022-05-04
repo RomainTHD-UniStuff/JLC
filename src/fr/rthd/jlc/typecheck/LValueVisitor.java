@@ -25,6 +25,7 @@ class LValueVisitor implements LValue.Visitor<AnnotatedLValue<?>, EnvTypecheck> 
             );
         }
 
+        // Call a var visitor to make sure the variable on the left is defined
         new EVar(new LValueV(
             v.ident_,
             new ListIndex()

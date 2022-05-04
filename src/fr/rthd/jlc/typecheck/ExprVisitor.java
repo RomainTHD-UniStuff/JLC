@@ -135,8 +135,10 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
         FunType funcType = env.lookupFun(v.getBaseName());
         if (funcType == null) {
-            // Might happen for class methods
-            ClassType c = env.getCaller();
+            // Class method or unknown function
+            TypeCode classType = env.lookupVar(v.getBaseName());
+            assert classType != null;
+            ClassType c = env.lookupClass(classType);
             if (c != null) {
                 funcType = c.getMethod(v.getMethodName(), true);
             }

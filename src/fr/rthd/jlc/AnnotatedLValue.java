@@ -91,4 +91,10 @@ public class AnnotatedLValue<T extends LValue> extends LValue {
     public String getMethodName() {
         return Objects.requireNonNullElse(_methodName, _baseName);
     }
+
+    @Contract(pure = true)
+    @Nullable
+    public String getRealMethodName() {
+        return _methodName;
+    }
 }
