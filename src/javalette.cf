@@ -1,175 +1,140 @@
--- programs ------------------------------------------------
+-- Program -------------------------------------------------
 
 entrypoints Prog ;
 
-Program.   Prog ::= [TopDef] ;
+Program.        Prog    ::= [TopDef] ;
 
-TopFnDef.  TopDef ::= FuncDef ;
-
-TopClsDef. TopDef ::= ClassDef ;
+TopFnDef.       TopDef  ::= FuncDef ;
+TopClsDef.      TopDef  ::= ClassDef ;
 
 separator nonempty TopDef "" ;
 
--- classes -------------------------------------------------
+-- Classes -------------------------------------------------
 
-ClsDef.    ClassDef ::= "class" Ident ClassInheritance "{" [Member] "}" ;
+ClsDef.         ClassDef    ::= "class" Ident ClassInheritance "{" [Member] "}" ;
 
-HBase.     ClassInheritance ::= ;
+HBase.          ClassInheritance    ::= ;
+HExtends.       ClassInheritance    ::= "extends" Ident ;
 
-HExtends.  ClassInheritance ::= "extends" Ident ;
-
-FnMember.  Member ::= FuncDef ;
-
-AttrMember. Member ::= Type Ident ";" ;
+FnMember.       Member  ::= FuncDef ;
+AttrMember.     Member  ::= Type Ident ";" ;
 
 separator Member "" ;
 
--- functions -----------------------------------------------
+-- Functions -----------------------------------------------
 
-FnDef.     FuncDef ::= Type Ident "(" [Arg] ")" Blk ;
+FnDef.          FuncDef ::= Type Ident "(" [Arg] ")" Blk ;
 
-Argument.  Arg ::= Type Ident;
+Argument.       Arg     ::= Type Ident ;
 
-separator  Arg "," ;
+separator Arg "," ;
 
--- statements ----------------------------------------------
+-- Statements ----------------------------------------------
 
-Block.     Blk ::= "{" [Stmt] "}" ;
+Block.          Blk     ::= "{" [Stmt] "}" ;
 
-separator  Stmt "" ;
+Empty.          Stmt    ::= ";" ;
 
-Empty.     Stmt ::= ";" ;
+BStmt.          Stmt    ::= Blk ;
 
-BStmt.     Stmt ::= Blk ;
+Decl.           Stmt    ::= Type [Item] ";" ;
 
-Decl.      Stmt ::= Type [Item] ";" ;
-
-NoInit.    Item ::= Ident ;
-
-Init.      Item ::= Ident "=" Expr ;
-
+NoInit.         Item    ::= Ident ;
+Init.           Item    ::= Ident "=" Expr ;
 separator nonempty Item "," ;
 
-Ass.       Stmt ::= Ident "=" Expr  ";" ;
+Ass.            Stmt    ::= LValue "=" Expr ";" ;
 
-Incr.      Stmt ::= Ident "++"  ";" ;
+Incr.           Stmt    ::= Ident "++" ";" ;
+Decr.           Stmt    ::= Ident "--" ";" ;
 
-Decr.      Stmt ::= Ident "--"  ";" ;
-
-Ret.       Stmt ::= "return" Expr ";" ;
-
-VRet.      Stmt ::= "return" ";" ;
-
-Cond.      Stmt ::= "if" "(" Expr ")" Stmt ;
+Ret.            Stmt    ::= "return" Expr ";" ;
+VRet.           Stmt    ::= "return" ";" ;
 
 -- Shift-reduce
-CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt ;
+CondElse.       Stmt    ::= "if" "(" Expr ")" Stmt "else" Stmt ;
+Cond.           Stmt    ::= "if" "(" Expr ")" Stmt ;
 
-While.     Stmt ::= "while" "(" Expr ")" Stmt ;
+While.          Stmt    ::= "while" "(" Expr ")" Stmt ;
+For.            Stmt    ::= "for" "(" Type Ident ":" Expr ")" Stmt ;
 
-For.       Stmt ::= "for" "(" Type Ident ":" Expr ")" Stmt ;
+SExp.           Stmt    ::= Expr ";" ;
 
-SExp.      Stmt ::= Expr ";" ;
+separator Stmt "" ;
 
 -- Types ---------------------------------------------------
 
-Int.       Type ::= "int" ;
-
-Doub.      Type ::= "double" ;
-
-Bool.      Type ::= "boolean" ;
-
-Void.      Type ::= "void" ;
+Int.            Type    ::= "int" ;
+Doub.           Type    ::= "double" ;
+Bool.           Type    ::= "boolean" ;
+Void.           Type    ::= "void" ;
 
 -- Shift-reduce
-Array.     Type ::= Type "[" "]" ;
+Array.          Type    ::= Type [Dim] ;
+-- Array.     Type ::= Type "[" "]" ;
+Class.          Type    ::= Ident ;
 
-Class.     Type ::= Ident ;
+-- LValue --------------------------------------------------
 
--- separator  Type "," ;
+LValueV.        LValue  ::= Ident [Index] ;
+LValueP.        LValue  ::= Ident [Index] "." LValue ;
 
 -- Expressions ---------------------------------------------
 
 -- Shift-reduce
-ENull.     Expr8 ::= "(" Ident ")" "null" ;
+ENull.          Expr7   ::= "(" Ident ")" "null" ;
 
-EVar.      Expr7 ::= Ident ;
+EVar.           Expr6   ::= LValue ;
 
-ELitInt.   Expr7 ::= Integer ;
+ELitInt.        Expr6   ::= Integer ;
+ELitDoub.       Expr6   ::= Double;
+ELitTrue.       Expr6   ::= "true" ;
+ELitFalse.      Expr6   ::= "false" ;
+ESelf.          Expr6   ::= "self" ;
+EString.        Expr6   ::= String ;
 
-ELitDoub.  Expr7 ::= Double;
+ENew.           Expr6   ::= "new" Type [Index] ;
+EApp.           Expr6   ::= LValue "(" [Expr] ")" ;
 
-ELitTrue.  Expr7 ::= "true" ;
+Neg.            Expr5   ::= "-" Expr6 ;
+Not.            Expr5   ::= "!" Expr6 ;
 
-ELitFalse. Expr7 ::= "false" ;
+EMul.           Expr4   ::= Expr4 MulOp Expr5 ;
+EAdd.           Expr3   ::= Expr3 AddOp Expr4 ;
+ERel.           Expr2   ::= Expr2 RelOp Expr3 ;
 
-ESelf.     Expr7 ::= "self" ;
+EAnd.           Expr1   ::= Expr2 "&&" Expr1 ;
+EOr.            Expr    ::= Expr1 "||" Expr ;
 
-EApp.      Expr7 ::= Ident "(" [Expr] ")" ;
+coercions Expr 7 ;
+separator Expr "," ;
 
-EString.   Expr7 ::= String ;
+-- Dimensions ----------------------------------------------
 
-EIndex.    Expr7 ::= Expr8 Index ;
+SIndex.         Index   ::= "[" Expr "]" ;
+separator Index "" ;
 
--- Hack since only function calls are allowed
-EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
+DimenT.         Dim     ::= "[]" ;
+separator nonempty Dim "" ;
 
-ENewArr.   Expr6 ::= "new" Type [Index] ;
+-- Operators -----------------------------------------------
 
-ENewCls.   Expr6 ::= "new" Type ;
+Plus.           AddOp   ::= "+" ;
+Minus.          AddOp   ::= "-" ;
 
-Neg.       Expr5 ::= "-" Expr6 ;
+Times.          MulOp   ::= "*" ;
+Div.            MulOp   ::= "/" ;
+Mod.            MulOp   ::= "%" ;
 
-Not.       Expr5 ::= "!" Expr6 ;
+LTH.            RelOp   ::= "<" ;
+LE.             RelOp   ::= "<=" ;
+GTH.            RelOp   ::= ">" ;
+GE.             RelOp   ::= ">=" ;
+EQU.            RelOp   ::= "==" ;
+NE.             RelOp   ::= "!=" ;
 
-EMul.      Expr4 ::= Expr4 MulOp Expr5 ;
+-- Comments ------------------------------------------------
 
-EAdd.      Expr3 ::= Expr3 AddOp Expr4 ;
-
-ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
-
-EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
-
-EOr.       Expr ::= Expr1 "||" Expr ;
-
-coercions  Expr 8 ;
-
-separator  Expr "," ;
-
--- dimensions ----------------------------------------------
-
-SIndex.    Index ::= "[" Expr "]" ;
-
-separator nonempty Index "" ;
-
--- operators -----------------------------------------------
-
-Plus.      AddOp ::= "+" ;
-
-Minus.     AddOp ::= "-" ;
-
-Times.     MulOp ::= "*" ;
-
-Div.       MulOp ::= "/" ;
-
-Mod.       MulOp ::= "%" ;
-
-LTH.       RelOp ::= "<" ;
-
-LE.        RelOp ::= "<=" ;
-
-GTH.       RelOp ::= ">" ;
-
-GE.        RelOp ::= ">=" ;
-
-EQU.       RelOp ::= "==" ;
-
-NE.        RelOp ::= "!=" ;
-
--- comments ------------------------------------------------
-
-comment    "#" ;
-
-comment    "//" ;
-
-comment    "/*" "*/" ;
+comment "#" ;
+comment "//" ;
+comment "/*" "*/" ;
