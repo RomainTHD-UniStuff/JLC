@@ -154,14 +154,14 @@ public class Main {
             System.err.println("ERROR");
             System.err.println("Environment error: " + e.getMessage());
             exit(1);
-        } catch (RuntimeException | StackOverflowError e) {
+        } catch (RuntimeException | StackOverflowError | AssertionError e) {
             e.printStackTrace();
             exit(-1);
         } catch (IOException e) {
             System.err.println("ERROR");
             System.err.println("IO error: " + e.getMessage());
             exit(1);
-        } catch (Throwable e) {
+        } catch (Exception | Error e) {
             System.err.println("ERROR");
             System.err.println(
                 "Syntax error at line " +
@@ -170,7 +170,7 @@ public class Main {
                 lex.buff() +
                 "\" :"
             );
-            System.err.println("     " + e.getMessage());
+            System.err.println("\t" + e.getMessage());
             exit(1);
         }
     }

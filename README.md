@@ -22,4 +22,43 @@
 
 The grammar is based on a Java / C-like language with some minor changes.
 
-The shift-reduce conflict warning comes from the infamous dangling else problem.
+There are 3 shift-reduce conflicts:
+
+- The infamous dangling else
+```c
+CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt ;
+```
+
+Conflict between
+```c
+if (cond) {
+  stmt;
+}
+```
+and
+```c
+if (cond) {
+  stmt1;
+} else {
+  stmt2;
+}
+```
+
+- Array types
+```c
+Array.     Type ::= Type [Dim] ;
+```
+
+Conflict between
+```c
+((int)[])[] t;
+```
+and
+```c
+int([][]) t;
+```
+
+- Null and brackets
+```c
+ENull.     Expr8 ::= "(" Ident ")" "null" ;
+```

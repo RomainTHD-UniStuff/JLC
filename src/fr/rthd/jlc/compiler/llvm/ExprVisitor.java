@@ -1,6 +1,6 @@
 package fr.rthd.jlc.compiler.llvm;
 
-import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.Literal;
@@ -12,7 +12,6 @@ import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
-import javalette.Absyn.EDot;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -22,11 +21,13 @@ import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
-import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
+import javalette.Absyn.LValueP;
+import javalette.Absyn.LValueV;
 import javalette.Absyn.ListExpr;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +66,8 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EVar p, EnvCompiler env) {
-        Variable var = env.lookupVar(p.ident_);
+        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
+        Variable var = env.lookupVar(v.getBaseName());
         assert var != null;
         if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
             || (var.getType().isObject()) && var.getPointerLevel() > 1) {
@@ -125,39 +127,61 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     /**
-     * Self expression
-     * @param p Self expression
-     * @param env Environment
-     * @return Operation result
-     */
-    @Override
-    public OperationItem visit(ESelf p, EnvCompiler env) {
-        Variable v = env.lookupVar("self");
-        assert v != null;
-        return v;
-    }
-
-    /**
-     * Function call
+     * Function call. Note that `getName` of a function should not be used in
+     * this visitor because it contains the logical name of the function, not
+     * the name of the function in the LLVM IR
      * @param p Function call
      * @param env Environment
      * @return Operation result
      */
     @Override
     public OperationItem visit(EApp p, EnvCompiler env) {
-        FunType func = env.lookupFun(p.ident_);
-        assert func != null;
+        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
 
-        // `getName` should not be used in this visitor because it contains the
-        //  logical name of the function, not the name of the function in the
-        //  LLVM IR
-
+        FunType func = env.lookupFun(v.getMethodName());
+        String fName = v.getMethodName();
         List<OperationItem> args = new ArrayList<>();
+        ListExpr listExpr = p.listexpr_;
+        List<FunArg> funArgs = new ArrayList<>();
 
-        for (int i = 0; i < p.listexpr_.size(); i++) {
+        if (func == null) {
+            // Class method
+
+            Variable ref = env.lookupVar(v.getBaseName());
+            assert ref != null;
+
+            ClassType c = env.lookupClass(ref.getType());
+            assert c != null;
+
+            while ((func = c.getMethod(v.getMethodName(), false)) == null) {
+                c = c.getSuperclass();
+                assert c != null;
+            }
+
+            // call `@Class$method` instead of `@method`
+            fName = c.getAssemblyMethodName(fName);
+
+            // Add `this` to the arguments by adding the variable itself. Either
+            //  it is a "real" variable like `obj.call()`, or a temporary one
+            //  if a cast or deref is involved
+            listExpr.add(0, new EVar(new LValueV(
+                ref.getSourceName(),
+                new ListIndex()
+            )));
+
+            if (listExpr.size() != func.getArgs().size()) {
+                // FIXME: Makes no sense at all, it means that some methods
+                //  don't have the `this` argument in first position!?
+                funArgs.add(new FunArg(ref.getType(), "self"));
+            }
+        }
+
+        funArgs.addAll(func.getArgs());
+
+        for (int i = 0; i < listExpr.size(); i++) {
             // Visit arguments
-            Expr expr = p.listexpr_.get(i);
-            FunArg arg = func.getArgs().get(i);
+            Expr expr = listExpr.get(i);
+            FunArg arg = funArgs.get(i);
             OperationItem value = expr.accept(new ExprVisitor(), env);
 
             if (!func.getName().equals(ClassType.CONSTRUCTOR_NAME)) {
@@ -178,7 +202,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
 
         if (func.getRetType() == CVoid) {
-            env.emit(env.instructionBuilder.call(p.ident_, args));
+            env.emit(env.instructionBuilder.call(fName, args));
             return null;
         } else {
             // Return value
@@ -187,7 +211,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
                 "function_call",
                 func.getRetType().isPrimitive() ? 0 : 1
             );
-            env.emit(env.instructionBuilder.call(out, p.ident_, args));
+            env.emit(env.instructionBuilder.call(out, fName, args));
             return out;
         }
     }
@@ -223,41 +247,11 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     /**
-     * Method call
-     * @param p Method call
-     * @param env Environment
-     * @return Operation result
-     * @see ExprVisitor#visit(EApp, EnvCompiler)
-     */
-    @Override
-    public OperationItem visit(EDot p, EnvCompiler env) {
-        TypeCode classType = ((AnnotatedExpr<?>) p.expr_).getType();
-        ClassType c = env.lookupClass(classType);
-        assert c != null;
-
-        while (c.getMethod(p.ident_, false) == null) {
-            c = c.getSuperclass();
-            assert c != null;
-        }
-
-        // Add `this` to the arguments
-        ListExpr args = new ListExpr();
-        args.add(p.expr_);
-        args.addAll(p.listexpr_);
-
-        // Call the "normal" function call visitor
-        return new EApp(
-            c.getAssemblyMethodName(p.ident_),
-            args
-        ).accept(new ExprVisitor(), env);
-    }
-
-    /**
      * Object creation using `new`
      * @param p Object creation
      * @param env Environment
      * @return Operation result
-     * @see ExprVisitor#visit(EDot, EnvCompiler)
+     * @see ExprVisitor#visit(EApp, EnvCompiler)
      */
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
@@ -280,9 +274,15 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.newObject(ref, tmp, c));
 
         // Call the constructor, which is a method of the object
-        new EDot(
-            new AnnotatedExpr<>(classType, new EVar(ref.getName())),
-            ClassType.CONSTRUCTOR_NAME,
+        new EApp(
+            new LValueP(
+                ref.getName(),
+                new ListIndex(),
+                new LValueV(
+                    ClassType.CONSTRUCTOR_NAME,
+                    new ListIndex()
+                )
+            ),
             new ListExpr()
         ).accept(new ExprVisitor(), env);
 

@@ -6,6 +6,8 @@ import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.Blk;
 import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
+import javalette.Absyn.LValueV;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.TopClsDef;
 import javalette.Absyn.TopDef;
 import javalette.Absyn.TopFnDef;
@@ -22,7 +24,13 @@ class TopDefVisitor implements TopDef.Visitor<TopDef, EnvOptimizer> {
         for (FunArg arg : func.getArgs()) {
             env.insertVar(
                 arg.getName(),
-                new AnnotatedExpr<>(arg.getType(), new EVar(arg.getName()))
+                new AnnotatedExpr<>(
+                    arg.getType(),
+                    new EVar(new LValueV(
+                        arg.getName(),
+                        new ListIndex()
+                    ))
+                )
             );
         }
 

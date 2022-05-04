@@ -55,12 +55,6 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
     private Class _currentClass = null;
 
     /**
-     * Calling class for method calls
-     */
-    @Nullable
-    private Class _callerClass = null;
-
-    /**
      * Empty constructor
      */
     public Env() {
@@ -81,7 +75,6 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
         _contexts = new LinkedList<>();
         _contexts.push(new HashMap<>());
         _currentClass = null;
-        _callerClass = null;
     }
 
     @Contract(pure = true)
@@ -136,23 +129,6 @@ public class Env<Value, Func extends FunType, Class extends ClassType> {
      */
     public void setCurrentClass(@Nullable Class c) {
         _currentClass = c;
-    }
-
-    /**
-     * @return Calling class
-     */
-    @Contract(pure = true)
-    @Nullable
-    public Class getCaller() {
-        return _callerClass;
-    }
-
-    /**
-     * Set the new calling class
-     * @param c Class to set
-     */
-    public void setCaller(@Nullable Class c) {
-        _callerClass = c;
     }
 
     /**

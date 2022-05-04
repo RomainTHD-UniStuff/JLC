@@ -14,7 +14,6 @@ import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
-import javalette.Absyn.EApp;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
@@ -23,6 +22,8 @@ import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Item;
+import javalette.Absyn.LValueV;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.ListItem;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
@@ -71,7 +72,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
                 //  still insert the new value for future use in this block
                 env.updateVar(ident, new AnnotatedExpr<>(
                     exp.getType(),
-                    new EVar(ident)
+                    new EVar(new LValueV(ident, new ListIndex()))
                 ));
                 env.insertVar(ident, newExp);
             }
@@ -111,6 +112,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     }
 
     public AnnotatedStmt<Ass> visit(Ass s, EnvOptimizer env) {
+        /*
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
         if (isLiteral(exp)) {
             // We can reduce this to something like `x = n`
@@ -135,6 +137,9 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
         }
 
         return new AnnotatedStmt<>(new Ass(s.ident_, exp));
+        */
+        // TODO:
+        throw new NotImplementedException();
     }
 
     public AnnotatedStmt<Incr> visit(Incr s, EnvOptimizer env) {
@@ -259,6 +264,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     }
 
     public AnnotatedStmt<?> visit(SExp s, EnvOptimizer env) {
+        /*
         AnnotatedExpr<?> expr = (AnnotatedExpr<?>) s.expr_;
         if (expr.getParentExp() instanceof EApp) {
             FunTypeOptimizer funType = env.lookupFun(
@@ -274,5 +280,8 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
             env
         );
         return new AnnotatedStmt<>(new SExp(expr));
+        */
+        // TODO:
+        throw new NotImplementedException();
     }
 }
