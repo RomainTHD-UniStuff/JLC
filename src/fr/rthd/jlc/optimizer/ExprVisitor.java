@@ -6,15 +6,12 @@ import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
-import javalette.Absyn.EDot;
-import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
-import javalette.Absyn.ENewArr;
-import javalette.Absyn.ENewCls;
+import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
@@ -22,7 +19,6 @@ import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
-import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 
@@ -32,6 +28,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
+        /*
         AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
         assert expr != null;
         if (env.constantPropagationEnabled()) {
@@ -42,6 +39,9 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
                 new EVar(e.ident_)
             );
         }
+         */
+        // TODO:
+        throw new NotImplementedException();
     }
 
     public AnnotatedExpr<ELitInt> visit(ELitInt e, EnvOptimizer env) {
@@ -65,6 +65,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {
+        /*
         FunTypeOptimizer funcType = env.lookupFun(e.ident_);
         assert funcType != null;
 
@@ -84,26 +85,16 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
         return new AnnotatedExpr<>(
             funcType.getRetType(),
             new EApp(e.ident_, exps)
-        );
+        );*/
+        // TODO:
+        throw new NotImplementedException();
     }
 
     public AnnotatedExpr<EString> visit(EString e, EnvOptimizer env) {
         return new AnnotatedExpr<>(TypeCode.CString, e);
     }
 
-    public AnnotatedExpr<? extends Expr> visit(EDot p, EnvOptimizer env) {
-        throw new NotImplementedException();
-    }
-
-    public AnnotatedExpr<? extends Expr> visit(EIndex p, EnvOptimizer env) {
-        throw new NotImplementedException();
-    }
-
-    public AnnotatedExpr<? extends Expr> visit(ENewCls p, EnvOptimizer env) {
-        throw new NotImplementedException();
-    }
-
-    public AnnotatedExpr<? extends Expr> visit(ENewArr p, EnvOptimizer env) {
+    public AnnotatedExpr<? extends Expr> visit(ENew p, EnvOptimizer env) {
         throw new NotImplementedException();
     }
 

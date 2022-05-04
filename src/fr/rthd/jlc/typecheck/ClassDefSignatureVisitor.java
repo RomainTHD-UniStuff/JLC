@@ -15,7 +15,9 @@ import javalette.Absyn.ClassDef;
 import javalette.Absyn.ClsDef;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FnMember;
+import javalette.Absyn.LValueV;
 import javalette.Absyn.ListArg;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.Member;
 import org.jetbrains.annotations.NonNls;
@@ -63,7 +65,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         for (Attribute attr : c.getAllAttributes()) {
             if (attr.getType().isPrimitive()) {
                 body.add(new Ass(
-                    attr.getName(),
+                    new LValueV(attr.getName(), new ListIndex()),
                     AnnotatedExpr.getDefaultValue(attr.getType())
                 ));
             }

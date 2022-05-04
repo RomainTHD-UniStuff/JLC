@@ -1,5 +1,6 @@
 package fr.rthd.jlc.compiler.llvm;
 
+import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
@@ -16,6 +17,9 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
+import javalette.Absyn.LValue;
+import javalette.Absyn.LValueV;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
 import javalette.Absyn.Ret;
@@ -74,7 +78,9 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Ass p, EnvCompiler env) {
-        Variable dst = env.lookupVar(p.ident_);
+        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
+
+        Variable dst = env.lookupVar(v.getBaseName());
         assert dst != null;
         assert dst.getPointerLevel() != 0;
 
@@ -99,10 +105,11 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Incr p, EnvCompiler env) {
+        LValue v = new LValueV(p.ident_, new ListIndex());
         return new Ass(
-            p.ident_,
+            v,
             new EAdd(
-                new EVar(p.ident_),
+                new EVar(v),
                 new Plus(),
                 new ELitInt(1)
             )
@@ -116,10 +123,11 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decr p, EnvCompiler env) {
+        LValue v = new LValueV(p.ident_, new ListIndex());
         return new Ass(
-            p.ident_,
+            v,
             new EAdd(
-                new EVar(p.ident_),
+                new EVar(v),
                 new Minus(),
                 new ELitInt(1)
             )
