@@ -27,7 +27,6 @@ import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
-import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
@@ -54,6 +53,13 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     @Override
     public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
         AnnotatedLValue<?> v = e.lvalue_.accept(new LValueVisitor(), env);
+
+        if (v.getBaseName().equals("self")) {
+            ClassType c = env.getCurrentClass();
+            if (c == null) {
+                throw new SelfOutOfClassException();
+            }
+        }
 
         TypeCode varType = env.lookupVar(v.getBaseName());
         if (varType == null) {
@@ -105,22 +111,6 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     @Override
     public AnnotatedExpr<ELitFalse> visit(ELitFalse e, EnvTypecheck env) {
         return new AnnotatedExpr<>(TypeCode.CBool, e);
-    }
-
-    /**
-     * Self reference
-     * @param e Self reference
-     * @param env Environment
-     * @return Annotated expression
-     */
-    @Override
-    public AnnotatedExpr<ESelf> visit(ESelf e, EnvTypecheck env) {
-        ClassType c = env.getCurrentClass();
-        if (c == null) {
-            throw new SelfOutOfClassException();
-        }
-
-        return new AnnotatedExpr<>(c.getType(), e);
     }
 
     /**

@@ -21,7 +21,6 @@ import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
-import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
@@ -128,19 +127,6 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     }
 
     /**
-     * Self expression
-     * @param p Self expression
-     * @param env Environment
-     * @return Operation result
-     */
-    @Override
-    public OperationItem visit(ESelf p, EnvCompiler env) {
-        Variable v = env.lookupVar("self");
-        assert v != null;
-        return v;
-    }
-
-    /**
      * Function call. Note that `getName` of a function should not be used in
      * this visitor because it contains the logical name of the function, not
      * the name of the function in the LLVM IR
@@ -156,6 +142,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         String fName = v.getMethodName();
         List<OperationItem> args = new ArrayList<>();
         ListExpr listExpr = p.listexpr_;
+        List<FunArg> funArgs = new ArrayList<>();
 
         if (func == null) {
             // Class method
@@ -181,12 +168,20 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
                 ref.getSourceName(),
                 new ListIndex()
             )));
+
+            if (listExpr.size() != func.getArgs().size()) {
+                // FIXME: Makes no sense at all, it means that some methods
+                //  don't have the `this` argument in first position!?
+                funArgs.add(new FunArg(ref.getType(), "self"));
+            }
         }
+
+        funArgs.addAll(func.getArgs());
 
         for (int i = 0; i < listExpr.size(); i++) {
             // Visit arguments
             Expr expr = listExpr.get(i);
-            FunArg arg = func.getArgs().get(i);
+            FunArg arg = funArgs.get(i);
             OperationItem value = expr.accept(new ExprVisitor(), env);
 
             if (!func.getName().equals(ClassType.CONSTRUCTOR_NAME)) {

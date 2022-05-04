@@ -15,7 +15,6 @@ import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
-import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
@@ -58,10 +57,6 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
 
     public AnnotatedExpr<ELitFalse> visit(ELitFalse e, EnvOptimizer env) {
         return new AnnotatedExpr<>(TypeCode.CBool, e);
-    }
-
-    public AnnotatedExpr<?> visit(ESelf p, EnvOptimizer env) {
-        throw new NotImplementedException();
     }
 
     public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {

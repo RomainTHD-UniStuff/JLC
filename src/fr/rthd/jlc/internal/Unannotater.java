@@ -27,7 +27,6 @@ import javalette.Absyn.ENew;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
-import javalette.Absyn.ESelf;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
@@ -166,10 +165,6 @@ public class Unannotater implements Visitor {
         }
 
         public ELitFalse visit(ELitFalse p, Void ignored) {
-            return p;
-        }
-
-        public ESelf visit(ESelf p, Void ignored) {
             return p;
         }
 

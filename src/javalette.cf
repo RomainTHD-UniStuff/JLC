@@ -90,7 +90,6 @@ ELitInt.        Expr6   ::= Integer ;
 ELitDoub.       Expr6   ::= Double;
 ELitTrue.       Expr6   ::= "true" ;
 ELitFalse.      Expr6   ::= "false" ;
-ESelf.          Expr6   ::= "self" ;
 EString.        Expr6   ::= String ;
 
 ENew.           Expr6   ::= "new" Type [Index] ;

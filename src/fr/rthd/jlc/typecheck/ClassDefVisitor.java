@@ -43,6 +43,8 @@ class ClassDefVisitor implements ClassDef.Visitor<ClassDef, EnvTypecheck> {
             env.insertVar(a.getName(), a.getType());
         }
 
+        env.insertVar("self", c.getType());
+
         for (Member m : p.listmember_) {
             members.add(m.accept(new MemberVisitor(), env));
         }
