@@ -646,7 +646,7 @@ public class InstructionBuilder {
     }
 
     /**
-     * `new` call, using calloc
+     * `new` call, using malloc
      * @param dst Destination variable
      * @param tmp Temporary variable
      * @param c Class
@@ -661,7 +661,7 @@ public class InstructionBuilder {
         Instruction i = new Instruction();
         List<OperationItem> args = new ArrayList<>();
         args.add(new Literal(TypeCode.CInt, c.getSize()));
-        i.add(call(tmp, "calloc", args));
+        i.add(call(tmp, "malloc", args));
         i.add(cast(dst, tmp, c.getType()));
         return i;
     }
