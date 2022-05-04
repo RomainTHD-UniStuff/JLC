@@ -82,7 +82,7 @@ Bool.      Type ::= "boolean" ;
 Void.      Type ::= "void" ;
 
 -- Shift-reduce
-Array.     Type ::= Type [Dim] ;
+Array.     Type ::= Type "[" "]" ;
 
 Class.     Type ::= Ident ;
 
@@ -109,13 +109,14 @@ EApp.      Expr7 ::= Ident "(" [Expr] ")" ;
 
 EString.   Expr7 ::= String ;
 
-EIndex.    Expr7 ::= Expr7 Index ;
--- EIndex.    Expr6 ::= Expr7 Index [Index] ;
+EIndex.    Expr7 ::= Expr8 Index ;
 
 -- Hack since only function calls are allowed
 EDot.      Expr6 ::= Expr6 "." Ident "(" [Expr] ")" ;
 
-ENew.      Expr6 ::= "new" Type [Index] ;
+ENewArr.   Expr6 ::= "new" Type [Index] ;
+
+ENewCls.   Expr6 ::= "new" Type ;
 
 Neg.       Expr5 ::= "-" Expr6 ;
 
@@ -139,12 +140,7 @@ separator  Expr "," ;
 
 SIndex.    Index ::= "[" Expr "]" ;
 
-separator  Index "" ;
-
--- FIXME: Oddly enough, "[" "]" will create a shift reduce
-SDim.      Dim ::= "[]" ;
-
-separator nonempty Dim "" ;
+separator nonempty Index "" ;
 
 -- operators -----------------------------------------------
 

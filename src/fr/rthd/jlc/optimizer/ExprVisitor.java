@@ -13,7 +13,8 @@ import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
-import javalette.Absyn.ENew;
+import javalette.Absyn.ENewArr;
+import javalette.Absyn.ENewCls;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
@@ -98,7 +99,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
         throw new NotImplementedException();
     }
 
-    public AnnotatedExpr<? extends Expr> visit(ENew p, EnvOptimizer env) {
+    public AnnotatedExpr<? extends Expr> visit(ENewCls p, EnvOptimizer env) {
+        throw new NotImplementedException();
+    }
+
+    public AnnotatedExpr<? extends Expr> visit(ENewArr p, EnvOptimizer env) {
         throw new NotImplementedException();
     }
 

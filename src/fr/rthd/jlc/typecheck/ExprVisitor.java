@@ -26,7 +26,8 @@ import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
-import javalette.Absyn.ENew;
+import javalette.Absyn.ENewArr;
+import javalette.Absyn.ENewCls;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
@@ -269,7 +270,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
      * @return Annotated expression
      */
     @Override
-    public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {
+    public AnnotatedExpr<ENewCls> visit(ENewCls e, EnvTypecheck env) {
         TypeCode t = e.type_.accept(new TypeVisitor(), null);
         if (t.isPrimitive()) {
             throw new InvalidNewTypeException(t);
@@ -280,6 +281,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         }
 
         return new AnnotatedExpr<>(t, e);
+    }
+
+    @Override
+    public AnnotatedExpr<ENewArr> visit(ENewArr e, EnvTypecheck env) {
+        throw new NotImplementedException();
     }
 
     /**

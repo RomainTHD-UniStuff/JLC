@@ -25,7 +25,8 @@ import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
-import javalette.Absyn.ENew;
+import javalette.Absyn.ENewArr;
+import javalette.Absyn.ENewCls;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
@@ -72,7 +73,10 @@ import org.jetbrains.annotations.NotNull;
 public class Unannotater implements Visitor {
     @NotNull
     @Override
-    public Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> ignored) {
+    public Prog accept(
+        @NotNull Prog p,
+        @NotNull Env<?, FunType, ClassType> ignored
+    ) {
         return p.accept(new ProgVisitor(), null);
     }
 
@@ -195,7 +199,11 @@ public class Unannotater implements Visitor {
             throw new NotImplementedException();
         }
 
-        public ENew visit(ENew p, Void ignored) {
+        public ENewArr visit(ENewArr p, Void ignored) {
+            return p;
+        }
+
+        public ENewCls visit(ENewCls p, Void ignored) {
             return p;
         }
 

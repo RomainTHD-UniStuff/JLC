@@ -20,7 +20,8 @@ import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EMul;
-import javalette.Absyn.ENew;
+import javalette.Absyn.ENewArr;
+import javalette.Absyn.ENewCls;
 import javalette.Absyn.ENull;
 import javalette.Absyn.EOr;
 import javalette.Absyn.ERel;
@@ -265,6 +266,11 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         throw new NotImplementedException();
     }
 
+    @Override
+    public OperationItem visit(ENewArr p, EnvCompiler env) {
+        throw new NotImplementedException();
+    }
+
     /**
      * Object creation using `new`
      * @param p Object creation
@@ -273,7 +279,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      * @see ExprVisitor#visit(EDot, EnvCompiler)
      */
     @Override
-    public OperationItem visit(ENew p, EnvCompiler env) {
+    public OperationItem visit(ENewCls p, EnvCompiler env) {
         TypeCode classType = p.type_.accept(new TypeVisitor(), null);
         Variable ref = env.createTempVar(
             classType,
