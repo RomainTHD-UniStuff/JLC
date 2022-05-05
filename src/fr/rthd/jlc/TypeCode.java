@@ -216,18 +216,23 @@ public class TypeCode {
     /**
      * Create a type code for an array
      * @param baseType Array base type
+     * @param dimension Array dimension (1D, 2D, ...)
      * @return Type code
      */
     @NotNull
-    public static TypeCode forArray(@NotNull TypeCode baseType) {
-        String realName = baseType._realName + "[]";
+    public static TypeCode forArray(@NotNull TypeCode baseType, int dimension) {
+        if (dimension <= 0) {
+            return baseType;
+        }
+
+        String realName = baseType._realName + "[]".repeat(dimension);
         TypeCode typeCode = _pool.get(realName);
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                "(TBD)",
+                baseType.getAssemblyName(),
                 null,
-                0,
+                dimension,
                 false,
                 baseType
             );
@@ -268,6 +273,18 @@ public class TypeCode {
             return _size;
         } else {
             return POINTER_SIZE;
+        }
+    }
+
+    /**
+     * @return Array dimension
+     */
+    @Contract(pure = true)
+    public int getDimension() {
+        if (isArray()) {
+            return _size;
+        } else {
+            throw new UnsupportedOperationException("Not an array");
         }
     }
 

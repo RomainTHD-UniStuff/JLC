@@ -9,7 +9,7 @@ import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typechecker.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
-import fr.rthd.jlc.typechecker.exception.InvalidMethodCallException;
+import fr.rthd.jlc.typechecker.exception.InvalidFieldAccessException;
 import fr.rthd.jlc.typechecker.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidOperationException;
 import fr.rthd.jlc.typechecker.exception.NoSuchClassException;
@@ -34,6 +34,7 @@ import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
 import javalette.Absyn.ListExpr;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.Mod;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
@@ -191,23 +192,28 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             env
         );
 
-        if (!expr.getType().isObject()) {
-            throw new InvalidMethodCallException(expr.getType());
+        if (expr.getType().isArray()) {
+            if (e.ident_.equals("length")) {
+                return new AnnotatedExpr<>(
+                    TypeCode.CInt,
+                    new EDot(expr, e.ident_)
+                );
+            } else {
+                throw new InvalidFieldAccessException(e.ident_, expr.getType());
+            }
+        } else if (expr.getType().isObject()) {
+            return new AnnotatedExpr<>(
+                // HACK: Technically, this type is wrong, but it makes it easier
+                //  if we're in a method call
+                expr.getType(),
+                new EDot(
+                    expr,
+                    e.ident_
+                )
+            );
+        } else {
+            throw new InvalidFieldAccessException(e.ident_, expr.getType());
         }
-
-        ClassType c = env.lookupClass(expr.getType());
-        assert c != null;
-        // It should be impossible to be null, since it would mean we created a
-        //  variable with a type that doesn't exist
-
-        return new AnnotatedExpr<>(
-            c.getType(),
-            // FIXME: Hack for method call, needs to be changed for array length
-            new EDot(
-                expr,
-                e.ident_
-            )
-        );
     }
 
     @Override
@@ -250,15 +256,28 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     @Override
     public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {
         TypeCode t = e.basetype_.accept(new TypeVisitor(), null);
+
+        if (!e.listindex_.isEmpty()) {
+            t = TypeCode.forArray(t, e.listindex_.size());
+        }
+
+        ListIndex listIndex = new ListIndex();
+        for (int i = 0; i < e.listindex_.size(); ++i) {
+            listIndex.add(e.listindex_.get(i).accept(
+                new IndexVisitor(i),
+                env
+            ));
+        }
+
         if (t.isPrimitive()) {
             throw new InvalidNewTypeException(t);
+        } else if (t.isObject()) {
+            if (env.lookupClass(t) == null) {
+                throw new NoSuchClassException(t);
+            }
         }
 
-        if (env.lookupClass(t) == null) {
-            throw new NoSuchClassException(t);
-        }
-
-        return new AnnotatedExpr<>(t, e);
+        return new AnnotatedExpr<>(t, new ENew(e.basetype_, listIndex));
     }
 
     /**

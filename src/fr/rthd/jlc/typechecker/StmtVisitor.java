@@ -6,6 +6,7 @@ import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.typechecker.exception.InvalidAssignmentException;
 import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidDeclaredTypeException;
@@ -21,6 +22,7 @@ import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
+import javalette.Absyn.EDot;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
@@ -104,11 +106,15 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
 
         if (s.expr_1 instanceof EVar) {
             v = ((EVar) s.expr_1).ident_;
+        } else if (s.expr_1 instanceof EDot) {
+            // Field assignment
+            throw new InvalidAssignmentException(
+                ((EDot) s.expr_1).ident_
+            );
         } else {
-            throw new NotImplementedException();
+            // rvalue assignment
+            throw new InvalidAssignmentException();
         }
-
-        // FIXME: Check that there are no conflicts with `.length` or a method
 
         TypeCode expectedType = env.lookupVar(v);
         if (expectedType == null) {
@@ -136,12 +142,26 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
                 // `B x = new A;`
                 throw e;
             }
+        } else if (exp.getType().isArray()) {
+            if (!expectedType.isArray()) {
+                // `int x = new int[10];`
+                throw e;
+            }
+
+            if (exp.getType().getBaseType() != expectedType.getBaseType()) {
+                // `boolean[] x = new int[10];`
+                throw e;
+            }
+
+            if (exp.getType().getDimension() != expectedType.getDimension()) {
+                // `int[] x = new int[10][20][30];`
+                throw e;
+            }
         } else if (exp.getType() != expectedType) {
             // `int x = true;`
             throw e;
         }
 
-        // FIXME: Use annotated expression for left member?
         return new Ass(s.expr_1, exp);
     }
 
