@@ -43,7 +43,7 @@ NoInit.         Item    ::= Ident ;
 Init.           Item    ::= Ident "=" Expr ;
 separator nonempty Item "," ;
 
-Ass.            Stmt    ::= LValue "=" Expr ";" ;
+Ass.            Stmt    ::= Expr "=" Expr ";" ;
 
 Incr.           Stmt    ::= Ident "++" ";" ;
 Decr.           Stmt    ::= Ident "--" ";" ;
@@ -64,27 +64,21 @@ separator Stmt "" ;
 
 -- Types ---------------------------------------------------
 
-Int.            Type    ::= "int" ;
-Doub.           Type    ::= "double" ;
-Bool.           Type    ::= "boolean" ;
-Void.           Type    ::= "void" ;
+Int.            BaseType    ::= "int" ;
+Doub.           BaseType    ::= "double" ;
+Bool.           BaseType    ::= "boolean" ;
+Void.           BaseType    ::= "void" ;
+Class.          BaseType    ::= Ident ;
 
 -- Shift-reduce
-Array.          Type    ::= Type [Dim] ;
--- Array.     Type ::= Type "[" "]" ;
-Class.          Type    ::= Ident ;
-
--- LValue --------------------------------------------------
-
-LValueV.        LValue  ::= Ident [Index] ;
-LValueP.        LValue  ::= Ident [Index] "." LValue ;
+TType.          Type    ::= BaseType [Dim] ;
 
 -- Expressions ---------------------------------------------
 
 -- Shift-reduce
 ENull.          Expr7   ::= "(" Ident ")" "null" ;
 
-EVar.           Expr6   ::= LValue ;
+EVar.           Expr6   ::= Ident ;
 
 ELitInt.        Expr6   ::= Integer ;
 ELitDoub.       Expr6   ::= Double;
@@ -92,8 +86,11 @@ ELitTrue.       Expr6   ::= "true" ;
 ELitFalse.      Expr6   ::= "false" ;
 EString.        Expr6   ::= String ;
 
-ENew.           Expr6   ::= "new" Type [Index] ;
-EApp.           Expr6   ::= LValue "(" [Expr] ")" ;
+ENew.           Expr6   ::= "new" BaseType [Index] ;
+EApp.           Expr6   ::= Expr6 "(" [Expr] ")" ;
+EDot.           Expr6   ::= Expr6 "." Ident ;
+
+EIndex.         Expr5   ::= Expr5 "[" Expr "]" ;
 
 Neg.            Expr5   ::= "-" Expr6 ;
 Not.            Expr5   ::= "!" Expr6 ;
@@ -114,7 +111,7 @@ SIndex.         Index   ::= "[" Expr "]" ;
 separator Index "" ;
 
 DimenT.         Dim     ::= "[]" ;
-separator nonempty Dim "" ;
+separator Dim "" ;
 
 -- Operators -----------------------------------------------
 

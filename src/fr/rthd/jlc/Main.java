@@ -15,8 +15,8 @@ import javalette.Yylex;
 import javalette.parser;
 import org.jetbrains.annotations.Nls;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -92,24 +92,37 @@ public class Main {
             System.exit(0);
         }
 
-        Yylex lex = null;
+        String lexerInput = null;
 
         if (opt.inputFile != null) {
             try {
-                lex = new Yylex(new FileReader(opt.inputFile));
-            } catch (FileNotFoundException ignored) {
+                BufferedReader reader = new BufferedReader(new FileReader(opt.inputFile));
+                StringBuilder input = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    input.append(line).append("\n");
+                }
+                reader.close();
+                lexerInput = input.toString();
+            } catch (IOException ignored) {
                 // TODO: Log this error
             }
         }
 
-        if (lex == null) {
+        if (lexerInput == null) {
             StringBuilder input = new StringBuilder();
             Scanner sc = new Scanner(System.in);
             while (sc.hasNextLine()) {
                 input.append(sc.nextLine()).append("\n");
             }
-            lex = new Yylex(new StringReader(input.toString()));
+
+            lexerInput = input.toString();
         }
+
+        // HACK: The grammar doesn't support `int [ ] t;`, so we replace it with
+        //  `int [] t;`
+        lexerInput = lexerInput.replaceAll("\\[ +]", "[]");
+        Yylex lex = new Yylex(new StringReader(lexerInput));
 
         try {
             // Parse
