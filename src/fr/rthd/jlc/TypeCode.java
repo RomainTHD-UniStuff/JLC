@@ -300,9 +300,14 @@ public class TypeCode {
      * @return Array base type
      */
     @Contract(pure = true)
-    @Nullable
+    @NotNull
     public TypeCode getBaseType() {
-        return _baseType;
+        if (isArray()) {
+            assert _baseType != null;
+            return _baseType;
+        } else {
+            throw new UnsupportedOperationException("Not an array");
+        }
     }
 
     /**
