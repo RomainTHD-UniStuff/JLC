@@ -183,9 +183,15 @@ public class Unannotater implements Visitor {
         }
 
         public EIndex visit(EIndex p, Void ignored) {
+            Index idx = p.index_.accept(new IndexVisitor(), null);
+            ListIndex listIndex = new ListIndex();
+            for (Index i : p.listindex_) {
+                listIndex.add(i.accept(new IndexVisitor(), null));
+            }
             return new EIndex(
-                p.expr_1.accept(new ExprVisitor(), null),
-                p.expr_2.accept(new ExprVisitor(), null)
+                p.expr_.accept(new ExprVisitor(), null),
+                idx,
+                listIndex
             );
         }
 

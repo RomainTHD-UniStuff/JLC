@@ -90,7 +90,7 @@ ENew.           Expr6   ::= "new" BaseType [Index] ;
 EApp.           Expr6   ::= Expr6 "(" [Expr] ")" ;
 EDot.           Expr6   ::= Expr6 "." Ident ;
 
-EIndex.         Expr5   ::= Expr5 "[" Expr "]" ;
+EIndex.         Expr5   ::= Expr6 Index [Index] ;
 
 Neg.            Expr5   ::= "-" Expr6 ;
 Not.            Expr5   ::= "!" Expr6 ;
