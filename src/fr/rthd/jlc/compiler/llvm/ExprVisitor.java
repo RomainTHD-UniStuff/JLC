@@ -1,6 +1,5 @@
 package fr.rthd.jlc.compiler.llvm;
 
-import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.Literal;
@@ -9,9 +8,12 @@ import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -24,10 +26,7 @@ import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
-import javalette.Absyn.LValueP;
-import javalette.Absyn.LValueV;
 import javalette.Absyn.ListExpr;
-import javalette.Absyn.ListIndex;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
@@ -66,8 +65,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EVar p, EnvCompiler env) {
-        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
-        Variable var = env.lookupVar(v.getBaseName());
+        Variable var = env.lookupVar(p.ident_);
         assert var != null;
         if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
             || (var.getType().isObject()) && var.getPointerLevel() > 1) {
@@ -136,44 +134,51 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EApp p, EnvCompiler env) {
-        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
-
-        FunType func = env.lookupFun(v.getMethodName());
-        String fName = v.getMethodName();
+        FunType func;
+        String fName;
         List<OperationItem> args = new ArrayList<>();
         ListExpr listExpr = p.listexpr_;
         List<FunArg> funArgs = new ArrayList<>();
 
-        if (func == null) {
+        if (p.expr_ instanceof EVar) {
+            // Normal function call
+
+            fName = ((EVar) p.expr_).ident_;
+            func = env.lookupFun(fName);
+            assert func != null;
+        } else if (p.expr_ instanceof EDot) {
             // Class method
 
-            Variable ref = env.lookupVar(v.getBaseName());
+            EDot dot = ((EDot) p.expr_);
+            assert dot.expr_ instanceof EVar;
+            EVar left = (EVar) dot.expr_;
+
+            Variable ref = env.lookupVar(left.ident_);
             assert ref != null;
 
             ClassType c = env.lookupClass(ref.getType());
             assert c != null;
 
-            while ((func = c.getMethod(v.getMethodName(), false)) == null) {
+            while ((func = c.getMethod(dot.ident_, false)) == null) {
                 c = c.getSuperclass();
                 assert c != null;
             }
 
             // call `@Class$method` instead of `@method`
-            fName = c.getAssemblyMethodName(fName);
+            fName = c.getAssemblyMethodName(dot.ident_);
 
             // Add `this` to the arguments by adding the variable itself. Either
             //  it is a "real" variable like `obj.call()`, or a temporary one
             //  if a cast or deref is involved
-            listExpr.add(0, new EVar(new LValueV(
-                ref.getSourceName(),
-                new ListIndex()
-            )));
+            listExpr.add(0, new EVar(ref.getSourceName()));
 
             if (listExpr.size() != func.getArgs().size()) {
                 // FIXME: Makes no sense at all, it means that some methods
                 //  don't have the `this` argument in first position!?
                 funArgs.add(new FunArg(ref.getType(), "self"));
             }
+        } else {
+            throw new IllegalStateException("Unsupported function call");
         }
 
         funArgs.addAll(func.getArgs());
@@ -216,6 +221,16 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
     }
 
+    @Override
+    public OperationItem visit(EDot p, EnvCompiler env) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public OperationItem visit(EIndex p, EnvCompiler env) {
+        throw new NotImplementedException();
+    }
+
     /**
      * String literal
      * @param p String literal
@@ -255,7 +270,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
-        TypeCode classType = p.type_.accept(new TypeVisitor(), null);
+        TypeCode classType = p.basetype_.accept(new TypeVisitor(), null);
         Variable ref = env.createTempVar(
             classType,
             "new_" + classType.getRealName(),
@@ -275,13 +290,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         // Call the constructor, which is a method of the object
         new EApp(
-            new LValueP(
-                ref.getName(),
-                new ListIndex(),
-                new LValueV(
-                    ClassType.CONSTRUCTOR_NAME,
-                    new ListIndex()
-                )
+            new EDot(
+                new EVar(ref.getName()),
+                ClassType.CONSTRUCTOR_NAME
             ),
             new ListExpr()
         ).accept(new ExprVisitor(), env);

@@ -6,6 +6,8 @@ import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -18,6 +20,7 @@ import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
+import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 
@@ -27,7 +30,6 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
-        /*
         AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
         assert expr != null;
         if (env.constantPropagationEnabled()) {
@@ -38,9 +40,6 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
                 new EVar(e.ident_)
             );
         }
-         */
-        // TODO:
-        throw new NotImplementedException();
     }
 
     public AnnotatedExpr<ELitInt> visit(ELitInt e, EnvOptimizer env) {
@@ -60,8 +59,15 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {
-        /*
-        FunTypeOptimizer funcType = env.lookupFun(e.ident_);
+        String fName;
+
+        if (e.expr_ instanceof EVar) {
+            fName = ((EVar) e.expr_).ident_;
+        } else {
+            throw new NotImplementedException();
+        }
+
+        FunTypeOptimizer funcType = env.lookupFun(fName);
         assert funcType != null;
 
         FunTypeOptimizer currentFunction = env.getCurrentFunction();
@@ -79,9 +85,15 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
 
         return new AnnotatedExpr<>(
             funcType.getRetType(),
-            new EApp(e.ident_, exps)
-        );*/
-        // TODO:
+            new EApp(e.expr_, exps)
+        );
+    }
+
+    public AnnotatedExpr<EDot> visit(EDot e, EnvOptimizer env) {
+        throw new NotImplementedException();
+    }
+
+    public AnnotatedExpr<EIndex> visit(EIndex e, EnvOptimizer env) {
         throw new NotImplementedException();
     }
 

@@ -1,7 +1,6 @@
 package fr.rthd.jlc.typecheck;
 
 import fr.rthd.jlc.AnnotatedExpr;
-import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
@@ -22,6 +21,7 @@ import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
+import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
@@ -100,18 +100,24 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      */
     @Override
     public Ass visit(Ass s, EnvTypecheck env) {
-        AnnotatedLValue<?> v = s.lvalue_.accept(new LValueVisitor(), env);
+        String v;
+
+        if (s.expr_1 instanceof EVar) {
+            v = ((EVar) s.expr_1).ident_;
+        } else {
+            throw new NotImplementedException();
+        }
 
         // FIXME: Check that there are no conflicts with `.length` or a method
 
-        TypeCode expectedType = env.lookupVar(v.getBaseName());
+        TypeCode expectedType = env.lookupVar(v);
         if (expectedType == null) {
-            throw new NoSuchVariableException(v.getBaseName());
+            throw new NoSuchVariableException(v);
         }
 
-        AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
+        AnnotatedExpr<?> exp = s.expr_2.accept(new ExprVisitor(), env);
         TypeException e = new InvalidAssignmentTypeException(
-            v.getBaseName(),
+            v,
             expectedType,
             exp.getType()
         );
@@ -135,7 +141,8 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             throw e;
         }
 
-        return new Ass(v, exp);
+        // FIXME: Use annotated expression for left member?
+        return new Ass(s.expr_1, exp);
     }
 
     /**

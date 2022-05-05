@@ -20,7 +20,7 @@ import java.util.List;
 class FuncDefSignatureVisitor implements FuncDef.Visitor<Void, EnvTypecheck> {
     /**
      * Function definition
-     * @param p Functino definition
+     * @param p Function definition
      * @param env Environment
      */
     @Override
