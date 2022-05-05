@@ -1,17 +1,17 @@
 package fr.rthd.jlc.compiler.llvm;
 
-import fr.rthd.jlc.AnnotatedLValue;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
-import fr.rthd.jlc.env.FunArg;
-import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -24,22 +24,15 @@ import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
-import javalette.Absyn.LValueP;
-import javalette.Absyn.LValueV;
 import javalette.Absyn.ListExpr;
-import javalette.Absyn.ListIndex;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static fr.rthd.jlc.TypeCode.CBool;
 import static fr.rthd.jlc.TypeCode.CDouble;
 import static fr.rthd.jlc.TypeCode.CInt;
 import static fr.rthd.jlc.TypeCode.CString;
-import static fr.rthd.jlc.TypeCode.CVoid;
 
 /**
  * Expression visitor
@@ -66,8 +59,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EVar p, EnvCompiler env) {
-        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
-        Variable var = env.lookupVar(v.getBaseName());
+        Variable var = env.lookupVar(p.ident_);
         assert var != null;
         if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
             || (var.getType().isObject()) && var.getPointerLevel() > 1) {
@@ -136,8 +128,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EApp p, EnvCompiler env) {
-        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
-
+        /*
         FunType func = env.lookupFun(v.getMethodName());
         String fName = v.getMethodName();
         List<OperationItem> args = new ArrayList<>();
@@ -213,7 +204,18 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             );
             env.emit(env.instructionBuilder.call(out, fName, args));
             return out;
-        }
+        }*/
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public OperationItem visit(EDot p, EnvCompiler env) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public OperationItem visit(EIndex p, EnvCompiler env) {
+        throw new NotImplementedException();
     }
 
     /**
@@ -255,7 +257,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
-        TypeCode classType = p.type_.accept(new TypeVisitor(), null);
+        TypeCode classType = p.basetype_.accept(new TypeVisitor(), null);
         Variable ref = env.createTempVar(
             classType,
             "new_" + classType.getRealName(),
@@ -275,13 +277,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         // Call the constructor, which is a method of the object
         new EApp(
-            new LValueP(
-                ref.getName(),
-                new ListIndex(),
-                new LValueV(
-                    ClassType.CONSTRUCTOR_NAME,
-                    new ListIndex()
-                )
+            new EDot(
+                new EVar(ref.getName()),
+                ClassType.CONSTRUCTOR_NAME
             ),
             new ListExpr()
         ).accept(new ExprVisitor(), env);

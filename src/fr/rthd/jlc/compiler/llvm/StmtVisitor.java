@@ -1,6 +1,6 @@
 package fr.rthd.jlc.compiler.llvm;
 
-import fr.rthd.jlc.AnnotatedLValue;
+import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
@@ -17,9 +17,6 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
-import javalette.Absyn.LValue;
-import javalette.Absyn.LValueV;
-import javalette.Absyn.ListIndex;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
 import javalette.Absyn.Ret;
@@ -78,13 +75,13 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Ass p, EnvCompiler env) {
-        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
+        String varName = ((EVar) ((AnnotatedExpr<?>) p.expr_1).getParentExp()).ident_;
 
-        Variable dst = env.lookupVar(v.getBaseName());
+        Variable dst = env.lookupVar(varName);
         assert dst != null;
         assert dst.getPointerLevel() != 0;
 
-        OperationItem value = p.expr_.accept(new ExprVisitor(), env);
+        OperationItem value = p.expr_2.accept(new ExprVisitor(), env);
         assert value != null;
 
         OperationItem src;
@@ -105,11 +102,10 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Incr p, EnvCompiler env) {
-        LValue v = new LValueV(p.ident_, new ListIndex());
         return new Ass(
-            v,
+            new EVar(p.ident_),
             new EAdd(
-                new EVar(v),
+                new EVar(p.ident_),
                 new Plus(),
                 new ELitInt(1)
             )
@@ -123,11 +119,10 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decr p, EnvCompiler env) {
-        LValue v = new LValueV(p.ident_, new ListIndex());
         return new Ass(
-            v,
+            new EVar(p.ident_),
             new EAdd(
-                new EVar(v),
+                new EVar(p.ident_),
                 new Minus(),
                 new ELitInt(1)
             )

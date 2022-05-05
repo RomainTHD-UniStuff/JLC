@@ -1,11 +1,12 @@
 package fr.rthd.jlc;
 
 import fr.rthd.jlc.internal.NotImplementedException;
-import javalette.Absyn.Array;
+import javalette.Absyn.BaseType;
 import javalette.Absyn.Bool;
 import javalette.Absyn.Class;
 import javalette.Absyn.Doub;
 import javalette.Absyn.Int;
+import javalette.Absyn.TType;
 import javalette.Absyn.Type;
 import org.jetbrains.annotations.NonNls;
 
@@ -19,28 +20,13 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  * @author RomainTHD
  */
 @NonNls
-public class TypeVisitor implements Type.Visitor<TypeCode, Void> {
-    /**
-     * Javalette type from TypeCode
-     * @param t TypeCode type
-     * @return Javalette type
-     * @throws IllegalArgumentException If type is not supported
-     * @see TypeCode
-     */
-    public static Type fromTypecode(TypeCode t) throws IllegalArgumentException {
-        if (CVoid.equals(t)) {
-            return new javalette.Absyn.Void();
-        } else if (CBool.equals(t)) {
-            return new Bool();
-        } else if (CInt.equals(t)) {
-            return new Int();
-        } else if (CDouble.equals(t)) {
-            return new Doub();
-        } else if (t.isObject()) {
-            return new Class(t.getRealName());
+public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visitor<TypeCode, Void> {
+    @Override
+    public TypeCode visit(TType p, Void ignored) {
+        if (p.listdim_.size() != 0) {
+            throw new NotImplementedException();
         }
-
-        throw new IllegalArgumentException("Unknown typecode: " + t);
+        return p.basetype_.accept(new TypeVisitor(), null);
     }
 
     /**
@@ -85,17 +71,6 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void> {
      */
     public TypeCode visit(javalette.Absyn.Void t, Void ignored) {
         return CVoid;
-    }
-
-    /**
-     * Array type
-     * @param t Array type
-     * @param ignored Unused, visitor pattern artifact
-     * @return TODO: Documentation
-     */
-    @Override
-    public TypeCode visit(Array t, Void ignored) {
-        throw new NotImplementedException();
     }
 
     /**

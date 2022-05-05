@@ -18,6 +18,8 @@ import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -39,9 +41,6 @@ import javalette.Absyn.Incr;
 import javalette.Absyn.Index;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
-import javalette.Absyn.LValue;
-import javalette.Absyn.LValueP;
-import javalette.Absyn.LValueV;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListIndex;
 import javalette.Absyn.ListItem;
@@ -173,7 +172,21 @@ public class Unannotater implements Visitor {
             for (Expr x : p.listexpr_) {
                 expr.add(x.accept(new ExprVisitor(), null));
             }
-            return new EApp(p.lvalue_.accept(new LValueVisitor(), null), expr);
+            return new EApp(p.expr_.accept(new ExprVisitor(), null), expr);
+        }
+
+        public EDot visit(EDot p, Void ignored) {
+            return new EDot(
+                p.expr_.accept(new ExprVisitor(), null),
+                p.ident_
+            );
+        }
+
+        public EIndex visit(EIndex p, Void ignored) {
+            return new EIndex(
+                p.expr_1.accept(new ExprVisitor(), null),
+                p.expr_2.accept(new ExprVisitor(), null)
+            );
         }
 
         public EString visit(EString p, Void ignored) {
@@ -181,7 +194,14 @@ public class Unannotater implements Visitor {
         }
 
         public ENew visit(ENew p, Void ignored) {
-            return p;
+            ListIndex index = new ListIndex();
+            for (Index x : p.listindex_) {
+                index.add(x.accept(new IndexVisitor(), null));
+            }
+            return new ENew(
+                p.basetype_,
+                index
+            );
         }
 
         public Neg visit(Neg p, Void ignored) {
@@ -247,28 +267,6 @@ public class Unannotater implements Visitor {
         }
     }
 
-    private static class LValueVisitor implements LValue.Visitor<LValue, Void> {
-        public LValueV visit(LValueV p, Void ignored) {
-            ListIndex idx = new ListIndex();
-            for (Index i : p.listindex_) {
-                idx.add(i.accept(new IndexVisitor(), null));
-            }
-            return new LValueV(p.ident_, idx);
-        }
-
-        public LValueP visit(LValueP p, Void ignored) {
-            ListIndex idx = new ListIndex();
-            for (Index i : p.listindex_) {
-                idx.add(i.accept(new IndexVisitor(), null));
-            }
-            return new LValueP(
-                p.ident_,
-                idx,
-                p.lvalue_.accept(new LValueVisitor(), null)
-            );
-        }
-    }
-
     private static class StmtVisitor implements Stmt.Visitor<Stmt, Void> {
         public Empty visit(Empty p, Void ignored) {
             return p;
@@ -289,8 +287,8 @@ public class Unannotater implements Visitor {
 
         public Ass visit(Ass p, Void ignored) {
             return new Ass(
-                p.lvalue_.accept(new LValueVisitor(), null),
-                p.expr_.accept(new ExprVisitor(), null)
+                p.expr_1.accept(new ExprVisitor(), null),
+                p.expr_2.accept(new ExprVisitor(), null)
             );
         }
 

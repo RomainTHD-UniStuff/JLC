@@ -13,13 +13,14 @@ import javalette.Absyn.AttrMember;
 import javalette.Absyn.Block;
 import javalette.Absyn.ClassDef;
 import javalette.Absyn.ClsDef;
+import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FnMember;
-import javalette.Absyn.LValueV;
 import javalette.Absyn.ListArg;
-import javalette.Absyn.ListIndex;
+import javalette.Absyn.ListDim;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.Member;
+import javalette.Absyn.TType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,14 +66,14 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         for (Attribute attr : c.getAllAttributes()) {
             if (attr.getType().isPrimitive()) {
                 body.add(new Ass(
-                    new LValueV(attr.getName(), new ListIndex()),
+                    new EVar(attr.getName()),
                     AnnotatedExpr.getDefaultValue(attr.getType())
                 ));
             }
         }
 
         FnDef fdef = new FnDef(
-            new javalette.Absyn.Void(),
+            new TType(new javalette.Absyn.Void(), new ListDim()),
             ClassType.CONSTRUCTOR_NAME,
             new ListArg(),
             new Block(body)
