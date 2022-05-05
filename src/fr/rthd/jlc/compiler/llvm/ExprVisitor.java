@@ -6,6 +6,8 @@ import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
+import fr.rthd.jlc.env.FunArg;
+import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
@@ -29,10 +31,14 @@ import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static fr.rthd.jlc.TypeCode.CBool;
 import static fr.rthd.jlc.TypeCode.CDouble;
 import static fr.rthd.jlc.TypeCode.CInt;
 import static fr.rthd.jlc.TypeCode.CString;
+import static fr.rthd.jlc.TypeCode.CVoid;
 
 /**
  * Expression visitor
@@ -128,43 +134,51 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EApp p, EnvCompiler env) {
-        /*
-        FunType func = env.lookupFun(v.getMethodName());
-        String fName = v.getMethodName();
+        FunType func;
+        String fName;
         List<OperationItem> args = new ArrayList<>();
         ListExpr listExpr = p.listexpr_;
         List<FunArg> funArgs = new ArrayList<>();
 
-        if (func == null) {
+        if (p.expr_ instanceof EVar) {
+            // Normal function call
+
+            fName = ((EVar) p.expr_).ident_;
+            func = env.lookupFun(fName);
+            assert func != null;
+        } else if (p.expr_ instanceof EDot) {
             // Class method
 
-            Variable ref = env.lookupVar(v.getBaseName());
+            EDot dot = ((EDot) p.expr_);
+            assert dot.expr_ instanceof EVar;
+            EVar left = (EVar) dot.expr_;
+
+            Variable ref = env.lookupVar(left.ident_);
             assert ref != null;
 
             ClassType c = env.lookupClass(ref.getType());
             assert c != null;
 
-            while ((func = c.getMethod(v.getMethodName(), false)) == null) {
+            while ((func = c.getMethod(dot.ident_, false)) == null) {
                 c = c.getSuperclass();
                 assert c != null;
             }
 
             // call `@Class$method` instead of `@method`
-            fName = c.getAssemblyMethodName(fName);
+            fName = c.getAssemblyMethodName(dot.ident_);
 
             // Add `this` to the arguments by adding the variable itself. Either
             //  it is a "real" variable like `obj.call()`, or a temporary one
             //  if a cast or deref is involved
-            listExpr.add(0, new EVar(new LValueV(
-                ref.getSourceName(),
-                new ListIndex()
-            )));
+            listExpr.add(0, new EVar(ref.getSourceName()));
 
             if (listExpr.size() != func.getArgs().size()) {
                 // FIXME: Makes no sense at all, it means that some methods
                 //  don't have the `this` argument in first position!?
                 funArgs.add(new FunArg(ref.getType(), "self"));
             }
+        } else {
+            throw new IllegalStateException("Unsupported function call");
         }
 
         funArgs.addAll(func.getArgs());
@@ -204,8 +218,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             );
             env.emit(env.instructionBuilder.call(out, fName, args));
             return out;
-        }*/
-        throw new NotImplementedException();
+        }
     }
 
     @Override

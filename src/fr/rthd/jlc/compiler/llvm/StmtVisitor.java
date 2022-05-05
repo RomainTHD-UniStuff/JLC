@@ -1,6 +1,5 @@
 package fr.rthd.jlc.compiler.llvm;
 
-import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
@@ -75,7 +74,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Ass p, EnvCompiler env) {
-        String varName = ((EVar) ((AnnotatedExpr<?>) p.expr_1).getParentExp()).ident_;
+        String varName = ((EVar) p.expr_1).ident_;
 
         Variable dst = env.lookupVar(varName);
         assert dst != null;
