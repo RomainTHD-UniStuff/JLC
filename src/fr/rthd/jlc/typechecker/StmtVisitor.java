@@ -23,6 +23,7 @@ import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
@@ -102,28 +103,47 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      */
     @Override
     public Ass visit(Ass s, EnvTypecheck env) {
-        String v;
+        String target;
 
         if (s.expr_1 instanceof EVar) {
-            v = ((EVar) s.expr_1).ident_;
+            // Variable assignment
+            target = ((EVar) s.expr_1).ident_;
         } else if (s.expr_1 instanceof EDot) {
             // Field assignment
             throw new InvalidAssignmentException(
                 ((EDot) s.expr_1).ident_
             );
+        } else if (s.expr_1 instanceof EIndex) {
+            // Array assignment
+            EIndex idx = (EIndex) s.expr_1;
+            if (idx.expr_ instanceof EVar) {
+                // `t[0] = 1`
+                target = ((EVar) idx.expr_).ident_;
+            } else {
+                // `f()[0] = 1` is a rvalue
+                throw new InvalidAssignmentException();
+            }
         } else {
             // rvalue assignment
             throw new InvalidAssignmentException();
         }
 
-        TypeCode expectedType = env.lookupVar(v);
+        TypeCode expectedType = env.lookupVar(target);
         if (expectedType == null) {
-            throw new NoSuchVariableException(v);
+            throw new NoSuchVariableException(target);
+        }
+
+        if (s.expr_1 instanceof EIndex) {
+            int dim = ((EIndex) s.expr_1).listindex_.size() + 1;
+            expectedType = TypeCode.forArray(
+                expectedType.getBaseType(),
+                expectedType.getDimension() - dim
+            );
         }
 
         AnnotatedExpr<?> exp = s.expr_2.accept(new ExprVisitor(), env);
         TypeException e = new InvalidAssignmentTypeException(
-            v,
+            target,
             expectedType,
             exp.getType()
         );
@@ -162,7 +182,10 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             throw e;
         }
 
-        return new Ass(s.expr_1, exp);
+        return new Ass(
+            s.expr_1.accept(new ExprVisitor(), env),
+            exp
+        );
     }
 
     /**

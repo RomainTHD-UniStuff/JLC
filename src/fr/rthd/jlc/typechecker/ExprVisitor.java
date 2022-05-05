@@ -10,6 +10,7 @@ import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typechecker.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidFieldAccessException;
+import fr.rthd.jlc.typechecker.exception.InvalidIndexDimensionException;
 import fr.rthd.jlc.typechecker.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidOperationException;
 import fr.rthd.jlc.typechecker.exception.NoSuchClassException;
@@ -33,6 +34,7 @@ import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
+import javalette.Absyn.Index;
 import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListIndex;
 import javalette.Absyn.Mod;
@@ -218,7 +220,29 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
     @Override
     public AnnotatedExpr<EIndex> visit(EIndex e, EnvTypecheck env) {
-        throw new NotImplementedException();
+        Index idx = e.index_.accept(new IndexVisitor(0), env);
+        ListIndex indexes = new ListIndex();
+        for (int i = 0; i < e.listindex_.size(); ++i) {
+            indexes.add(e.listindex_.get(i).accept(
+                new IndexVisitor(i + 1),
+                env
+            ));
+        }
+
+        AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
+
+        int newDim = expr.getType().getDimension() - indexes.size() - 1;
+        if (newDim < 0) {
+            throw new InvalidIndexDimensionException(
+                expr.getType().getDimension(),
+                indexes.size() + 1
+            );
+        }
+
+        return new AnnotatedExpr<>(
+            TypeCode.forArray(expr.getType().getBaseType(), newDim),
+            new EIndex(expr, idx, indexes)
+        );
     }
 
     /**
