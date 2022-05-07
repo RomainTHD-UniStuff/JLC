@@ -6,10 +6,10 @@ import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
-import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.typechecker.exception.InvalidArgumentCountException;
 import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidFieldAccessException;
+import fr.rthd.jlc.typechecker.exception.InvalidFunctionCallException;
 import fr.rthd.jlc.typechecker.exception.InvalidIndexDimensionException;
 import fr.rthd.jlc.typechecker.exception.InvalidNewTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidOperationException;
@@ -129,16 +129,19 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         String methodName;
 
         if (e.expr_ instanceof EVar) {
+            // `f()`
             methodName = ((EVar) e.expr_).ident_;
             funcType = env.lookupFun(methodName);
         } else if (e.expr_ instanceof EDot) {
+            // `self.f()`
             AnnotatedExpr<?> left = e.expr_.accept(new ExprVisitor(), env);
             ClassType c = env.lookupClass(left.getType());
             assert c != null;
             methodName = ((EDot) e.expr_).ident_;
             funcType = c.getMethod(methodName, true);
         } else {
-            throw new NotImplementedException();
+            // `42()`
+            throw new InvalidFunctionCallException();
         }
 
         if (funcType == null) {
