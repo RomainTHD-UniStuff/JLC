@@ -1,6 +1,7 @@
 package fr.rthd.jlc.typechecker.exception;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Invalid assignment type
@@ -8,8 +9,8 @@ import fr.rthd.jlc.TypeCode;
  */
 public class InvalidAssignmentTypeException extends TypeException {
     public InvalidAssignmentTypeException(
-        TypeCode expected,
-        TypeCode actual
+        @NotNull TypeCode expected,
+        @NotNull TypeCode actual
     ) {
         super(String.format(
             "Invalid assignment to variable from type `%s` to type `%s`",
@@ -19,9 +20,9 @@ public class InvalidAssignmentTypeException extends TypeException {
     }
 
     public InvalidAssignmentTypeException(
-        String varName,
-        TypeCode expected,
-        TypeCode actual
+        @NotNull String varName,
+        @NotNull TypeCode expected,
+        @NotNull TypeCode actual
     ) {
         super(String.format(
             "Invalid assignment to argument `%s` from type `%s` to type `%s`",

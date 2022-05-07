@@ -1,12 +1,14 @@
 package fr.rthd.jlc.typechecker.exception;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Invalid argument count
  * @author RomainTHD
  */
 public class InvalidArgumentCountException extends TypeException {
     public InvalidArgumentCountException(
-        String funcName,
+        @NotNull String funcName,
         int expected,
         int actual
     ) {

@@ -1,18 +1,21 @@
 package fr.rthd.jlc.typechecker.exception;
 
 import fr.rthd.jlc.TypeCode;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Invalid operation
  * @author RomainTHD
  */
 public class InvalidOperationException extends TypeException {
+    @NotNull
     private final String _message;
 
     public InvalidOperationException(
-        String operationName,
-        TypeCode actual,
-        TypeCode... expected
+        @NotNull String operationName,
+        @NotNull TypeCode actual,
+        @NotNull TypeCode... expected
     ) {
         // Will be overridden later
         super("TBD");
@@ -50,6 +53,8 @@ public class InvalidOperationException extends TypeException {
         );
     }
 
+    @Contract(pure = true)
+    @NotNull
     @Override
     public String getMessage() {
         return _message;
