@@ -11,8 +11,8 @@ public class InvalidIndexTypeException extends TypeException {
     public InvalidIndexTypeException(@NotNull TypeCode type, int idx) {
         super(String.format(
             "Invalid index type, `%s` found instead of `%s` at index %d",
-            type,
-            TypeCode.CInt,
+            type.getRealName(),
+            TypeCode.CInt.getRealName(),
             idx
         ));
     }
