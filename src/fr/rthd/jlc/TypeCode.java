@@ -306,7 +306,7 @@ public class TypeCode {
             assert _baseType != null;
             return _baseType;
         } else {
-            throw new UnsupportedOperationException("Not an array");
+            return this;
         }
     }
 

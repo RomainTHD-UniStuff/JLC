@@ -341,6 +341,10 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             throw new InvalidForTypeException(varType, expr.getType());
         }
 
+        if (expr.getType().getBaseType() != varType.getBaseType()) {
+            throw new InvalidForTypeException(varType, expr.getType());
+        }
+
         env.enterScope();
         env.insertVar(s.ident_, varType);
         Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
