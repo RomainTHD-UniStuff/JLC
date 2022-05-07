@@ -167,8 +167,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
                 throw new InvalidAssignmentTypeException(
                     expected.getName(),
                     expected.getType(),
-                    exp.getType(),
-                    true
+                    exp.getType()
                 );
             }
             exps.add(exp);

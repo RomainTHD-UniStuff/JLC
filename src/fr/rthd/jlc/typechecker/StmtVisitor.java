@@ -5,8 +5,6 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
-import fr.rthd.jlc.internal.NotImplementedException;
-import fr.rthd.jlc.typechecker.exception.InvalidAssignmentException;
 import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidDeclaredTypeException;
@@ -23,9 +21,6 @@ import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
-import javalette.Absyn.EDot;
-import javalette.Absyn.EIndex;
-import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
@@ -104,52 +99,16 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      */
     @Override
     public Ass visit(Ass s, EnvTypecheck env) {
-        String target;
+        AnnotatedExpr<?> left = s.expr_1.accept(new ExprVisitor(), env);
+        TypeCode expectedType = left.getType();
 
-        if (s.expr_1 instanceof EVar) {
-            // Variable assignment
-            target = ((EVar) s.expr_1).ident_;
-        } else if (s.expr_1 instanceof EDot) {
-            // Field assignment
-            throw new InvalidAssignmentException(
-                ((EDot) s.expr_1).ident_
-            );
-        } else if (s.expr_1 instanceof EIndex) {
-            // Array assignment
-            EIndex idx = (EIndex) s.expr_1;
-            if (idx.expr_ instanceof EVar) {
-                // `t[0] = 1`
-                target = ((EVar) idx.expr_).ident_;
-            } else {
-                // `f()[0] = 1` is a rvalue
-                throw new InvalidAssignmentException();
-            }
-        } else {
-            // rvalue assignment
-            throw new InvalidAssignmentException();
-        }
-
-        TypeCode expectedType = env.lookupVar(target);
-        if (expectedType == null) {
-            throw new NoSuchVariableException(target);
-        }
-
-        if (s.expr_1 instanceof EIndex) {
-            int dim = ((EIndex) s.expr_1).listindex_.size() + 1;
-            expectedType = TypeCode.forArray(
-                expectedType.getBaseType(),
-                expectedType.getDimension() - dim
-            );
-        }
-
-        AnnotatedExpr<?> exp = s.expr_2.accept(new ExprVisitor(), env);
+        AnnotatedExpr<?> right = s.expr_2.accept(new ExprVisitor(), env);
         TypeException e = new InvalidAssignmentTypeException(
-            target,
             expectedType,
-            exp.getType()
+            right.getType()
         );
 
-        if (exp.getType().isObject()) {
+        if (right.getType().isObject()) {
             if (!expectedType.isObject()) {
                 // `int x = new A;`
                 throw e;
@@ -157,35 +116,35 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
 
             ClassType expectedClass = env.lookupClass(expectedType);
             assert expectedClass != null;
-            ClassType actualClass = env.lookupClass(exp.getType());
+            ClassType actualClass = env.lookupClass(right.getType());
             assert actualClass != null;
             if (!actualClass.isSubclassOf(expectedClass)) {
                 // `B x = new A;`
                 throw e;
             }
-        } else if (exp.getType().isArray()) {
+        } else if (right.getType().isArray()) {
             if (!expectedType.isArray()) {
                 // `int x = new int[10];`
                 throw e;
             }
 
-            if (exp.getType().getBaseType() != expectedType.getBaseType()) {
+            if (right.getType().getBaseType() != expectedType.getBaseType()) {
                 // `boolean[] x = new int[10];`
                 throw e;
             }
 
-            if (exp.getType().getDimension() != expectedType.getDimension()) {
+            if (right.getType().getDimension() != expectedType.getDimension()) {
                 // `int[] x = new int[10][20][30];`
                 throw e;
             }
-        } else if (exp.getType() != expectedType) {
+        } else if (right.getType() != expectedType) {
             // `int x = true;`
             throw e;
         }
 
         return new Ass(
-            s.expr_1.accept(new ExprVisitor(), env),
-            exp
+            left.getParentExp(),
+            right
         );
     }
 

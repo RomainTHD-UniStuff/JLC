@@ -8,15 +8,11 @@ import fr.rthd.jlc.TypeCode;
  */
 public class InvalidAssignmentTypeException extends TypeException {
     public InvalidAssignmentTypeException(
-        String varName,
         TypeCode expected,
-        TypeCode actual,
-        boolean isVar
+        TypeCode actual
     ) {
         super(String.format(
-            "Invalid assignment to %s `%s` from type `%s` to type `%s`",
-            isVar ? "variable" : "argument",
-            varName,
+            "Invalid assignment to variable from type `%s` to type `%s`",
             actual.getRealName(),
             expected.getRealName()
         ));
@@ -27,6 +23,11 @@ public class InvalidAssignmentTypeException extends TypeException {
         TypeCode expected,
         TypeCode actual
     ) {
-        this(varName, expected, actual, false);
+        super(String.format(
+            "Invalid assignment to argument `%s` from type `%s` to type `%s`",
+            varName,
+            actual.getRealName(),
+            expected.getRealName()
+        ));
     }
 }
