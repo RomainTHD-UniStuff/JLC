@@ -5,7 +5,6 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
-import fr.rthd.jlc.internal.Unannotater;
 import fr.rthd.jlc.optimizer.Optimizer;
 import fr.rthd.jlc.typechecker.TypeChecker;
 import fr.rthd.jlc.typechecker.exception.TypeException;

@@ -1,4 +1,4 @@
-package fr.rthd.jlc.internal;
+package fr.rthd.jlc;
 
 import fr.rthd.jlc.Visitor;
 import fr.rthd.jlc.env.ClassType;
