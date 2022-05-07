@@ -11,6 +11,7 @@ import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidDeclaredTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidExpressionTypeException;
+import fr.rthd.jlc.typechecker.exception.InvalidForTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidOperationException;
 import fr.rthd.jlc.typechecker.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typechecker.exception.NoSuchClassException;
@@ -370,7 +371,23 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      */
     @Override
     public For visit(For s, EnvTypecheck env) {
-        throw new NotImplementedException();
+        TypeCode varType = s.type_.accept(new TypeVisitor(), null);
+        AnnotatedExpr<?> expr = s.expr_.accept(new ExprVisitor(), env);
+
+        if (!expr.getType().isArray()) {
+            throw new InvalidForTypeException(varType, expr.getType());
+        }
+
+        if (expr.getType().getDimension() != varType.getDimension() + 1) {
+            throw new InvalidForTypeException(varType, expr.getType());
+        }
+
+        env.enterScope();
+        env.insertVar(s.ident_, varType);
+        Stmt stmt = s.stmt_.accept(new StmtVisitor(), env);
+        env.leaveScope();
+
+        return new For(s.type_, s.ident_, expr, stmt);
     }
 
     /**

@@ -284,7 +284,7 @@ public class TypeCode {
         if (isArray()) {
             return _size;
         } else {
-            throw new UnsupportedOperationException("Not an array");
+            return 0;
         }
     }
 
