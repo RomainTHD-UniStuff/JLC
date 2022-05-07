@@ -5,10 +5,9 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
-import fr.rthd.jlc.internal.Unannotater;
 import fr.rthd.jlc.optimizer.Optimizer;
-import fr.rthd.jlc.typecheck.TypeChecker;
-import fr.rthd.jlc.typecheck.exception.TypeException;
+import fr.rthd.jlc.typechecker.TypeChecker;
+import fr.rthd.jlc.typechecker.exception.TypeException;
 import javalette.Absyn.Prog;
 import javalette.PrettyPrinter;
 import javalette.Yylex;
@@ -121,7 +120,7 @@ public class Main {
 
         // HACK: The grammar doesn't support `int [ ] t;`, so we replace it with
         //  `int [] t;`
-        lexerInput = lexerInput.replaceAll("\\[ +]", "[]");
+        lexerInput = lexerInput.replaceAll("\\[[\\t\\s \\n\\r]+]", "[]");
         Yylex lex = new Yylex(new StringReader(lexerInput));
 
         try {

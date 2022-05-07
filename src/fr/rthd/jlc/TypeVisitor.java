@@ -1,6 +1,5 @@
 package fr.rthd.jlc;
 
-import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.BaseType;
 import javalette.Absyn.Bool;
 import javalette.Absyn.Class;
@@ -23,10 +22,12 @@ import static fr.rthd.jlc.TypeCode.CVoid;
 public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visitor<TypeCode, Void> {
     @Override
     public TypeCode visit(TType p, Void ignored) {
-        if (p.listdim_.size() != 0) {
-            throw new NotImplementedException();
+        TypeCode base = p.basetype_.accept(new TypeVisitor(), null);
+        if (p.listdim_.size() == 0) {
+            return base;
+        } else {
+            return TypeCode.forArray(base, p.listdim_.size());
         }
-        return p.basetype_.accept(new TypeVisitor(), null);
     }
 
     /**
