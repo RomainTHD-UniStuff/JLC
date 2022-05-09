@@ -130,10 +130,11 @@ public class InstructionBuilder {
         int attributeLocation
     ) {
         return new Instruction(String.format(
-            "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
+            "%s = getelementptr %s, %s%s %s, i32 0, i32 %d",
             dst,
             thisVar.getType(),
             thisVar.getType(),
+            "*".repeat(thisVar.getPointerLevel()),
             thisVar,
             attributeLocation
         ));
@@ -721,7 +722,7 @@ public class InstructionBuilder {
         @NotNull Variable tmp,
         @NotNull OperationItem len,
         @NotNull TypeCode item
-        ) {
+    ) {
         Instruction i = new Instruction();
         List<OperationItem> args = new ArrayList<>();
         args.add(len);
@@ -729,5 +730,28 @@ public class InstructionBuilder {
         i.add(call(tmp, "calloc", args));
         i.add(cast(dst, tmp, dst.getType()));
         return i;
+    }
+
+    /**
+     * Array index access
+     * @param dst Destination variable
+     * @param src Array content
+     * @param index
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction loadIndex(
+        @NotNull Variable dst,
+        @NotNull Variable src,
+        @NotNull OperationItem index
+    ) {
+        return new Instruction(String.format(
+            "%s = getelementptr inbounds %s, %s* %s, i32 %s",
+            dst,
+            src.getType(),
+            src.getType(),
+            src,
+            index
+        ));
     }
 }

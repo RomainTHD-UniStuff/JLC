@@ -248,7 +248,35 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EIndex p, EnvCompiler env) {
-        throw new NotImplementedException();
+        // TODO: Multidimensional arrays
+
+        OperationItem left = p.expr_.accept(new ExprVisitor(), env);
+        OperationItem index = p.index_.accept(new IndexVisitor(), env);
+
+        TypeCode elemType = TypeCode.forArray(
+            left.getType().getBaseType(),
+            left.getType().getDimension() - 1 - p.listindex_.size()
+        );
+
+        if (!p.listindex_.isEmpty()) {
+            throw new NotImplementedException(
+                "Multidimensional arrays not supported yet"
+            );
+        }
+
+        Variable contentPtr = env.createTempVar(elemType, "array_content", 2);
+        env.emit(env.instructionBuilder.loadAttribute(contentPtr, left, 1));
+
+        Variable content = env.createTempVar(contentPtr.getType(), "array_content", 1);
+        env.emit(env.instructionBuilder.load(content, contentPtr));
+
+        Variable ptr = env.createTempVar(elemType, "array_access", 1);
+        env.emit(env.instructionBuilder.loadIndex(ptr, content, index));
+
+        Variable value = env.createTempVar(ptr.getType(), "array_access");
+        env.emit(env.instructionBuilder.load(value, ptr));
+
+        return value;
     }
 
     /**
