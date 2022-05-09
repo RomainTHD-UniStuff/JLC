@@ -126,7 +126,7 @@ public class InstructionBuilder {
     @NotNull
     public Instruction loadAttribute(
         @NotNull Variable dst,
-        @NotNull Variable thisVar,
+        @NotNull OperationItem thisVar,
         int attributeLocation
     ) {
         return new Instruction(String.format(

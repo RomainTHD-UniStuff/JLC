@@ -221,11 +221,32 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
     }
 
+    /**
+     * Dot operator. Method calls are already checked in visit(EApp), so the
+     * only attribute allowed should be `length` for arrays
+     * @param p Dot operator
+     * @param env Environment
+     * @return Operation result
+     */
     @Override
     public OperationItem visit(EDot p, EnvCompiler env) {
-        throw new NotImplementedException();
+        OperationItem left = p.expr_.accept(new ExprVisitor(), env);
+
+        //
+        assert p.ident_.equals("length");
+        assert left.getType().isArray();
+
+        Variable res = env.createTempVar(CInt, "array_length");
+        env.emit(env.instructionBuilder.loadAttribute(res, left, 0));
+        return res;
     }
 
+    /**
+     * Array access
+     * @param p Array access
+     * @param env Environment
+     * @return Operation result
+     */
     @Override
     public OperationItem visit(EIndex p, EnvCompiler env) {
         throw new NotImplementedException();
