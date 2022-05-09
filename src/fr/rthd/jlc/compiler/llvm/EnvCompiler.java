@@ -224,8 +224,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Create a temporary variable that is a pointer
      * @param type Variable type
-     * @param ctx Context, like "if", "while", etc. Only used here for `and`
-     *     and `or`
+     * @param ctx Context, like "if", "while", etc
      * @param pointerLevel Pointer level
      * @return Temporary variable
      */
