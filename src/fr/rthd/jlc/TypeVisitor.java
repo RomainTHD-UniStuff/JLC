@@ -3,11 +3,14 @@ package fr.rthd.jlc;
 import javalette.Absyn.BaseType;
 import javalette.Absyn.Bool;
 import javalette.Absyn.Class;
+import javalette.Absyn.DimenT;
 import javalette.Absyn.Doub;
 import javalette.Absyn.Int;
+import javalette.Absyn.ListDim;
 import javalette.Absyn.TType;
 import javalette.Absyn.Type;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import static fr.rthd.jlc.TypeCode.CBool;
 import static fr.rthd.jlc.TypeCode.CDouble;
@@ -20,6 +23,33 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  */
 @NonNls
 public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visitor<TypeCode, Void> {
+    @NotNull
+    public static Type getTypeFromTypecode(@NotNull TypeCode typecode) {
+        BaseType base;
+        if (CBool.equals(typecode)) {
+            base = new Bool();
+        } else if (CInt.equals(typecode)) {
+            base = new Int();
+        } else if (CDouble.equals(typecode)) {
+            base = new Doub();
+        } else if (CVoid.equals(typecode)) {
+            base = new javalette.Absyn.Void();
+        } else if (typecode.isObject()) {
+            base = new javalette.Absyn.Class(typecode.getRealName());
+        } else {
+            throw new IllegalArgumentException(
+                "Unknown type code: " + typecode
+            );
+        }
+
+        ListDim listdim = new ListDim();
+        for (int i = 0; i < typecode.getDimension(); ++i) {
+            listdim.add(new DimenT());
+        }
+
+        return new TType(base, listdim);
+    }
+
     @Override
     public TypeCode visit(TType p, Void ignored) {
         TypeCode base = p.basetype_.accept(new TypeVisitor(), null);
