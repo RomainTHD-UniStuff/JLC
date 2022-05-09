@@ -91,7 +91,10 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
         if (_value == Value.RValue
-            && (var.getPointerLevel() > 1 || var.getType().isPrimitive())
+            && (
+                (var.getType().isPrimitive() && var.getPointerLevel() > 0)
+                || var.getPointerLevel() > 1
+            )
         ) {
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
