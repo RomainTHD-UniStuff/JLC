@@ -287,6 +287,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             t = TypeCode.forArray(t, e.listindex_.size());
         }
 
+        for (int i = 0; i < e.listindex_.size(); ++i) {
+            // Populate all intermediate types, used for compiler
+            TypeCode.forArray(t, i);
+        }
+
         ListIndex listIndex = new ListIndex();
         for (int i = 0; i < e.listindex_.size(); ++i) {
             listIndex.add(e.listindex_.get(i).accept(

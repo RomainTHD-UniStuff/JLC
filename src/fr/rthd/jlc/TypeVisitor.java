@@ -26,6 +26,11 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visit
         if (p.listdim_.size() == 0) {
             return base;
         } else {
+            for (int i = 0; i < p.listdim_.size(); ++i) {
+                // Populate all intermediate types, used for compiler
+                TypeCode.forArray(base, i);
+            }
+
             return TypeCode.forArray(base, p.listdim_.size());
         }
     }

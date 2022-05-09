@@ -688,4 +688,23 @@ public class InstructionBuilder {
             classType
         ));
     }
+
+    /**
+     * Array definition
+     * @param type Array type
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction arrayDef(@NotNull TypeCode type) {
+        assert type.isArray();
+        Instruction i = new Instruction();
+        i.add(comment("Array definition: " + type.getRealName()));
+        i.add(new Instruction(String.format(
+            "%s = type { %s, %s* }",
+            type,
+            TypeCode.CInt,
+            TypeCode.forArray(type.getBaseType(), type.getDimension() - 1)
+        )));
+        return i;
+    }
 }

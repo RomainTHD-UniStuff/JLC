@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -230,7 +231,11 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                baseType.getAssemblyName(),
+                String.format(
+                    "%%Array_%s_%dD",
+                    baseType.getRealName(),
+                    dimension
+                ),
                 null,
                 dimension,
                 false,
@@ -240,6 +245,15 @@ public class TypeCode {
         }
 
         return typeCode;
+    }
+
+    /**
+     * Get all non-primitive types
+     * @return All non-primitive types
+     */
+    @NotNull
+    public static Collection<TypeCode> getAllComplexTypes() {
+        return _pool.values();
     }
 
     @Contract(pure = true)

@@ -1,5 +1,6 @@
 package fr.rthd.jlc.compiler.llvm;
 
+import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Prog;
@@ -27,6 +28,16 @@ class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
             if (fun.isExternal()) {
                 // External functions are not emitted, only declared
                 env.emit(env.instructionBuilder.declareExternalFunction(fun));
+            }
+        }
+
+        env.emit(env.instructionBuilder.newLine());
+
+        for (TypeCode t : TypeCode.getAllComplexTypes()) {
+            // Emit all array types used in the program
+            if (t.isArray()) {
+                env.emit(env.instructionBuilder.arrayDef(t));
+                env.emit(env.instructionBuilder.newLine());
             }
         }
 
