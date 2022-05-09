@@ -4,6 +4,7 @@ import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Cond;
@@ -74,9 +75,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Ass p, EnvCompiler env) {
-        String varName = ((EVar) p.expr_1).ident_;
-
-        Variable dst = env.lookupVar(varName);
+        OperationItem dst = p.expr_1.accept(new ExprVisitor(Value.LValue), env);
         assert dst != null;
         assert dst.getPointerLevel() != 0;
 

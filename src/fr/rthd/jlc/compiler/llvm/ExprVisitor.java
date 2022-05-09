@@ -9,6 +9,7 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -30,6 +31,7 @@ import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +48,27 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  */
 @NonNls
 class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+    /**
+     * LValue or RValue
+     */
+    @NotNull
+    private final Value _value;
+
+    /**
+     * Constructor
+     */
+    public ExprVisitor() {
+        _value = Value.RValue;
+    }
+
+    /**
+     * Constructor
+     * @param value LValue or RValue
+     */
+    public ExprVisitor(@NotNull Value value) {
+        _value = value;
+    }
+
     /**
      * Null literal
      * @param p Null literal
@@ -67,8 +90,9 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
-        if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
-            || var.getPointerLevel() > 1) {
+        if (_value == Value.RValue
+            && (var.getPointerLevel() > 1 || var.getType().isPrimitive())
+        ) {
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
                 var.getSourceName()
@@ -267,16 +291,24 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         Variable contentPtr = env.createTempVar(elemType, "array_content", 2);
         env.emit(env.instructionBuilder.loadAttribute(contentPtr, left, 1));
 
-        Variable content = env.createTempVar(contentPtr.getType(), "array_content", 1);
+        Variable content = env.createTempVar(
+            contentPtr.getType(),
+            "array_content",
+            1
+        );
         env.emit(env.instructionBuilder.load(content, contentPtr));
 
         Variable ptr = env.createTempVar(elemType, "array_access", 1);
         env.emit(env.instructionBuilder.loadIndex(ptr, content, index));
 
-        Variable value = env.createTempVar(ptr.getType(), "array_access");
-        env.emit(env.instructionBuilder.load(value, ptr));
+        if (_value == Value.RValue) {
+            Variable value = env.createTempVar(ptr.getType(), "array_access");
+            env.emit(env.instructionBuilder.load(value, ptr));
 
-        return value;
+            return value;
+        } else {
+            return ptr;
+        }
     }
 
     /**

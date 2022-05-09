@@ -67,7 +67,7 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction store(
-        @NotNull Variable dst,
+        @NotNull OperationItem dst,
         @NotNull OperationItem src
     ) {
         return new Instruction(String.format(
