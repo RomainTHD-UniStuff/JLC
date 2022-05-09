@@ -68,7 +68,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
         if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
-            || (var.getType().isObject()) && var.getPointerLevel() > 1) {
+            || var.getPointerLevel() > 1) {
             Variable tmp = env.createTempVar(var.getType(), String.format(
                 "var_%s",
                 var.getSourceName()
@@ -232,7 +232,6 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     public OperationItem visit(EDot p, EnvCompiler env) {
         OperationItem left = p.expr_.accept(new ExprVisitor(), env);
 
-        //
         assert p.ident_.equals("length");
         assert left.getType().isArray();
 

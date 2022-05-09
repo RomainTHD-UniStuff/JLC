@@ -56,8 +56,8 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
     public Void visit(NoInit p, EnvCompiler env) {
         env.insertVar(
             p.ident_,
-            env.createVar(_type, p.ident_, _type.isObject() ? 2 : 1)
-            // Objects are allowed to be null
+            env.createVar(_type, p.ident_, _type.isPrimitive() ? 1 : 2)
+            // Objects and arrays are allowed to be null pointers
         );
         // FIXME: Why lookup here?
         Variable v = env.lookupVar(p.ident_);
@@ -85,6 +85,7 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             _type,
             p.ident_,
             _type.isPrimitive() ? 1 : 2
+            // Objects and arrays are allowed to be null pointers
         );
         env.emit(env.instructionBuilder.declare(var));
         OperationItem value = p.expr_.accept(new ExprVisitor(), env);
