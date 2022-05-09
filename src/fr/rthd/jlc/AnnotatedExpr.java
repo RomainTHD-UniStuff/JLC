@@ -1,5 +1,6 @@
 package fr.rthd.jlc;
 
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.ELitDoub;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
@@ -34,13 +35,35 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
     private final TypeCode _type;
 
     /**
+     * Expression value
+     */
+    @NotNull
+    private final Value _value;
+
+    /**
      * Constructor
      * @param expType Expression type
      * @param parentExp Parent expression
      */
     public AnnotatedExpr(@NotNull TypeCode expType, @NotNull T parentExp) {
+        this(expType, parentExp, Value.RValue);
+    }
+
+    /**
+     * Constructor
+     * @param expType Expression type
+     * @param parentExp Parent expression
+     * @param value Expression value
+     * @see Value
+     */
+    public AnnotatedExpr(
+        @NotNull TypeCode expType,
+        @NotNull T parentExp,
+        @NotNull Value value
+    ) {
         _type = expType;
         _parentExp = parentExp;
+        _value = value;
     }
 
     /**
@@ -96,5 +119,15 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
     @NotNull
     public TypeCode getType() {
         return _type;
+    }
+
+    /**
+     * @return Expression value
+     * @see Value
+     */
+    @Contract(pure = true)
+    @NotNull
+    public Value getValue() {
+        return _value;
     }
 }

@@ -17,6 +17,7 @@ import fr.rthd.jlc.typechecker.exception.NoSuchClassException;
 import fr.rthd.jlc.typechecker.exception.NoSuchFunctionException;
 import fr.rthd.jlc.typechecker.exception.NoSuchVariableException;
 import fr.rthd.jlc.typechecker.exception.SelfOutOfClassException;
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -41,6 +42,7 @@ import javalette.Absyn.Mod;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Expression visitor, will typecheck an expression and return an annotated
@@ -50,6 +52,27 @@ import org.jetbrains.annotations.NonNls;
  */
 @NonNls
 class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
+    /**
+     * LValue or RValue
+     */
+    @NotNull
+    private final Value _value;
+
+    /**
+     * Constructor
+     */
+    public ExprVisitor() {
+        _value = Value.RValue;
+    }
+
+    /**
+     * Constructor
+     * @param value LValue or RValue
+     */
+    public ExprVisitor(@NotNull Value value) {
+        _value = value;
+    }
+
     /**
      * Variable
      * @param e Variable
@@ -70,7 +93,12 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             throw new NoSuchVariableException(e.ident_);
         }
 
-        return new AnnotatedExpr<>(varType, e);
+        return new AnnotatedExpr<>(
+            varType,
+            e,
+            e.ident_.equals("self") ? Value.RValue : _value
+            // Expressions using `self` are always RValue
+        );
     }
 
     /**
@@ -178,7 +206,9 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
         return new AnnotatedExpr<>(
             funcType.getRetType(),
-            new EApp(e.expr_, exps)
+            new EApp(e.expr_, exps),
+            funcType.getRetType().isArray() ? _value : Value.RValue
+            // `f()` is always a RValue, but `f()[n]` can be a LValue
         );
     }
 
@@ -243,7 +273,8 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
         return new AnnotatedExpr<>(
             TypeCode.forArray(expr.getType().getBaseType(), newDim),
-            new EIndex(expr, idx, indexes)
+            new EIndex(expr, idx, indexes),
+            expr.getValue() == Value.RValue ? Value.RValue : _value
         );
     }
 
