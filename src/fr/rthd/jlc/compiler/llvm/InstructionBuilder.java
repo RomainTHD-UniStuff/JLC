@@ -120,23 +120,22 @@ public class InstructionBuilder {
     /**
      * Load a class attribute in memory
      * @param dst Destination variable
-     * @param arg Attribute location
+     * @param attributeLocation Attribute location
      * @return Instruction
      */
     @NotNull
     public Instruction loadAttribute(
         @NotNull Variable dst,
         @NotNull Variable thisVar,
-        int arg
+        int attributeLocation
     ) {
-        // FIXME: Ugly use of int
         return new Instruction(String.format(
             "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
             dst,
             thisVar.getType(),
             thisVar.getType(),
             thisVar,
-            arg
+            attributeLocation
         ));
     }
 
@@ -649,20 +648,20 @@ public class InstructionBuilder {
      * `new` call, using malloc
      * @param dst Destination variable
      * @param tmp Temporary variable
-     * @param c Class
+     * @param size Size of the object to allocate
      * @return Instruction
      */
     @NotNull
     public Instruction newObject(
         @NotNull Variable dst,
         @NotNull Variable tmp,
-        @NotNull ClassType c
+        int size
     ) {
         Instruction i = new Instruction();
         List<OperationItem> args = new ArrayList<>();
-        args.add(new Literal(TypeCode.CInt, c.getSize()));
+        args.add(new Literal(TypeCode.CInt, size));
         i.add(call(tmp, "malloc", args));
-        i.add(cast(dst, tmp, c.getType()));
+        i.add(cast(dst, tmp, dst.getType()));
         return i;
     }
 
@@ -705,6 +704,30 @@ public class InstructionBuilder {
             TypeCode.CInt,
             TypeCode.forArray(type.getBaseType(), type.getDimension() - 1)
         )));
+        return i;
+    }
+
+    /**
+     * Array content allocation
+     * @param dst Destination variable
+     * @param tmp Temp variable
+     * @param len Array length
+     * @param item Item type
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction arrayAlloc(
+        @NotNull Variable dst,
+        @NotNull Variable tmp,
+        @NotNull OperationItem len,
+        @NotNull TypeCode item
+        ) {
+        Instruction i = new Instruction();
+        List<OperationItem> args = new ArrayList<>();
+        args.add(len);
+        args.add(new Literal(TypeCode.CInt, item.getSize()));
+        i.add(call(tmp, "calloc", args));
+        i.add(cast(dst, tmp, dst.getType()));
         return i;
     }
 }

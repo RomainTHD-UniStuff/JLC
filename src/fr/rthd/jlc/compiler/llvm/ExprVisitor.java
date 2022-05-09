@@ -270,32 +270,86 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
-        TypeCode classType = p.basetype_.accept(new TypeVisitor(), null);
+        TypeCode type = TypeCode.forArray(
+            p.basetype_.accept(new TypeVisitor(), null),
+            p.listindex_.size()
+        );
+
         Variable ref = env.createTempVar(
-            classType,
-            "new_" + classType.getRealName(),
+            type,
+            "new_" + type.getReadableAssemblyName(),
             1
         );
+        env.insertVar(ref.getName(), ref);
 
         Variable tmp = env.createTempVar(
             TypeCode.CRawPointer,
-            "malloc_" + classType.getRealName()
+            "malloc_" + type.getReadableAssemblyName()
         );
 
-        ClassType c = env.lookupClass(classType);
-        assert c != null;
+        int size = type.getSize();
+        if (type.isObject()) {
+            // For objects, the size needs to be looked up in the class
+            ClassType c = env.lookupClass(type);
+            assert c != null;
+            size = c.getSize();
+        }
 
-        env.insertVar(ref.getName(), ref);
-        env.emit(env.instructionBuilder.newObject(ref, tmp, c));
+        env.emit(env.instructionBuilder.newObject(ref, tmp, size));
 
-        // Call the constructor, which is a method of the object
-        new EApp(
-            new EDot(
-                new EVar(ref.getName()),
-                ClassType.CONSTRUCTOR_NAME
-            ),
-            new ListExpr()
-        ).accept(new ExprVisitor(), env);
+        if (type.isObject()) {
+            // Call the constructor, which is a method of the object
+            new EApp(
+                new EDot(
+                    new EVar(ref.getName()),
+                    ClassType.CONSTRUCTOR_NAME
+                ),
+                new ListExpr()
+            ).accept(new ExprVisitor(), env);
+        } else if (type.isArray()) {
+            // TODO: Multi-dimensional arrays
+            Variable lenField = env.createTempVar(CInt, "array_length", 1);
+
+            OperationItem len = p.listindex_.get(0).accept(
+                new IndexVisitor(),
+                env
+            );
+
+            env.emit(env.instructionBuilder.loadAttribute(lenField, ref, 0));
+            env.emit(env.instructionBuilder.store(lenField, len));
+
+            TypeCode contentType = TypeCode.forArray(
+                type.getBaseType(),
+                type.getDimension() - 1
+            );
+            Variable contentField = env.createTempVar(
+                contentType,
+                "array_content",
+                2
+            );
+            Variable contentPtr = env.createTempVar(
+                contentType,
+                "array_content_ptr",
+                1
+            );
+            Variable contentTmp = env.createTempVar(
+                TypeCode.CRawPointer,
+                "array_content_ptr"
+                // Hack, but no pointer because CRawPointer is already a pointer
+            );
+            env.emit(env.instructionBuilder.loadAttribute(
+                contentField,
+                ref,
+                1
+            ));
+            env.emit(env.instructionBuilder.arrayAlloc(
+                contentPtr,
+                contentTmp,
+                len,
+                contentType
+            ));
+            env.emit(env.instructionBuilder.store(contentField, contentPtr));
+        }
 
         return ref;
     }
