@@ -2,13 +2,17 @@ package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.compiler.Literal;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
+import javalette.Absyn.EVar;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
 import javalette.Absyn.NoInit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import static fr.rthd.jlc.TypeCode.CInt;
 
 /**
  * Declaration visitor
@@ -69,6 +73,18 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
                 v,
                 AnnotatedExpr.getDefaultValue(_type)
                              .accept(new ExprVisitor(), env)
+            ));
+        } else if (_type.isArray()) {
+            // If array type, length is 0
+            Variable lenField = env.createTempVar(CInt, "array_length", 1);
+            OperationItem array = new EVar(p.ident_).accept(
+                new ExprVisitor(),
+                env
+            );
+            env.emit(env.instructionBuilder.loadAttribute(lenField, array, 0));
+            env.emit(env.instructionBuilder.store(
+                lenField,
+                new Literal(CInt, 0)
             ));
         }
         return null;
