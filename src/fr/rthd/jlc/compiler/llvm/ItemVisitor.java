@@ -61,15 +61,14 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(NoInit p, EnvCompiler env) {
-        env.insertVar(
+        Variable v = env.createVar(
+            _type,
             p.ident_,
-            env.createVar(_type, p.ident_, _type.isPrimitive() ? 1 : 2)
-            // Objects are allowed to be null pointers. Arrays as well in
-            //  theory, but to make it easier to use, we don't allow them
+            _type.isPrimitive() ? 1 : 2
         );
-        // FIXME: Why lookup here?
-        Variable v = env.lookupVar(p.ident_);
-        assert v != null;
+        // Objects are allowed to be null pointers. Arrays as well in
+        //  theory, but to make it easier to use, we don't allow them
+        env.insertVar(p.ident_, v);
         env.emit(env.instructionBuilder.declare(v));
         if (_type.isPrimitive()) {
             // If primitive type, initialize with default value
