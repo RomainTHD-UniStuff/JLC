@@ -262,9 +262,13 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         assert p.ident_.equals("length");
         assert left.getType().isArray();
 
-        Variable res = env.createTempVar(CInt, "array_length");
+        Variable res = env.createTempVar(CInt, "array_length_ptr", 1);
         env.emit(env.instructionBuilder.loadAttribute(res, left, 0));
-        return res;
+
+        Variable out = env.createTempVar(CInt, "array_length");
+        env.emit(env.instructionBuilder.load(out, res));
+
+        return out;
     }
 
     /**
