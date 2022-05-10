@@ -7,7 +7,6 @@ import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
-import fr.rthd.jlc.internal.NotImplementedException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Instruction builder for LLVM
+ * Instruction builder for LLVM. Quite critical section, so `String.format`
+ * shouldn't be used, as it is several magnitudes slower.
  * @author RomainTHD
  */
 @NonNls
@@ -38,9 +38,7 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction comment(@NotNull String comment) {
-        return new Instruction(
-            String.format("; %s", comment)
-        );
+        return new Instruction("; " + comment);
     }
 
     /**
@@ -67,18 +65,22 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction store(
-        @NotNull Variable dst,
+        @NotNull OperationItem dst,
         @NotNull OperationItem src
     ) {
-        return new Instruction(String.format(
-            "store %s%s %s, %s%s %s",
-            src.getType(),
-            "*".repeat(src.getPointerLevel()),
-            src,
-            src.getType(),
-            "*".repeat(dst.getPointerLevel()),
-            dst
-        ));
+        // "store %s%s %s, %s%s %s"
+        return new Instruction(
+            "store "
+            + src.getType()
+            + "*".repeat(src.getPointerLevel())
+            + " "
+            + src
+            + ", "
+            + src.getType()
+            + "*".repeat(dst.getPointerLevel())
+            + " "
+            + dst
+        );
     }
 
     /**
@@ -89,55 +91,45 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction load(@NotNull Variable dst, @NotNull Variable src) {
-        return new Instruction(String.format(
-            "%s = load %s%s, %s%s %s",
-            dst,
-            dst.getType(),
-            "*".repeat(dst.getPointerLevel()),
-            dst.getType(),
-            "*".repeat(dst.getPointerLevel() + 1),
-            src
-        ));
-    }
-
-    /**
-     * Load a double pointer in memory to a single pointer variable
-     * @param dst Destination variable
-     * @param src Source variable
-     * @return Instruction
-     */
-    @NotNull
-    public Instruction loadDeref(@NotNull Variable dst, @NotNull Variable src) {
-        return new Instruction(String.format(
-            "%s = load %s*, %s** %s",
-            dst,
-            dst.getType(),
-            dst.getType(),
-            src
-        ));
+        // "%s = load %s%s, %s%s %s"
+        return new Instruction(
+            dst
+            + " = load "
+            + dst.getType()
+            + "*".repeat(dst.getPointerLevel())
+            + ", "
+            + dst.getType()
+            + "*".repeat(dst.getPointerLevel() + 1)
+            + " "
+            + src
+        );
     }
 
     /**
      * Load a class attribute in memory
      * @param dst Destination variable
-     * @param arg Attribute location
+     * @param attributeLocation Attribute location
      * @return Instruction
      */
     @NotNull
     public Instruction loadAttribute(
         @NotNull Variable dst,
-        @NotNull Variable thisVar,
-        int arg
+        @NotNull OperationItem thisVar,
+        int attributeLocation
     ) {
-        // FIXME: Ugly use of int
-        return new Instruction(String.format(
-            "%s = getelementptr %s, %s* %s, i32 0, i32 %d",
-            dst,
-            thisVar.getType(),
-            thisVar.getType(),
-            thisVar,
-            arg
-        ));
+        // "%s = getelementptr %s, %s%s %s, i32 0, i32 %d"
+        return new Instruction(
+            dst
+            + " = getelementptr "
+            + thisVar.getType()
+            + ", "
+            + thisVar.getType()
+            + "*".repeat(thisVar.getPointerLevel())
+            + ""
+            + thisVar
+            + ", i32 0, i32 "
+            + attributeLocation
+        );
     }
 
     /**
@@ -147,13 +139,14 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction declare(@NotNull Variable dst) {
+        // "%s = alloca %s%s"
         assert dst.getPointerLevel() != 0;
-        return new Instruction(String.format(
-            "%s = alloca %s%s",
-            dst,
-            dst.getType(),
-            "*".repeat(dst.getPointerLevel() - 1)
-        ));
+        return new Instruction(
+            dst
+            + " = alloca "
+            + dst.getType()
+            + "*".repeat(dst.getPointerLevel() - 1)
+        );
     }
 
     /**
@@ -171,23 +164,29 @@ public class InstructionBuilder {
         @NotNull String funcName,
         @NotNull List<Variable> args
     ) {
-        return new Instruction(String.format(
-            "define %s%s @%s(%s) nounwind \"nosync\" \"nofree\" {",
-            retType,
-            (retType.isPrimitive() ? "" : "*"),
-            parentClass == null
-            ? funcName
-            : parentClass.getAssemblyMethodName(funcName),
-            args.stream()
-                .map(arg -> String.format(
-                    "%s%s %%%s",
-                    arg.getType(),
-                    "*".repeat(arg.getPointerLevel()),
-                    arg.getName()
-                ))
-                .reduce((a, b) -> String.format("%s, %s", a, b))
-                .orElse("")
-        ));
+        // "define %s%s @%s(%s) nounwind \"nosync\" \"nofree\" {",
+        return new Instruction(
+            "define "
+            + retType
+            + (retType.isPrimitive() ? "" : "*")
+            + " @"
+            + (
+                parentClass == null
+                ? funcName
+                : parentClass.getAssemblyMethodName(funcName)
+            )
+            + "("
+            + args.stream()
+                  // "%s%s %%%s"
+                  .map(arg -> arg.getType()
+                              + "*".repeat(arg.getPointerLevel())
+                              + " %"
+                              + arg.getName()
+                  )
+                  .reduce((a, b) -> a + ", " + b)
+                  .orElse("")
+            + ") nounwind \"nosync\" \"nofree\" {"
+        );
     }
 
     /**
@@ -206,20 +205,21 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction declareExternalFunction(@NotNull FunType func) {
-        return new Instruction(String.format(
-            "declare %s @%s(%s)",
-            func.getRetType(),
-            func.getName(),
-            func.getArgs()
-                .stream()
-                .map(arg -> String.format(
-                    "%s %%%s",
-                    arg.getType(),
-                    arg.getName()
-                ))
-                .reduce((a, b) -> String.format("%s, %s", a, b))
-                .orElse("")
-        ));
+        // "declare %s @%s(%s)"
+        return new Instruction(
+            "declare "
+            + func.getRetType()
+            + " @"
+            + func.getName()
+            + "("
+            + func.getArgs()
+                  .stream()
+                  // "%s %%%s"
+                  .map(arg -> arg.getType() + " %" + arg.getName())
+                  .reduce((a, b) -> a + ", " + b)
+                  .orElse("")
+            + ")"
+        );
     }
 
     /**
@@ -249,22 +249,26 @@ public class InstructionBuilder {
         @NotNull String funcName,
         @NotNull List<OperationItem> args
     ) {
-        return new Instruction(String.format(
-            "%scall %s%s @%s(%s)",
-            dst == null ? "" : dst + " = ",
-            dst == null ? TypeCode.CVoid : dst.getType(),
-            dst == null ? "" : "*".repeat(dst.getPointerLevel()),
-            funcName,
-            args.stream()
-                .map(arg -> String.format(
-                    "%s%s %s",
-                    arg.getType(),
-                    "*".repeat(arg.getPointerLevel()),
-                    arg
-                ))
-                .reduce((a, b) -> String.format("%s, %s", a, b))
-                .orElse("")
-        ));
+        // "%scall %s%s @%s(%s)"
+        return new Instruction(
+            (dst == null ? "" : dst + " = ")
+            + "call "
+            + (dst == null ? TypeCode.CVoid : dst.getType())
+            + (dst == null ? "" : "*".repeat(dst.getPointerLevel()))
+            + " @"
+            + funcName
+            + "("
+            + args.stream()
+                  // "%s%s %s",
+                  .map(arg -> arg.getType()
+                              + "*".repeat(arg.getPointerLevel())
+                              + " "
+                              + arg
+                  )
+                  .reduce((a, b) -> a + ", " + b)
+                  .orElse("")
+            + ")"
+        );
     }
 
     /**
@@ -274,7 +278,7 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction label(@NotNull String labelName) {
-        Instruction i = new Instruction(String.format("%s:", labelName));
+        Instruction i = new Instruction(labelName + ":");
         i.setIndentable(false);
         return i;
     }
@@ -292,24 +296,18 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = %sadd %s %s, %s",
-            dst,
-            left.getType() == TypeCode.CDouble ? "f" : "",
-            left.getType(),
-            left,
-            right
-        ));
-    }
-
-    /**
-     * Increment a variable
-     * @param src Input variable
-     * @return Instruction
-     */
-    @NotNull
-    public Instruction increment(@NotNull Variable src) {
-        throw new NotImplementedException("Instruction not supported yet");
+        // "%s = %sadd %s %s, %s"
+        return new Instruction(
+            dst
+            + " = "
+            + (left.getType() == TypeCode.CDouble ? "f" : "")
+            + "add "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -325,24 +323,18 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = %ssub %s %s, %s",
-            dst,
-            left.getType() == TypeCode.CDouble ? "f" : "",
-            left.getType(),
-            left,
-            right
-        ));
-    }
-
-    /**
-     * Decrement a variable
-     * @param src Input variable
-     * @return Instruction
-     */
-    @NotNull
-    public Instruction decrement(@NotNull Variable src) {
-        throw new NotImplementedException("Instruction not supported yet");
+        // "%s = %ssub %s %s, %s"
+        return new Instruction(
+            dst
+            + " = "
+            + (left.getType() == TypeCode.CDouble ? "f" : "")
+            + "sub "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -358,14 +350,18 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = %smul %s %s, %s",
-            dst,
-            left.getType() == TypeCode.CDouble ? "f" : "",
-            left.getType(),
-            left,
-            right
-        ));
+        // "%s = %smul %s %s, %s"
+        return new Instruction(
+            dst
+            + " = "
+            + (left.getType() == TypeCode.CDouble ? "f" : "")
+            + "mul "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -381,14 +377,18 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = %cdiv %s %s, %s",
-            dst,
-            left.getType() == TypeCode.CDouble ? 'f' : 's',
-            left.getType(),
-            left,
-            right
-        ));
+        // "%s = %cdiv %s %s, %s"
+        return new Instruction(
+            dst
+            + " = "
+            + (left.getType() == TypeCode.CDouble ? "f" : "s")
+            + "div "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -404,13 +404,17 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = srem %s %s, %s",
-            dst,
-            left.getType(),
-            left,
-            right
-        ));
+        // "%s = srem %s %s, %s"
+        return new Instruction(
+            dst
+            + " = "
+            + "srem "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -428,17 +432,22 @@ public class InstructionBuilder {
         @NotNull ComparisonOperator operator,
         @NotNull OperationItem right
     ) {
+        // "%s = %ccmp %s %s%s %s, %s"
         // Example: "%temp = fcmp oeq double %x, %y"
-        return new Instruction(String.format(
-            "%s = %ccmp %s %s%s %s, %s",
-            dst,
-            left.getType() == TypeCode.CDouble ? 'f' : 'i',
-            ComparisonOperator.getOperand(operator, left.getType()),
-            left.getType(),
-            "*".repeat(left.getPointerLevel()),
-            left,
-            right
-        ));
+        return new Instruction(
+            dst
+            + " = "
+            + (left.getType() == TypeCode.CDouble ? 'f' : 'i')
+            + "cmp "
+            + ComparisonOperator.getOperand(operator, left.getType())
+            + " "
+            + left.getType()
+            + "*".repeat(left.getPointerLevel())
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -448,7 +457,7 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction jump(@NotNull String label) {
-        return new Instruction(String.format("br label %%%s", label));
+        return new Instruction("br label %" + label);
     }
 
     /**
@@ -464,12 +473,15 @@ public class InstructionBuilder {
         @NotNull String labelTrue,
         @NotNull String labelFalse
     ) {
-        return new Instruction(String.format(
-            "br i1 %s, label %%%s, label %%%s",
-            condition,
-            labelTrue,
-            labelFalse
-        ));
+        // "br i1 %s, label %%%s, label %%%s"
+        return new Instruction(
+            "br i1 "
+            + condition
+            + ", label %"
+            + labelTrue
+            + ", label %"
+            + labelFalse
+        );
     }
 
     /**
@@ -488,12 +500,14 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction ret(@NotNull OperationItem returned) {
-        return new Instruction(String.format(
-            "ret %s%s %s",
-            returned.getType(),
-            "*".repeat(returned.getPointerLevel()),
-            returned
-        ));
+        // "ret %s%s %s"
+        return new Instruction(
+            "ret "
+            + returned.getType()
+            + "*".repeat(returned.getPointerLevel())
+            + " "
+            + returned
+        );
     }
 
     /**
@@ -509,13 +523,16 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = and %s %s, %s",
-            dst,
-            left.getType(),
-            left,
-            right
-        ));
+        // "%s = and %s %s, %s"
+        return new Instruction(
+            dst
+            + " = and "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -531,13 +548,16 @@ public class InstructionBuilder {
         @NotNull OperationItem left,
         @NotNull OperationItem right
     ) {
-        return new Instruction(String.format(
-            "%s = or %s %s, %s",
-            dst,
-            left.getType(),
-            left,
-            right
-        ));
+        // "%s = or %s %s, %s"
+        return new Instruction(
+            dst
+            + " = or "
+            + left.getType()
+            + " "
+            + left
+            + ", "
+            + right
+        );
     }
 
     /**
@@ -551,12 +571,15 @@ public class InstructionBuilder {
         @NotNull Variable dst,
         @NotNull OperationItem src
     ) {
-        return new Instruction(String.format(
-            "%s = xor %s %s, 1",
-            dst,
-            src.getType(),
-            src
-        ));
+        // "%s = xor %s %s, 1"
+        return new Instruction(
+            dst
+            + " = xor "
+            + src.getType()
+            + " "
+            + src
+            + ", 1"
+        );
     }
 
     /**
@@ -571,12 +594,14 @@ public class InstructionBuilder {
         @NotNull Variable src
     ) {
         if (src.getType() == TypeCode.CDouble) {
-            return new Instruction(String.format(
-                "%s = fneg %s %s",
-                dst,
-                src.getType(),
-                src
-            ));
+            // "%s = fneg %s %s"
+            return new Instruction(
+                dst
+                + " = fneg "
+                + src.getType()
+                + " "
+                + src
+            );
         } else {
             return subtract(
                 dst,
@@ -597,12 +622,15 @@ public class InstructionBuilder {
         @NotNull Variable global,
         @NotNull String content
     ) {
-        return new Instruction(String.format(
-            "%s = private unnamed_addr constant [%d x i8] c\"%s\\00\", align 1",
-            global,
-            content.length() + 1,
-            content.replace("\n", "\\0A")
-        ));
+        // "%s = private unnamed_addr constant [%d x i8] c\"%s\\00\", align 1"
+        return new Instruction(
+            global
+            + " = private unnamed_addr constant ["
+            + (content.length() + 1)
+            + " x i8] c\""
+            + content.replace("\n", "\\0A")
+            + "\\00\", align 1"
+        );
     }
 
     /**
@@ -616,13 +644,17 @@ public class InstructionBuilder {
         @NotNull Variable dst,
         @NotNull Variable global
     ) {
-        return new Instruction(String.format(
-            "%s = getelementptr inbounds [%d x i8], [%d x i8]* %s, i32 0, i32 0",
-            dst,
-            global.getSize(),
-            global.getSize(),
-            global
-        ));
+        // "%s = getelementptr inbounds [%d x i8], [%d x i8]* %s, i32 0, i32 0"
+        return new Instruction(
+            dst
+            + " = getelementptr inbounds ["
+            + global.getSize()
+            + " x i8], ["
+            + global.getSize()
+            + " x i8]* "
+            + global
+            + ", i32 0, i32 0"
+        );
     }
 
     /**
@@ -636,33 +668,36 @@ public class InstructionBuilder {
         @NotNull String className,
         @NotNull List<TypeCode> members
     ) {
-        return new Instruction(String.format(
-            "%%%s = type { %s }",
-            className,
-            members.stream()
-                   .map(t -> t.toString() + (t.isPrimitive() ? "" : "*"))
-                   .collect(Collectors.joining(", "))
-        ));
+        // "%%%s = type { %s }"
+        return new Instruction(
+            "%"
+            + className
+            + " = type { "
+            + members.stream()
+                     .map(t -> t.toString() + (t.isPrimitive() ? "" : "*"))
+                     .collect(Collectors.joining(", "))
+            + " }"
+        );
     }
 
     /**
      * `new` call, using malloc
      * @param dst Destination variable
      * @param tmp Temporary variable
-     * @param c Class
+     * @param size Size of the object to allocate
      * @return Instruction
      */
     @NotNull
     public Instruction newObject(
         @NotNull Variable dst,
         @NotNull Variable tmp,
-        @NotNull ClassType c
+        int size
     ) {
         Instruction i = new Instruction();
         List<OperationItem> args = new ArrayList<>();
-        args.add(new Literal(TypeCode.CInt, c.getSize()));
+        args.add(new Literal(TypeCode.CInt, size));
         i.add(call(tmp, "malloc", args));
-        i.add(cast(dst, tmp, c.getType()));
+        i.add(cast(dst, tmp, dst.getType()));
         return i;
     }
 
@@ -679,13 +714,90 @@ public class InstructionBuilder {
         @NotNull OperationItem src,
         @NotNull TypeCode classType
     ) {
-        return new Instruction(String.format(
-            "%s = bitcast %s%s %s to %s*",
-            dst,
-            src.getType(),
-            "*".repeat(src.getPointerLevel()),
-            src,
-            classType
+        // "%s = bitcast %s%s %s to %s*"
+        return new Instruction(
+            dst
+            + " = bitcast "
+            + src.getType()
+            + "*".repeat(src.getPointerLevel())
+            + " "
+            + src
+            + " to "
+            + classType
+            + "*"
+        );
+    }
+
+    /**
+     * Array definition
+     * @param type Array type
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction arrayDef(@NotNull TypeCode type) {
+        assert type.isArray();
+        Instruction i = new Instruction();
+        i.add(comment("Array definition: " + type.getRealName()));
+        // "%s = type { %s, %s* }"
+        i.add(new Instruction(
+            type
+            + " = type { "
+            + TypeCode.CInt
+            + ", "
+            + TypeCode.forArray(type.getBaseType(), type.getDimension() - 1)
+            + "* }"
         ));
+        return i;
+    }
+
+    /**
+     * Array content allocation
+     * @param dst Destination variable
+     * @param tmp Temp variable
+     * @param len Array length
+     * @param item Item type
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction arrayAlloc(
+        @NotNull Variable dst,
+        @NotNull Variable tmp,
+        @NotNull OperationItem len,
+        @NotNull TypeCode item
+    ) {
+        Instruction i = new Instruction();
+        List<OperationItem> args = new ArrayList<>();
+        args.add(len);
+        args.add(new Literal(TypeCode.CInt, item.getSize()));
+        i.add(call(tmp, "calloc", args));
+        i.add(cast(dst, tmp, dst.getType()));
+        return i;
+    }
+
+    /**
+     * Array index access
+     * @param dst Destination variable
+     * @param src Array content
+     * @param index Index
+     * @return Instruction
+     */
+    @NotNull
+    public Instruction loadIndex(
+        @NotNull Variable dst,
+        @NotNull Variable src,
+        @NotNull OperationItem index
+    ) {
+        // "%s = getelementptr inbounds %s, %s* %s, i32 %s"
+        return new Instruction(
+            dst
+            + " = getelementptr inbounds "
+            + src.getType()
+            + ", "
+            + src.getType()
+            + "* "
+            + src
+            + ", i32 "
+            + index
+        );
     }
 }

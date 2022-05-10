@@ -5,6 +5,7 @@ import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunType;
+import fr.rthd.jlc.typechecker.exception.InvalidAssignmentException;
 import fr.rthd.jlc.typechecker.exception.InvalidAssignmentTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidConditionTypeException;
 import fr.rthd.jlc.typechecker.exception.InvalidDeclaredTypeException;
@@ -14,7 +15,7 @@ import fr.rthd.jlc.typechecker.exception.InvalidOperationException;
 import fr.rthd.jlc.typechecker.exception.InvalidReturnedTypeException;
 import fr.rthd.jlc.typechecker.exception.NoSuchClassException;
 import fr.rthd.jlc.typechecker.exception.NoSuchVariableException;
-import fr.rthd.jlc.typechecker.exception.TypeException;
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
 import javalette.Absyn.Cond;
@@ -99,19 +100,25 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
      */
     @Override
     public Ass visit(Ass s, EnvTypecheck env) {
-        AnnotatedExpr<?> left = s.expr_1.accept(new ExprVisitor(), env);
+        AnnotatedExpr<?> left = s.expr_1.accept(
+            new ExprVisitor(Value.LValue),
+            env
+        );
         TypeCode expectedType = left.getType();
 
+        if (left.getValue() != Value.LValue) {
+            throw new InvalidAssignmentException();
+        }
+
         AnnotatedExpr<?> right = s.expr_2.accept(new ExprVisitor(), env);
-        TypeException e = new InvalidAssignmentTypeException(
-            expectedType,
-            right.getType()
-        );
 
         if (right.getType().isObject()) {
             if (!expectedType.isObject()) {
                 // `int x = new A;`
-                throw e;
+                throw new InvalidAssignmentTypeException(
+                    expectedType,
+                    right.getType()
+                );
             }
 
             ClassType expectedClass = env.lookupClass(expectedType);
@@ -120,26 +127,41 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
             assert actualClass != null;
             if (!actualClass.isSubclassOf(expectedClass)) {
                 // `B x = new A;`
-                throw e;
+                throw new InvalidAssignmentTypeException(
+                    expectedType,
+                    right.getType()
+                );
             }
         } else if (right.getType().isArray()) {
             if (!expectedType.isArray()) {
                 // `int x = new int[10];`
-                throw e;
+                throw new InvalidAssignmentTypeException(
+                    expectedType,
+                    right.getType()
+                );
             }
 
             if (right.getType().getBaseType() != expectedType.getBaseType()) {
                 // `boolean[] x = new int[10];`
-                throw e;
+                throw new InvalidAssignmentTypeException(
+                    expectedType,
+                    right.getType()
+                );
             }
 
             if (right.getType().getDimension() != expectedType.getDimension()) {
                 // `int[] x = new int[10][20][30];`
-                throw e;
+                throw new InvalidAssignmentTypeException(
+                    expectedType,
+                    right.getType()
+                );
             }
         } else if (right.getType() != expectedType) {
             // `int x = true;`
-            throw e;
+            throw new InvalidAssignmentTypeException(
+                expectedType,
+                right.getType()
+            );
         }
 
         return new Ass(

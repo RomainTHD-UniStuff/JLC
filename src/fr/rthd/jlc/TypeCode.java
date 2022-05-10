@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,7 +78,7 @@ public class TypeCode {
     /**
      * Pointer size
      */
-    private final static int POINTER_SIZE = 8;
+    public final static int POINTER_SIZE = 8;
 
     /**
      * Type code pool, to avoid problems with class and array type comparison,
@@ -94,6 +95,13 @@ public class TypeCode {
     private final String _realName;
 
     /**
+     * Readable name in assembly, since some types can use different structures
+     * under the hood
+     */
+    @NotNull
+    private final String _readableAssemblyName;
+
+    /**
      * Assembly name
      */
     @NotNull
@@ -106,7 +114,10 @@ public class TypeCode {
     private final Object _defaultValue;
 
     /**
-     * Size
+     * Will contain the size in bytes of the type for all types except for
+     * arrays, where it will contain its dimension. This is why the method
+     * `getSize()` needs to be used, even internally.
+     * @see #getSize()
      */
     private final int _size;
 
@@ -124,6 +135,7 @@ public class TypeCode {
     /**
      * Constructor
      * @param realName Real name in source code
+     * @param readableAssemblyName Readable name in assembly
      * @param assemblyName Assembly name
      * @param defaultValue Default value
      * @param size Size
@@ -132,6 +144,7 @@ public class TypeCode {
      */
     private TypeCode(
         @NotNull String realName,
+        @NotNull String readableAssemblyName,
         @NotNull String assemblyName,
         @Nullable Object defaultValue,
         int size,
@@ -139,6 +152,7 @@ public class TypeCode {
         @Nullable TypeCode baseType
     ) {
         _realName = realName;
+        _readableAssemblyName = readableAssemblyName;
         _assemblyName = assemblyName;
         _defaultValue = defaultValue;
         _size = size;
@@ -162,6 +176,7 @@ public class TypeCode {
         int size
     ) {
         return new TypeCode(
+            realName,
             realName,
             assemblyName,
             defaultValue,
@@ -201,6 +216,7 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
+                realName,
                 "%" + realName,
                 null,
                 0,
@@ -230,7 +246,8 @@ public class TypeCode {
         if (typeCode == null) {
             typeCode = new TypeCode(
                 realName,
-                baseType.getAssemblyName(),
+                baseType.getReadableAssemblyName() + "_" + dimension + "D",
+                "%Array_" + baseType.getRealName() + "_" + dimension + "D",
                 null,
                 dimension,
                 false,
@@ -240,6 +257,15 @@ public class TypeCode {
         }
 
         return typeCode;
+    }
+
+    /**
+     * Get all non-primitive types
+     * @return All non-primitive types
+     */
+    @NotNull
+    public static Collection<TypeCode> getAllComplexTypes() {
+        return _pool.values();
     }
 
     @Contract(pure = true)
@@ -269,10 +295,10 @@ public class TypeCode {
      */
     @Contract(pure = true)
     public int getSize() {
-        if (isPrimitive()) {
-            return _size;
+        if (isArray()) {
+            return CInt.getSize() + POINTER_SIZE; // Length + content fields
         } else {
-            return POINTER_SIZE;
+            return _size;
         }
     }
 
@@ -317,6 +343,15 @@ public class TypeCode {
     @NotNull
     public String getRealName() {
         return _realName;
+    }
+
+    /**
+     * @return Real name in source code
+     */
+    @Contract(pure = true)
+    @NotNull
+    public String getReadableAssemblyName() {
+        return _readableAssemblyName;
     }
 
     /**

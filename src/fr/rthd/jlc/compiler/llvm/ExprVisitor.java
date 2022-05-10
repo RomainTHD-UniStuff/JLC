@@ -9,6 +9,7 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -30,15 +31,10 @@ import javalette.Absyn.ListExpr;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static fr.rthd.jlc.TypeCode.CBool;
-import static fr.rthd.jlc.TypeCode.CDouble;
-import static fr.rthd.jlc.TypeCode.CInt;
-import static fr.rthd.jlc.TypeCode.CString;
-import static fr.rthd.jlc.TypeCode.CVoid;
 
 /**
  * Expression visitor
@@ -46,6 +42,27 @@ import static fr.rthd.jlc.TypeCode.CVoid;
  */
 @NonNls
 class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
+    /**
+     * LValue or RValue
+     */
+    @NotNull
+    private final Value _value;
+
+    /**
+     * Constructor
+     */
+    public ExprVisitor() {
+        _value = Value.RValue;
+    }
+
+    /**
+     * Constructor
+     * @param value LValue or RValue
+     */
+    public ExprVisitor(@NotNull Value value) {
+        _value = value;
+    }
+
     /**
      * Null literal
      * @param p Null literal
@@ -67,12 +84,17 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     public OperationItem visit(EVar p, EnvCompiler env) {
         Variable var = env.lookupVar(p.ident_);
         assert var != null;
-        if ((var.getType().isPrimitive() && var.getPointerLevel() > 0)
-            || (var.getType().isObject()) && var.getPointerLevel() > 1) {
-            Variable tmp = env.createTempVar(var.getType(), String.format(
-                "var_%s",
-                var.getSourceName()
-            ), var.getPointerLevel() - 1);
+        if (_value == Value.RValue
+            && (
+                (var.getType().isPrimitive() && var.getPointerLevel() > 0)
+                || var.getPointerLevel() > 1
+            )
+        ) {
+            Variable tmp = env.createTempVar(
+                var.getType(),
+                "var_" + var.getSourceName(),
+                var.getPointerLevel() - 1
+            );
             env.emit(env.instructionBuilder.load(tmp, var));
             return tmp;
         } else {
@@ -88,7 +110,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitInt p, EnvCompiler env) {
-        return new Literal(CInt, p.integer_);
+        return new Literal(TypeCode.CInt, p.integer_);
     }
 
     /**
@@ -99,7 +121,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitDoub p, EnvCompiler env) {
-        return new Literal(CDouble, p.double_);
+        return new Literal(TypeCode.CDouble, p.double_);
     }
 
     /**
@@ -110,7 +132,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitTrue p, EnvCompiler env) {
-        return new Literal(CBool, true);
+        return new Literal(TypeCode.CBool, true);
     }
 
     /**
@@ -121,7 +143,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitFalse p, EnvCompiler env) {
-        return new Literal(CBool, false);
+        return new Literal(TypeCode.CBool, false);
     }
 
     /**
@@ -206,7 +228,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             args.add(value);
         }
 
-        if (func.getRetType() == CVoid) {
+        if (func.getRetType() == TypeCode.CVoid) {
             env.emit(env.instructionBuilder.call(fName, args));
             return null;
         } else {
@@ -221,14 +243,74 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         }
     }
 
+    /**
+     * Dot operator. Method calls are already checked in visit(EApp), so the
+     * only attribute allowed should be `length` for arrays
+     * @param p Dot operator
+     * @param env Environment
+     * @return Operation result
+     */
     @Override
     public OperationItem visit(EDot p, EnvCompiler env) {
-        throw new NotImplementedException();
+        OperationItem left = p.expr_.accept(new ExprVisitor(), env);
+
+        assert p.ident_.equals("length");
+        assert left.getType().isArray();
+
+        Variable res = env.createTempVar(TypeCode.CInt, "array_length_ptr", 1);
+        env.emit(env.instructionBuilder.loadAttribute(res, left, 0));
+
+        Variable out = env.createTempVar(TypeCode.CInt, "array_length");
+        env.emit(env.instructionBuilder.load(out, res));
+
+        return out;
     }
 
+    /**
+     * Array access
+     * @param p Array access
+     * @param env Environment
+     * @return Operation result
+     */
     @Override
     public OperationItem visit(EIndex p, EnvCompiler env) {
-        throw new NotImplementedException();
+        // TODO: Multidimensional arrays
+
+        OperationItem left = p.expr_.accept(new ExprVisitor(), env);
+        OperationItem index = p.index_.accept(new IndexVisitor(), env);
+
+        TypeCode elemType = TypeCode.forArray(
+            left.getType().getBaseType(),
+            left.getType().getDimension() - 1 - p.listindex_.size()
+        );
+
+        if (!p.listindex_.isEmpty()) {
+            throw new NotImplementedException(
+                "Multidimensional arrays not supported yet"
+            );
+        }
+
+        Variable contentPtr = env.createTempVar(elemType, "array_content", 2);
+        env.emit(env.instructionBuilder.loadAttribute(contentPtr, left, 1));
+
+        Variable content = env.createTempVar(
+            contentPtr.getType(),
+            "array_content",
+            1
+        );
+        env.emit(env.instructionBuilder.load(content, contentPtr));
+
+        Variable ptr = env.createTempVar(elemType, "array_access", 1);
+        env.emit(env.instructionBuilder.loadIndex(ptr, content, index));
+
+        if (_value == Value.RValue) {
+            Variable value = env.createTempVar(ptr.getType(), "array_access");
+            env.emit(env.instructionBuilder.load(value, ptr));
+
+            return value;
+        } else {
+            return ptr;
+        }
     }
 
     /**
@@ -254,7 +336,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         // Load the global variable into a local variable
         Variable tmp = env.createTempVar(
-            CString,
+            TypeCode.CString,
             "string_literal"
         );
         env.emit(env.instructionBuilder.loadStringLiteral(tmp, global));
@@ -270,32 +352,90 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ENew p, EnvCompiler env) {
-        TypeCode classType = p.basetype_.accept(new TypeVisitor(), null);
+        TypeCode type = TypeCode.forArray(
+            p.basetype_.accept(new TypeVisitor(), null),
+            p.listindex_.size()
+        );
+
         Variable ref = env.createTempVar(
-            classType,
-            "new_" + classType.getRealName(),
+            type,
+            "new_" + type.getReadableAssemblyName(),
             1
         );
+        env.insertVar(ref.getName(), ref);
 
         Variable tmp = env.createTempVar(
             TypeCode.CRawPointer,
-            "malloc_" + classType.getRealName()
+            "malloc_" + type.getReadableAssemblyName()
         );
 
-        ClassType c = env.lookupClass(classType);
-        assert c != null;
+        int size = type.getSize();
+        if (type.isObject()) {
+            // For objects, the size needs to be looked up in the class
+            ClassType c = env.lookupClass(type);
+            assert c != null;
+            size = c.getSize();
+        }
 
-        env.insertVar(ref.getName(), ref);
-        env.emit(env.instructionBuilder.newObject(ref, tmp, c));
+        env.emit(env.instructionBuilder.newObject(ref, tmp, size));
 
-        // Call the constructor, which is a method of the object
-        new EApp(
-            new EDot(
-                new EVar(ref.getName()),
-                ClassType.CONSTRUCTOR_NAME
-            ),
-            new ListExpr()
-        ).accept(new ExprVisitor(), env);
+        if (type.isObject()) {
+            // Call the constructor, which is a method of the object
+            new EApp(
+                new EDot(
+                    new EVar(ref.getName()),
+                    ClassType.CONSTRUCTOR_NAME
+                ),
+                new ListExpr()
+            ).accept(new ExprVisitor(), env);
+        } else if (type.isArray()) {
+            // TODO: Multi-dimensional arrays
+            Variable lenField = env.createTempVar(
+                TypeCode.CInt,
+                "array_length",
+                1
+            );
+
+            OperationItem len = p.listindex_.get(0).accept(
+                new IndexVisitor(),
+                env
+            );
+
+            env.emit(env.instructionBuilder.loadAttribute(lenField, ref, 0));
+            env.emit(env.instructionBuilder.store(lenField, len));
+
+            TypeCode contentType = TypeCode.forArray(
+                type.getBaseType(),
+                type.getDimension() - 1
+            );
+            Variable contentField = env.createTempVar(
+                contentType,
+                "array_content",
+                2
+            );
+            Variable contentPtr = env.createTempVar(
+                contentType,
+                "array_content_ptr",
+                1
+            );
+            Variable contentTmp = env.createTempVar(
+                TypeCode.CRawPointer,
+                "array_content_ptr"
+                // Hack, but no pointer because CRawPointer is already a pointer
+            );
+            env.emit(env.instructionBuilder.loadAttribute(
+                contentField,
+                ref,
+                1
+            ));
+            env.emit(env.instructionBuilder.arrayAlloc(
+                contentPtr,
+                contentTmp,
+                len,
+                contentType
+            ));
+            env.emit(env.instructionBuilder.store(contentField, contentPtr));
+        }
 
         return ref;
     }
@@ -314,10 +454,10 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             // FIXME: Should already be handled by the optimizer?
             Literal lit = (Literal) expr;
             assert lit.getValue() != null;
-            if (lit.getType() == CInt) {
-                return new Literal(CInt, -(int) lit.getValue());
-            } else if (lit.getType() == CDouble) {
-                return new Literal(CDouble, -(double) lit.getValue());
+            if (lit.getType() == TypeCode.CInt) {
+                return new Literal(TypeCode.CInt, -(int) lit.getValue());
+            } else if (lit.getType() == TypeCode.CDouble) {
+                return new Literal(TypeCode.CDouble, -(double) lit.getValue());
             } else {
                 throw new IllegalArgumentException(
                     "Unsupported type for negation");
@@ -397,7 +537,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     @Override
     public OperationItem visit(EAnd p, EnvCompiler env) {
         // We need to create a pointer to the result variable
-        Variable var = env.createTempVar(CBool, "and_ptr", 1);
+        Variable var = env.createTempVar(TypeCode.CBool, "and_ptr", 1);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("and_true");
@@ -429,7 +569,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("and false"));
         env.emit(env.instructionBuilder.store(
             var,
-            new Literal(CBool, false)
+            new Literal(TypeCode.CBool, false)
         ));
         env.emit(env.instructionBuilder.jump(endLabel));
 
@@ -451,7 +591,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EOr p, EnvCompiler env) {
-        Variable var = env.createTempVar(CBool, "or_ptr", 1);
+        Variable var = env.createTempVar(TypeCode.CBool, "or_ptr", 1);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("or_true");
@@ -473,7 +613,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("or true"));
         env.emit(env.instructionBuilder.store(
             var,
-            new Literal(CBool, true)
+            new Literal(TypeCode.CBool, true)
         ));
         env.emit(env.instructionBuilder.jump(endLabel));
 

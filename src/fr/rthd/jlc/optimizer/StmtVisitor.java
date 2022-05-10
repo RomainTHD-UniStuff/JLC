@@ -31,8 +31,6 @@ import javalette.Absyn.Stmt;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
 
-import static fr.rthd.jlc.optimizer.Optimizer.isLiteral;
-
 class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOptimizer> {
     /**
      * Visitor for increments and decrements
@@ -51,7 +49,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     ) {
         AnnotatedExpr<?> exp = env.lookupVar(ident);
         assert exp != null;
-        if (isLiteral(exp)) {
+        if (Optimizer.isLiteral(exp)) {
             // We can reduce this to something like `x = n + 1`
             AnnotatedExpr<?> newExp = new EAdd(
                 exp,
@@ -112,7 +110,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     public AnnotatedStmt<Ass> visit(Ass s, EnvOptimizer env) {
         AnnotatedExpr<?> exp = s.expr_2.accept(new ExprVisitor(), env);
         String varName = ((EVar) s.expr_1).ident_;
-        if (isLiteral(exp)) {
+        if (Optimizer.isLiteral(exp)) {
             // We can reduce this to something like `x = n`
             if (env.isTopLevel(env.lookupVar(varName))) {
                 // We're in the same block, we can just update the value
