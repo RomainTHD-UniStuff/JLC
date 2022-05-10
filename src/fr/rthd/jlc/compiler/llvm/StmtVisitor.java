@@ -286,12 +286,17 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(For p, EnvCompiler env) {
+        // `int elt; for (int elt : array) { ... }` should be allowed
+        env.enterScope();
+
+        // Loop index
         Variable idx = env.createTempVar(TypeCode.CInt, "for_idx");
         new Init(
             idx.getName(),
             new ELitInt(0)
         ).accept(new ItemVisitor(idx.getType()), env);
 
+        // Loop iteration element
         new NoInit(p.ident_).accept(new ItemVisitor(p.type_.accept(
             new TypeVisitor(),
             null
@@ -299,12 +304,14 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
         Variable elt = env.lookupVar(p.ident_);
         assert elt != null;
 
+        // Array
         OperationItem array = p.expr_.accept(new ExprVisitor(), env);
         assert array instanceof Variable;
         Variable arrayVar = (Variable) array;
         env.insertVar(arrayVar.getName(), arrayVar);
 
         ListStmt stmts = new ListStmt();
+
         // `elt = array[idx]`
         stmts.add(new Ass(
             new EVar(p.ident_),
@@ -315,6 +322,7 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
             )
         ));
 
+        // Loop body
         stmts.add(p.stmt_);
 
         // `idx++`
@@ -329,6 +337,8 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
             ),
             new BStmt(new Block(stmts))
         ).accept(new StmtVisitor(), env);
+
+        env.leaveScope();
 
         return null;
     }
