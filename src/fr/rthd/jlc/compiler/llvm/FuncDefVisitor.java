@@ -52,7 +52,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         }
 
         List<Variable> args = new ArrayList<>();
-        func.getArgs().forEach(arg -> {
+        for (FunArg arg : func.getArgs()) {
             Variable var = env.createVar(
                 arg.getType(),
                 arg.getName(),
@@ -61,7 +61,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             );
             env.insertVar(arg.getName(), var);
             args.add(var);
-        });
+        }
 
         env.emit(env.instructionBuilder.functionDeclarationStart(
             c,

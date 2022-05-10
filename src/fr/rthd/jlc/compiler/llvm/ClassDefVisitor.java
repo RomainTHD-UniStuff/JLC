@@ -4,6 +4,7 @@ import fr.rthd.jlc.env.Attribute;
 import fr.rthd.jlc.env.ClassType;
 import javalette.Absyn.ClassDef;
 import javalette.Absyn.ClsDef;
+import javalette.Absyn.Member;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
@@ -45,10 +46,12 @@ public class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
 
         // Set class as current class and visit class body
         env.setCurrentClass(c);
-        p.listmember_.forEach(member -> member.accept(
-            new MemberVisitor(),
-            env
-        ));
+        for (Member member : p.listmember_) {
+            member.accept(
+                new MemberVisitor(),
+                env
+            );
+        }
         env.setCurrentClass(null);
 
         return null;

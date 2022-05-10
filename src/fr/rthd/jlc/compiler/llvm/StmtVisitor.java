@@ -22,6 +22,7 @@ import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Init;
+import javalette.Absyn.Item;
 import javalette.Absyn.LTH;
 import javalette.Absyn.ListIndex;
 import javalette.Absyn.ListStmt;
@@ -71,10 +72,12 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decl p, EnvCompiler env) {
-        p.listitem_.forEach(item -> item.accept(
-            new ItemVisitor(p.type_.accept(new TypeVisitor(), null)),
-            env
-        ));
+        for (Item item : p.listitem_) {
+            item.accept(
+                new ItemVisitor(p.type_.accept(new TypeVisitor(), null)),
+                env
+            );
+        }
         return null;
     }
 
