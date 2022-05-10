@@ -22,8 +22,6 @@ import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Item;
-import javalette.Absyn.LValueV;
-import javalette.Absyn.ListIndex;
 import javalette.Absyn.ListItem;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
@@ -32,8 +30,6 @@ import javalette.Absyn.SExp;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
-
-import static fr.rthd.jlc.optimizer.Optimizer.isLiteral;
 
 class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOptimizer> {
     /**
@@ -53,7 +49,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     ) {
         AnnotatedExpr<?> exp = env.lookupVar(ident);
         assert exp != null;
-        if (isLiteral(exp)) {
+        if (Optimizer.isLiteral(exp)) {
             // We can reduce this to something like `x = n + 1`
             AnnotatedExpr<?> newExp = new EAdd(
                 exp,
@@ -72,7 +68,7 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
                 //  still insert the new value for future use in this block
                 env.updateVar(ident, new AnnotatedExpr<>(
                     exp.getType(),
-                    new EVar(new LValueV(ident, new ListIndex()))
+                    new EVar(ident)
                 ));
                 env.insertVar(ident, newExp);
             }
@@ -112,34 +108,31 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     }
 
     public AnnotatedStmt<Ass> visit(Ass s, EnvOptimizer env) {
-        /*
-        AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (isLiteral(exp)) {
+        AnnotatedExpr<?> exp = s.expr_2.accept(new ExprVisitor(), env);
+        String varName = ((EVar) s.expr_1).ident_;
+        if (Optimizer.isLiteral(exp)) {
             // We can reduce this to something like `x = n`
-            if (env.isTopLevel(env.lookupVar(s.ident_))) {
+            if (env.isTopLevel(env.lookupVar(varName))) {
                 // We're in the same block, we can just update the value
-                env.updateVar(s.ident_, exp);
+                env.updateVar(varName, exp);
             } else {
                 // Different block, we need to repudiate the old value, but
                 //  still insert the new value for future use in this block
-                env.updateVar(s.ident_, new AnnotatedExpr<>(
+                env.updateVar(varName, new AnnotatedExpr<>(
                     exp.getType(),
-                    new EVar(s.ident_)
+                    new EVar(varName)
                 ));
-                env.insertVar(s.ident_, exp);
+                env.insertVar(varName, exp);
             }
         } else {
             // Not a literal, we lose the ability to optimize this variable
-            env.updateVar(s.ident_, new AnnotatedExpr<>(
+            env.updateVar(varName, new AnnotatedExpr<>(
                 exp.getType(),
-                new EVar(s.ident_)
+                new EVar(varName)
             ));
         }
 
-        return new AnnotatedStmt<>(new Ass(s.ident_, exp));
-        */
-        // TODO:
-        throw new NotImplementedException();
+        return new AnnotatedStmt<>(new Ass(s.expr_1, exp));
     }
 
     public AnnotatedStmt<Incr> visit(Incr s, EnvOptimizer env) {

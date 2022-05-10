@@ -5,11 +5,7 @@ import fr.rthd.jlc.TypeCode;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
-import javalette.Absyn.LValueV;
-import javalette.Absyn.ListIndex;
 import javalette.Absyn.NoInit;
-
-import static fr.rthd.jlc.optimizer.Optimizer.isLiteral;
 
 class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
     private final TypeCode _varType;
@@ -38,7 +34,7 @@ class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
 
     public Init visit(Init s, EnvOptimizer env) {
         AnnotatedExpr<?> exp = s.expr_.accept(new ExprVisitor(), env);
-        if (isLiteral(exp)) {
+        if (Optimizer.isLiteral(exp)) {
             env.insertVar(
                 s.ident_,
                 exp,
@@ -49,7 +45,7 @@ class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
                 s.ident_,
                 new AnnotatedExpr<>(
                     exp.getType(),
-                    new EVar(new LValueV(s.ident_, new ListIndex()))
+                    new EVar(s.ident_)
                 ),
                 true
             );

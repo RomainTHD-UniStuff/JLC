@@ -9,8 +9,6 @@ import javalette.Absyn.Mod;
 import javalette.Absyn.MulOp;
 import javalette.Absyn.Times;
 
-import static fr.rthd.jlc.optimizer.Optimizer.operatorAction;
-
 class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     private final AnnotatedExpr<?> _left;
     private final AnnotatedExpr<?> _right;
@@ -21,7 +19,7 @@ class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(Times p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> new ELitInt(l * r),
@@ -32,7 +30,7 @@ class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(Div p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> new ELitInt(l / r),
@@ -43,7 +41,7 @@ class MulOpVisitor implements MulOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(Mod p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> new ELitInt(l % r),

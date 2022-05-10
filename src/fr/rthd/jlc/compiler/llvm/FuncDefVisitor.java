@@ -11,8 +11,6 @@ import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
 import javalette.Absyn.Init;
-import javalette.Absyn.LValueV;
-import javalette.Absyn.ListIndex;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -54,7 +52,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
         }
 
         List<Variable> args = new ArrayList<>();
-        func.getArgs().forEach(arg -> {
+        for (FunArg arg : func.getArgs()) {
             Variable var = env.createVar(
                 arg.getType(),
                 arg.getName(),
@@ -63,7 +61,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
             );
             env.insertVar(arg.getName(), var);
             args.add(var);
-        });
+        }
 
         env.emit(env.instructionBuilder.functionDeclarationStart(
             c,
@@ -82,7 +80,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
                 //  following code would fail: `void f(int x) { x++; }`
                 new Init(
                     arg.getName(),
-                    new EVar(new LValueV(arg.getName(), new ListIndex()))
+                    new EVar(arg.getName())
                 ).accept(new ItemVisitor(
                     arg.getType(),
                     true

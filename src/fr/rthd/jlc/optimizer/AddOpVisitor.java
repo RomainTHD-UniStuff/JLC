@@ -8,8 +8,6 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
 
-import static fr.rthd.jlc.optimizer.Optimizer.operatorAction;
-
 class AddOpVisitor implements AddOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     private final AnnotatedExpr<?> _left;
     private final AnnotatedExpr<?> _right;
@@ -20,7 +18,7 @@ class AddOpVisitor implements AddOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(Plus p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> new ELitInt(l + r),
@@ -31,7 +29,7 @@ class AddOpVisitor implements AddOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(Minus p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> new ELitInt(l - r),

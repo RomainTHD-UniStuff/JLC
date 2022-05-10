@@ -1,29 +1,37 @@
 package fr.rthd.jlc.compiler.llvm;
 
-import fr.rthd.jlc.AnnotatedLValue;
+import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
-import fr.rthd.jlc.internal.NotImplementedException;
+import fr.rthd.jlc.utils.Value;
 import javalette.Absyn.Ass;
 import javalette.Absyn.BStmt;
+import javalette.Absyn.Block;
 import javalette.Absyn.Cond;
 import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
+import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitInt;
+import javalette.Absyn.ERel;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
-import javalette.Absyn.LValue;
-import javalette.Absyn.LValueV;
+import javalette.Absyn.Init;
+import javalette.Absyn.Item;
+import javalette.Absyn.LTH;
 import javalette.Absyn.ListIndex;
+import javalette.Absyn.ListStmt;
 import javalette.Absyn.Minus;
+import javalette.Absyn.NoInit;
 import javalette.Absyn.Plus;
 import javalette.Absyn.Ret;
 import javalette.Absyn.SExp;
+import javalette.Absyn.SIndex;
 import javalette.Absyn.Stmt;
 import javalette.Absyn.VRet;
 import javalette.Absyn.While;
@@ -64,10 +72,12 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decl p, EnvCompiler env) {
-        p.listitem_.forEach(item -> item.accept(
-            new ItemVisitor(p.type_.accept(new TypeVisitor(), null)),
-            env
-        ));
+        for (Item item : p.listitem_) {
+            item.accept(
+                new ItemVisitor(p.type_.accept(new TypeVisitor(), null)),
+                env
+            );
+        }
         return null;
     }
 
@@ -78,13 +88,11 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Ass p, EnvCompiler env) {
-        AnnotatedLValue<?> v = p.lvalue_.accept(new LValueVisitor(), env);
-
-        Variable dst = env.lookupVar(v.getBaseName());
+        OperationItem dst = p.expr_1.accept(new ExprVisitor(Value.LValue), env);
         assert dst != null;
         assert dst.getPointerLevel() != 0;
 
-        OperationItem value = p.expr_.accept(new ExprVisitor(), env);
+        OperationItem value = p.expr_2.accept(new ExprVisitor(), env);
         assert value != null;
 
         OperationItem src;
@@ -105,11 +113,10 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Incr p, EnvCompiler env) {
-        LValue v = new LValueV(p.ident_, new ListIndex());
         return new Ass(
-            v,
+            new EVar(p.ident_),
             new EAdd(
-                new EVar(v),
+                new EVar(p.ident_),
                 new Plus(),
                 new ELitInt(1)
             )
@@ -123,11 +130,10 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(Decr p, EnvCompiler env) {
-        LValue v = new LValueV(p.ident_, new ListIndex());
         return new Ass(
-            v,
+            new EVar(p.ident_),
             new EAdd(
-                new EVar(v),
+                new EVar(p.ident_),
                 new Minus(),
                 new ELitInt(1)
             )
@@ -277,13 +283,67 @@ class StmtVisitor implements Stmt.Visitor<Void, EnvCompiler> {
     }
 
     /**
-     * For
+     * For loop. Will internally be translated to a while loop
      * @param p For
      * @param env Environment
      */
     @Override
     public Void visit(For p, EnvCompiler env) {
-        throw new NotImplementedException();
+        // `int elt; for (int elt : array) { ... }` should be allowed
+        env.enterScope();
+
+        // Loop index
+        Variable idx = env.createTempVar(TypeCode.CInt, "for_idx");
+        new Init(
+            idx.getName(),
+            new ELitInt(0)
+        ).accept(new ItemVisitor(idx.getType()), env);
+
+        // Loop iteration element
+        new NoInit(p.ident_).accept(new ItemVisitor(p.type_.accept(
+            new TypeVisitor(),
+            null
+        )), env);
+        Variable elt = env.lookupVar(p.ident_);
+        assert elt != null;
+
+        // Array
+        OperationItem array = p.expr_.accept(new ExprVisitor(), env);
+        assert array instanceof Variable;
+        Variable arrayVar = (Variable) array;
+        env.insertVar(arrayVar.getName(), arrayVar);
+
+        ListStmt stmts = new ListStmt();
+
+        // `elt = array[idx]`
+        stmts.add(new Ass(
+            new EVar(p.ident_),
+            new EIndex(
+                new EVar(arrayVar.getName()),
+                new SIndex(new EVar(idx.getName())),
+                new ListIndex()
+            )
+        ));
+
+        // Loop body
+        stmts.add(p.stmt_);
+
+        // `idx++`
+        stmts.add(new Incr(idx.getName()));
+
+        // `while (idx < array.length) { ... }`
+        new While(
+            new ERel(
+                new EVar(idx.getName()),
+                new LTH(),
+                new EDot(new EVar(arrayVar.getName()), "length")
+            ),
+            new BStmt(new Block(stmts))
+        ).accept(new StmtVisitor(), env);
+
+        env.leaveScope();
+
+        return null;
     }
 
     /**

@@ -5,22 +5,23 @@ import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.env.exception.EnvException;
-import fr.rthd.jlc.internal.Unannotater;
 import fr.rthd.jlc.optimizer.Optimizer;
-import fr.rthd.jlc.typecheck.TypeChecker;
-import fr.rthd.jlc.typecheck.exception.TypeException;
+import fr.rthd.jlc.typechecker.TypeChecker;
+import fr.rthd.jlc.typechecker.exception.TypeException;
 import javalette.Absyn.Prog;
 import javalette.PrettyPrinter;
 import javalette.Yylex;
 import javalette.parser;
 import org.jetbrains.annotations.Nls;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -33,11 +34,16 @@ public class Main {
     /**
      * @return Help message
      */
-    private static String getHelp() {
-        String[] lines = {
-            "JLC - a Java-like compiler",
-            "By RomainTHD, 2022, under GPLv3",
-            "",
+    private static String getHelp(boolean usageOnly) {
+        List<String> lines = new ArrayList<>();
+
+        if (!usageOnly) {
+            lines.add("JLC - a Java-like compiler");
+            lines.add("By RomainTHD, 2022, under GPLv3");
+            lines.add("");
+        }
+
+        lines.addAll(Arrays.asList(
             "Usage: jlc [<file>]",
             "\t[-o|--output <file>]",
             "\t[-b|--backend x86 | amd64|x86_64|x64 | llvm | riscv]",
@@ -57,12 +63,11 @@ public class Main {
             "\t-t, --typecheck-only, --typecheck\tOnly typecheck",
             "\t--ast, --ast-only\t\t\t\tOnly print AST",
             "\t-h, --help\t\t\t\tShow this help",
-            "\t-Oz, -Os, -0, --O0, --O1, --O2, --O3\tOptimization level",
-            "",
-        };
+            "\t-Oz, -Os, -0, --O0, --O1, --O2, --O3\tOptimization level"
+        ));
 
-        return Arrays
-            .stream(lines)
+        return lines
+            .stream()
             .reduce((a, b) -> a + "\n" + b)
             .get();
     }
@@ -84,32 +89,53 @@ public class Main {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
-        ArgParse opt = ArgParse.parse(args);
-
-        if (opt.showHelp) {
-            // If help is requested, print it and exit
-            System.out.println(getHelp());
+        ArgParse opt = null;
+        try {
+            opt = ArgParse.parse(args);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            System.out.println();
+            System.out.println(getHelp(true));
             System.exit(0);
         }
 
-        Yylex lex = null;
+        if (opt.showHelp) {
+            // If help is requested, print it and exit
+            System.out.println(getHelp(false));
+            System.exit(0);
+        }
+
+        String lexerInput = null;
 
         if (opt.inputFile != null) {
             try {
-                lex = new Yylex(new FileReader(opt.inputFile));
-            } catch (FileNotFoundException ignored) {
+                BufferedReader reader = new BufferedReader(new FileReader(opt.inputFile));
+                StringBuilder input = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    input.append(line).append("\n");
+                }
+                reader.close();
+                lexerInput = input.toString();
+            } catch (IOException ignored) {
                 // TODO: Log this error
             }
         }
 
-        if (lex == null) {
+        if (lexerInput == null) {
             StringBuilder input = new StringBuilder();
             Scanner sc = new Scanner(System.in);
             while (sc.hasNextLine()) {
                 input.append(sc.nextLine()).append("\n");
             }
-            lex = new Yylex(new StringReader(input.toString()));
+
+            lexerInput = input.toString();
         }
+
+        // HACK: The grammar doesn't support `int [ ] t;`, so we replace it with
+        //  `int [] t;`
+        lexerInput = lexerInput.replaceAll("\\[[\\t\\s \\n\\r]+]", "[]");
+        Yylex lex = new Yylex(new StringReader(lexerInput));
 
         try {
             // Parse

@@ -12,8 +12,6 @@ import javalette.Absyn.LTH;
 import javalette.Absyn.NE;
 import javalette.Absyn.RelOp;
 
-import static fr.rthd.jlc.optimizer.Optimizer.operatorAction;
-
 class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     private final AnnotatedExpr<?> _left;
     private final AnnotatedExpr<?> _right;
@@ -24,7 +22,7 @@ class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(LTH p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> l < r ? new ELitTrue() : new ELitFalse(),
@@ -35,7 +33,7 @@ class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(LE p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
@@ -46,7 +44,7 @@ class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(GTH p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> l > r ? new ELitTrue() : new ELitFalse(),
@@ -57,7 +55,7 @@ class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(GE p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> l <= r ? new ELitTrue() : new ELitFalse(),
@@ -68,7 +66,7 @@ class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(EQU p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> l.equals(r) ? new ELitTrue() : new ELitFalse(),
@@ -79,7 +77,7 @@ class RelOpVisitor implements RelOp.Visitor<AnnotatedExpr<?>, EnvOptimizer> {
     }
 
     public AnnotatedExpr<?> visit(NE p, EnvOptimizer env) {
-        return new AnnotatedExpr<>(_left.getType(), operatorAction(
+        return new AnnotatedExpr<>(_left.getType(), Optimizer.operatorAction(
             _left,
             _right,
             (l, r) -> l.equals(r) ? new ELitFalse() : new ELitTrue(),

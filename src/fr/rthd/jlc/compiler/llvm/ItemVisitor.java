@@ -2,11 +2,18 @@ package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
+import javalette.Absyn.Ass;
+import javalette.Absyn.ELitInt;
+import javalette.Absyn.ENew;
+import javalette.Absyn.EVar;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.NoInit;
+import javalette.Absyn.SIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,13 +61,14 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(NoInit p, EnvCompiler env) {
-        env.insertVar(
+        Variable v = env.createVar(
+            _type,
             p.ident_,
-            env.createVar(_type, p.ident_, _type.isPrimitive() ? 1 : 2)
+            _type.isPrimitive() ? 1 : 2
         );
-        // FIXME: Why lookup here?
-        Variable v = env.lookupVar(p.ident_);
-        assert v != null;
+        // Objects are allowed to be null pointers. Arrays as well in
+        //  theory, but to make it easier to use, we don't allow them
+        env.insertVar(p.ident_, v);
         env.emit(env.instructionBuilder.declare(v));
         if (_type.isPrimitive()) {
             // If primitive type, initialize with default value
@@ -69,8 +77,18 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
                 AnnotatedExpr.getDefaultValue(_type)
                              .accept(new ExprVisitor(), env)
             ));
+        } else if (_type.isArray()) {
+            // If array type, we create an empty array with length 0
+            ListIndex indices = new ListIndex();
+            indices.add(new SIndex(new ELitInt(0)));
+            new Ass(
+                new EVar(p.ident_),
+                new ENew(
+                    TypeVisitor.getTypeFromTypecode(_type).basetype_,
+                    indices
+                )
+            ).accept(new StmtVisitor(), env);
         }
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 
@@ -89,7 +107,6 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         env.emit(env.instructionBuilder.declare(var));
         OperationItem value = p.expr_.accept(new ExprVisitor(), env);
 
-        // FIXME: Clearly duplicated code
         OperationItem src;
         if (value.getType().equals(var.getType())) {
             src = value;
@@ -103,7 +120,6 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         } else {
             env.insertVar(p.ident_, var);
         }
-        env.emit(env.instructionBuilder.newLine());
         return null;
     }
 }
