@@ -12,8 +12,6 @@ import javalette.Absyn.NoInit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static fr.rthd.jlc.TypeCode.CInt;
-
 /**
  * Declaration visitor
  * @author RomainTHD
@@ -62,6 +60,7 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             p.ident_,
             env.createVar(_type, p.ident_, _type.isPrimitive() ? 1 : 2)
             // Objects and arrays are allowed to be null pointers
+            // FIXME: Actually, arrays should never be null pointers
         );
         // FIXME: Why lookup here?
         Variable v = env.lookupVar(p.ident_);
@@ -76,7 +75,11 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             ));
         } else if (_type.isArray()) {
             // If array type, length is 0
-            Variable lenField = env.createTempVar(CInt, "array_length", 1);
+            Variable lenField = env.createTempVar(
+                TypeCode.CInt,
+                "array_length",
+                1
+            );
             OperationItem array = new EVar(p.ident_).accept(
                 new ExprVisitor(),
                 env
@@ -84,7 +87,7 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             env.emit(env.instructionBuilder.loadAttribute(lenField, array, 0));
             env.emit(env.instructionBuilder.store(
                 lenField,
-                new Literal(CInt, 0)
+                new Literal(TypeCode.CInt, 0)
             ));
         }
         return null;

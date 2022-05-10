@@ -36,12 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static fr.rthd.jlc.TypeCode.CBool;
-import static fr.rthd.jlc.TypeCode.CDouble;
-import static fr.rthd.jlc.TypeCode.CInt;
-import static fr.rthd.jlc.TypeCode.CString;
-import static fr.rthd.jlc.TypeCode.CVoid;
-
 /**
  * Expression visitor
  * @author RomainTHD
@@ -115,7 +109,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitInt p, EnvCompiler env) {
-        return new Literal(CInt, p.integer_);
+        return new Literal(TypeCode.CInt, p.integer_);
     }
 
     /**
@@ -126,7 +120,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitDoub p, EnvCompiler env) {
-        return new Literal(CDouble, p.double_);
+        return new Literal(TypeCode.CDouble, p.double_);
     }
 
     /**
@@ -137,7 +131,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitTrue p, EnvCompiler env) {
-        return new Literal(CBool, true);
+        return new Literal(TypeCode.CBool, true);
     }
 
     /**
@@ -148,7 +142,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(ELitFalse p, EnvCompiler env) {
-        return new Literal(CBool, false);
+        return new Literal(TypeCode.CBool, false);
     }
 
     /**
@@ -233,7 +227,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             args.add(value);
         }
 
-        if (func.getRetType() == CVoid) {
+        if (func.getRetType() == TypeCode.CVoid) {
             env.emit(env.instructionBuilder.call(fName, args));
             return null;
         } else {
@@ -262,10 +256,10 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         assert p.ident_.equals("length");
         assert left.getType().isArray();
 
-        Variable res = env.createTempVar(CInt, "array_length_ptr", 1);
+        Variable res = env.createTempVar(TypeCode.CInt, "array_length_ptr", 1);
         env.emit(env.instructionBuilder.loadAttribute(res, left, 0));
 
-        Variable out = env.createTempVar(CInt, "array_length");
+        Variable out = env.createTempVar(TypeCode.CInt, "array_length");
         env.emit(env.instructionBuilder.load(out, res));
 
         return out;
@@ -341,7 +335,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
 
         // Load the global variable into a local variable
         Variable tmp = env.createTempVar(
-            CString,
+            TypeCode.CString,
             "string_literal"
         );
         env.emit(env.instructionBuilder.loadStringLiteral(tmp, global));
@@ -395,7 +389,11 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             ).accept(new ExprVisitor(), env);
         } else if (type.isArray()) {
             // TODO: Multi-dimensional arrays
-            Variable lenField = env.createTempVar(CInt, "array_length", 1);
+            Variable lenField = env.createTempVar(
+                TypeCode.CInt,
+                "array_length",
+                1
+            );
 
             OperationItem len = p.listindex_.get(0).accept(
                 new IndexVisitor(),
@@ -455,10 +453,10 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             // FIXME: Should already be handled by the optimizer?
             Literal lit = (Literal) expr;
             assert lit.getValue() != null;
-            if (lit.getType() == CInt) {
-                return new Literal(CInt, -(int) lit.getValue());
-            } else if (lit.getType() == CDouble) {
-                return new Literal(CDouble, -(double) lit.getValue());
+            if (lit.getType() == TypeCode.CInt) {
+                return new Literal(TypeCode.CInt, -(int) lit.getValue());
+            } else if (lit.getType() == TypeCode.CDouble) {
+                return new Literal(TypeCode.CDouble, -(double) lit.getValue());
             } else {
                 throw new IllegalArgumentException(
                     "Unsupported type for negation");
@@ -538,7 +536,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
     @Override
     public OperationItem visit(EAnd p, EnvCompiler env) {
         // We need to create a pointer to the result variable
-        Variable var = env.createTempVar(CBool, "and_ptr", 1);
+        Variable var = env.createTempVar(TypeCode.CBool, "and_ptr", 1);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("and_true");
@@ -570,7 +568,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("and false"));
         env.emit(env.instructionBuilder.store(
             var,
-            new Literal(CBool, false)
+            new Literal(TypeCode.CBool, false)
         ));
         env.emit(env.instructionBuilder.jump(endLabel));
 
@@ -592,7 +590,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
      */
     @Override
     public OperationItem visit(EOr p, EnvCompiler env) {
-        Variable var = env.createTempVar(CBool, "or_ptr", 1);
+        Variable var = env.createTempVar(TypeCode.CBool, "or_ptr", 1);
         env.emit(env.instructionBuilder.declare(var));
 
         String trueLabel = env.getNewLabel("or_true");
@@ -614,7 +612,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         env.emit(env.instructionBuilder.comment("or true"));
         env.emit(env.instructionBuilder.store(
             var,
-            new Literal(CBool, true)
+            new Literal(TypeCode.CBool, true)
         ));
         env.emit(env.instructionBuilder.jump(endLabel));
 

@@ -12,11 +12,6 @@ import javalette.Absyn.Type;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static fr.rthd.jlc.TypeCode.CBool;
-import static fr.rthd.jlc.TypeCode.CDouble;
-import static fr.rthd.jlc.TypeCode.CInt;
-import static fr.rthd.jlc.TypeCode.CVoid;
-
 /**
  * Type visitor to transform a Javalette type to a TypeCode
  * @author RomainTHD
@@ -26,13 +21,13 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visit
     @NotNull
     public static Type getTypeFromTypecode(@NotNull TypeCode typecode) {
         BaseType base;
-        if (CBool.equals(typecode)) {
+        if (TypeCode.CBool.equals(typecode)) {
             base = new Bool();
-        } else if (CInt.equals(typecode)) {
+        } else if (TypeCode.CInt.equals(typecode)) {
             base = new Int();
-        } else if (CDouble.equals(typecode)) {
+        } else if (TypeCode.CDouble.equals(typecode)) {
             base = new Doub();
-        } else if (CVoid.equals(typecode)) {
+        } else if (TypeCode.CVoid.equals(typecode)) {
             base = new javalette.Absyn.Void();
         } else if (typecode.isObject()) {
             base = new javalette.Absyn.Class(typecode.getRealName());
@@ -73,7 +68,7 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visit
      * @see TypeCode#CBool
      */
     public TypeCode visit(Bool t, Void ignored) {
-        return CBool;
+        return TypeCode.CBool;
     }
 
     /**
@@ -84,7 +79,7 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visit
      * @see TypeCode#CInt
      */
     public TypeCode visit(Int t, Void ignored) {
-        return CInt;
+        return TypeCode.CInt;
     }
 
     /**
@@ -95,7 +90,7 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visit
      * @see TypeCode#CDouble
      */
     public TypeCode visit(Doub t, Void ignored) {
-        return CDouble;
+        return TypeCode.CDouble;
     }
 
     /**
@@ -106,7 +101,7 @@ public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visit
      * @see TypeCode#CVoid
      */
     public TypeCode visit(javalette.Absyn.Void t, Void ignored) {
-        return CVoid;
+        return TypeCode.CVoid;
     }
 
     /**

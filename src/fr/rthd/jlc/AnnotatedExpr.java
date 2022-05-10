@@ -10,11 +10,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static fr.rthd.jlc.TypeCode.CBool;
-import static fr.rthd.jlc.TypeCode.CDouble;
-import static fr.rthd.jlc.TypeCode.CInt;
-import static fr.rthd.jlc.TypeCode.CString;
-
 /**
  * Annotated expression
  * @param <T> Parent expression type
@@ -73,13 +68,13 @@ public class AnnotatedExpr<T extends Expr> extends Expr {
      */
     @NotNull
     public static AnnotatedExpr<Expr> getDefaultValue(@NotNull TypeCode type) {
-        if (CInt.equals(type)) {
+        if (TypeCode.CInt.equals(type)) {
             return new AnnotatedExpr<>(type, new ELitInt(0));
-        } else if (CDouble.equals(type)) {
+        } else if (TypeCode.CDouble.equals(type)) {
             return new AnnotatedExpr<>(type, new ELitDoub(0.0));
-        } else if (CBool.equals(type)) {
+        } else if (TypeCode.CBool.equals(type)) {
             return new AnnotatedExpr<>(type, new ELitFalse());
-        } else if (CString.equals(type)) {
+        } else if (TypeCode.CString.equals(type)) {
             return new AnnotatedExpr<>(type, new EString(""));
         } else {
             throw new IllegalArgumentException(
