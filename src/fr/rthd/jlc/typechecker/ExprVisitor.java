@@ -261,7 +261,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             ));
         }
 
-        AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
+        AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(_value), env);
 
         int newDim = expr.getType().getDimension() - indexes.size() - 1;
         if (newDim < 0) {
