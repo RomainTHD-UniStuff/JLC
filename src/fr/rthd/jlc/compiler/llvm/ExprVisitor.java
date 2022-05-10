@@ -90,10 +90,11 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
                 || var.getPointerLevel() > 1
             )
         ) {
-            Variable tmp = env.createTempVar(var.getType(), String.format(
-                "var_%s",
-                var.getSourceName()
-            ), var.getPointerLevel() - 1);
+            Variable tmp = env.createTempVar(
+                var.getType(),
+                "var_" + var.getSourceName(),
+                var.getPointerLevel() - 1
+            );
             env.emit(env.instructionBuilder.load(tmp, var));
             return tmp;
         } else {

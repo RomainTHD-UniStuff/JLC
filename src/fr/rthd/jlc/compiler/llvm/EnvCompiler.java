@@ -201,13 +201,13 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         // Get access count for current scope and increment it
         int count = scope.getOrDefault(name, 0);
         scope.put(name, count + 1);
-        return String.format(
-            "stack_%d_%d%cscope_%d",
-            getScopeDepth(),
-            _depthAccessCount.get(getScopeDepth()),
-            SEP,
-            count
-        );
+        return "stack_"
+               + getScopeDepth()
+               + "_"
+               + _depthAccessCount.get(getScopeDepth())
+               + SEP
+               + "scope_"
+               + count;
     }
 
     /**
@@ -234,13 +234,12 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         @NotNull String ctx,
         int pointerLevel
     ) {
-        return new Variable(type, String.format(
-            ".temp%c%s%c%s",
-            SEP,
-            ctx,
-            SEP,
-            getVariableUID(ctx)
-        ), null, pointerLevel);
+        return new Variable(
+            type,
+            ".temp" + SEP + ctx + SEP + getVariableUID(ctx),
+            null,
+            pointerLevel
+        );
     }
 
     /**
@@ -275,12 +274,13 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         int pointerLevel,
         boolean isClassVariable
     ) {
-        return new Variable(type, String.format(
-            "%s%c%s",
+        return new Variable(
+            type,
+            name + SEP + getVariableUID(name),
             name,
-            SEP,
-            getVariableUID(name)
-        ), name, pointerLevel, isClassVariable);
+            pointerLevel,
+            isClassVariable
+        );
     }
 
     /**
@@ -290,12 +290,15 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      */
     @NotNull
     public Variable createGlobalStringLiteral(@NotNull String content) {
-        return new Variable(TypeCode.CString, String.format(
-            ".string%c%s",
-            SEP,
-            getHash(content)
-        ), null, 1, false, true, content.length() + 1);
-        // FIXME: This pointer level isn't even used
+        return new Variable(
+            TypeCode.CString,
+            ".string" + SEP + getHash(content),
+            null,
+            1, // FIXME: This pointer level isn't even used
+            false,
+            true,
+            content.length() + 1
+        );
     }
 
     /**
@@ -309,16 +312,17 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
         assert scope != null;
         int count = scope.getOrDefault(ctx, 0);
         scope.put(ctx, count + 1);
-        return String.format(
-            ".label%c%s%cstack_%d_%d%cscope_%d",
-            SEP,
-            ctx,
-            SEP,
-            getScopeDepth(),
-            _depthAccessCount.get(getScopeDepth()),
-            SEP,
-            count
-        );
+        return ".label"
+               + SEP
+               + ctx
+               + SEP
+               + "stack_"
+               + getScopeDepth()
+               + "_"
+               + _depthAccessCount.get(getScopeDepth())
+               + SEP
+               + "scope_"
+               + count;
     }
 
     @Override
@@ -357,7 +361,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
     private String getHash(@NotNull String content) {
         if (_hashAlgorithm == null) {
             // Use default `hashCode` implementation, which isn't recommended
-            return String.format("%x", content.hashCode());
+            return Integer.toString(content.hashCode());
         } else {
             // Use custom hash algorithm in hexadecimal format
             _hashAlgorithm.update(content.getBytes());

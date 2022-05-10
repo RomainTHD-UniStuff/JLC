@@ -28,13 +28,12 @@ public class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
 
         List<Attribute> attrs = c.getAllAttributes();
         // Comment like `Class Foo: int bar`
-        env.emit(env.instructionBuilder.comment(String.format(
-            "Class %s: %s",
-            p.ident_,
-            attrs.stream()
-                 .map(Attribute::toString)
-                 .collect(Collectors.joining(", "))
-        )));
+        env.emit(env.instructionBuilder.comment(
+            "Class " + p.ident_ + ": "
+            + attrs.stream()
+                   .map(Attribute::toString)
+                   .collect(Collectors.joining(", "))
+        ));
         // Define class
         env.emit(env.instructionBuilder.classDef(
             c.getName(),

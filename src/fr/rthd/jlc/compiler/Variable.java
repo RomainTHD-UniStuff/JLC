@@ -130,10 +130,6 @@ public class Variable extends OperationItem {
     @Override
     public String toString() {
         // Globals start with a '@', locals with a '%'
-        return String.format(
-            "%c%s",
-            isGlobal() ? '@' : '%',
-            _name
-        );
+        return (isGlobal() ? "@" : "%") + _name;
     }
 }

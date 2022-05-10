@@ -247,11 +247,7 @@ public class TypeCode {
             typeCode = new TypeCode(
                 realName,
                 baseType.getReadableAssemblyName() + "_" + dimension + "D",
-                String.format(
-                    "%%Array_%s_%dD",
-                    baseType.getRealName(),
-                    dimension
-                ),
+                "%Array_" + baseType.getRealName() + "_" + dimension + "D",
                 null,
                 dimension,
                 false,
