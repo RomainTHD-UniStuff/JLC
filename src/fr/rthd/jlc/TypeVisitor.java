@@ -19,21 +19,23 @@ import org.jetbrains.annotations.NotNull;
 @NonNls
 public class TypeVisitor implements Type.Visitor<TypeCode, Void>, BaseType.Visitor<TypeCode, Void> {
     @NotNull
-    public static Type getTypeFromTypecode(@NotNull TypeCode typecode) {
+    public static TType getTypeFromTypecode(@NotNull TypeCode typecode) {
         BaseType base;
-        if (TypeCode.CBool.equals(typecode)) {
+
+        TypeCode typecodeBase = typecode.getBaseType();
+        if (TypeCode.CBool.equals(typecodeBase)) {
             base = new Bool();
-        } else if (TypeCode.CInt.equals(typecode)) {
+        } else if (TypeCode.CInt.equals(typecodeBase)) {
             base = new Int();
-        } else if (TypeCode.CDouble.equals(typecode)) {
+        } else if (TypeCode.CDouble.equals(typecodeBase)) {
             base = new Doub();
-        } else if (TypeCode.CVoid.equals(typecode)) {
+        } else if (TypeCode.CVoid.equals(typecodeBase)) {
             base = new javalette.Absyn.Void();
-        } else if (typecode.isObject()) {
-            base = new javalette.Absyn.Class(typecode.getRealName());
+        } else if (typecodeBase.isObject()) {
+            base = new javalette.Absyn.Class(typecodeBase.getRealName());
         } else {
             throw new IllegalArgumentException(
-                "Unknown type code: " + typecode
+                "Unknown type code: " + typecodeBase
             );
         }
 

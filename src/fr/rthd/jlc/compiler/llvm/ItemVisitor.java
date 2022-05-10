@@ -2,13 +2,18 @@ package fr.rthd.jlc.compiler.llvm;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
-import fr.rthd.jlc.compiler.Literal;
+import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.compiler.OperationItem;
 import fr.rthd.jlc.compiler.Variable;
+import javalette.Absyn.Ass;
+import javalette.Absyn.ELitInt;
+import javalette.Absyn.ENew;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Init;
 import javalette.Absyn.Item;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.NoInit;
+import javalette.Absyn.SIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,8 +64,8 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
         env.insertVar(
             p.ident_,
             env.createVar(_type, p.ident_, _type.isPrimitive() ? 1 : 2)
-            // Objects and arrays are allowed to be null pointers
-            // FIXME: Actually, arrays should never be null pointers
+            // Objects are allowed to be null pointers. Arrays as well in
+            //  theory, but to make it easier to use, we don't allow them
         );
         // FIXME: Why lookup here?
         Variable v = env.lookupVar(p.ident_);
@@ -74,21 +79,16 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
                              .accept(new ExprVisitor(), env)
             ));
         } else if (_type.isArray()) {
-            // If array type, length is 0
-            Variable lenField = env.createTempVar(
-                TypeCode.CInt,
-                "array_length",
-                1
-            );
-            OperationItem array = new EVar(p.ident_).accept(
-                new ExprVisitor(),
-                env
-            );
-            env.emit(env.instructionBuilder.loadAttribute(lenField, array, 0));
-            env.emit(env.instructionBuilder.store(
-                lenField,
-                new Literal(TypeCode.CInt, 0)
-            ));
+            // If array type, we create an empty array with length 0
+            ListIndex indices = new ListIndex();
+            indices.add(new SIndex(new ELitInt(0)));
+            new Ass(
+                new EVar(p.ident_),
+                new ENew(
+                    TypeVisitor.getTypeFromTypecode(_type).basetype_,
+                    indices
+                )
+            ).accept(new StmtVisitor(), env);
         }
         return null;
     }
@@ -104,12 +104,10 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
             _type,
             p.ident_,
             _type.isPrimitive() ? 1 : 2
-            // Objects and arrays are allowed to be null pointers
         );
         env.emit(env.instructionBuilder.declare(var));
         OperationItem value = p.expr_.accept(new ExprVisitor(), env);
 
-        // FIXME: Clearly duplicated code
         OperationItem src;
         if (value.getType().equals(var.getType())) {
             src = value;
