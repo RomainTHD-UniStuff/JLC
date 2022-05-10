@@ -228,7 +228,7 @@ public class ArgParse {
                 if (linkedFlag != null) {
                     // A situation like `jlc -o --help`
                     throw new IllegalArgumentException(String.format(
-                        "Invalid argument combination between %s and %s",
+                        "Invalid argument combination between '%s' and '%s'",
                         linkedFlag,
                         arg
                     ));
@@ -281,7 +281,7 @@ public class ArgParse {
 
                         default:
                             throw new IllegalArgumentException(String.format(
-                                "Unknown backend: %s",
+                                "Unknown backend '%s'",
                                 arg
                             ));
                     }
@@ -289,13 +289,20 @@ public class ArgParse {
 
                 default:
                     throw new IllegalArgumentException(String.format(
-                        "Invalid argument combination between %s and %s",
+                        "Invalid argument combination between '%s' and '%s'",
                         linkedFlag,
                         arg
                     ));
             }
 
             linkedFlag = null;
+        }
+
+        if (linkedFlag != null) {
+            throw new IllegalArgumentException(String.format(
+                "Unmatched argument '%s'",
+                linkedFlag
+            ));
         }
 
         return new ArgParse(
