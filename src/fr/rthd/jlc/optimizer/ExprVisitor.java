@@ -2,6 +2,7 @@ package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
@@ -26,7 +27,9 @@ import javalette.Absyn.Not;
 
 class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOptimizer> {
     public AnnotatedExpr<?> visit(ENull e, EnvOptimizer env) {
-        throw new NotImplementedException();
+        ClassType c = env.lookupClass(e.ident_);
+        assert c != null;
+        return new AnnotatedExpr<>(c.getType(), e);
     }
 
     public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
@@ -101,7 +104,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
         return new AnnotatedExpr<>(TypeCode.CString, e);
     }
 
-    public AnnotatedExpr<? extends Expr> visit(ENew p, EnvOptimizer env) {
+    public AnnotatedExpr<ENew> visit(ENew p, EnvOptimizer env) {
         throw new NotImplementedException();
     }
 

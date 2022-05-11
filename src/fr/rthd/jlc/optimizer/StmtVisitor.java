@@ -3,7 +3,6 @@ package fr.rthd.jlc.optimizer;
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
-import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.AddOp;
 import javalette.Absyn.Ass;
@@ -14,11 +13,14 @@ import javalette.Absyn.CondElse;
 import javalette.Absyn.Decl;
 import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
+import javalette.Absyn.EApp;
+import javalette.Absyn.EDot;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Empty;
+import javalette.Absyn.Expr;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
 import javalette.Absyn.Item;
@@ -253,19 +255,35 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     }
 
     public AnnotatedStmt<?> visit(For p, EnvOptimizer env) {
-        throw new NotImplementedException();
+        env.enterScope();
+        AnnotatedStmt<?> s = p.stmt_.accept(new StmtVisitor(), env);
+        env.leaveScope();
+        return new AnnotatedStmt<>(new For(
+            p.type_,
+            p.ident_,
+            p.expr_.accept(new ExprVisitor(), env),
+            s
+        ), s.doesReturn());
     }
 
     public AnnotatedStmt<?> visit(SExp s, EnvOptimizer env) {
-        /*
         AnnotatedExpr<?> expr = (AnnotatedExpr<?>) s.expr_;
         if (expr.getParentExp() instanceof EApp) {
-            FunTypeOptimizer funType = env.lookupFun(
-                ((EApp) expr.getParentExp()).ident_
-            );
-            assert funType != null;
-            if (funType.isPure() == Choice.TRUE) {
-                return new AnnotatedStmt<>(new Empty());
+            Expr left = ((EApp) expr.getParentExp()).expr_;
+            FunTypeOptimizer funType = null;
+
+            if (left instanceof EVar) {
+                funType = env.lookupFun(
+                    ((EVar) left).ident_
+                );
+            } else if (left instanceof EDot) {
+                // TODO:
+            }
+
+            if (funType != null) {
+                if (funType.isPure() == Choice.TRUE) {
+                    return new AnnotatedStmt<>(new Empty());
+                }
             }
         }
         expr = s.expr_.accept(
@@ -273,8 +291,5 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
             env
         );
         return new AnnotatedStmt<>(new SExp(expr));
-        */
-        // TODO:
-        throw new NotImplementedException();
     }
 }
