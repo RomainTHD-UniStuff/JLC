@@ -171,7 +171,7 @@ int sideEffect() {
 
 int main() {
     if (sideEffect() == 0) {
-        printString ("11 is odd");
+        printString ("11 is not divisible by 2 or 3");
     }
     return 32;
 }
