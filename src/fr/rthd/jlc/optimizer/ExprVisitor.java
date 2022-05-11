@@ -2,6 +2,7 @@ package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
+import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
@@ -21,13 +22,15 @@ import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
+import javalette.Absyn.Index;
 import javalette.Absyn.ListExpr;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
 
 class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOptimizer> {
     public AnnotatedExpr<?> visit(ENull e, EnvOptimizer env) {
-        ClassType c = env.lookupClass(e.ident_);
+        ClassType<?> c = env.lookupClass(e.ident_);
         assert c != null;
         return new AnnotatedExpr<>(c.getType(), e);
     }
@@ -62,15 +65,22 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<EApp> visit(EApp e, EnvOptimizer env) {
-        String fName;
+        FunTypeOptimizer funcType;
 
         if (e.expr_ instanceof EVar) {
-            fName = ((EVar) e.expr_).ident_;
+            funcType = env.lookupFun(((EVar) e.expr_).ident_);
+        } else if (e.expr_ instanceof EDot) {
+            AnnotatedExpr<?> left = ((EDot) e.expr_).expr_.accept(
+                new ExprVisitor(),
+                env
+            );
+            ClassTypeOptimizer c = env.lookupClass(left.getType());
+            assert c != null;
+            funcType = c.getMethod(((EDot) e.expr_).ident_, true);
         } else {
-            throw new NotImplementedException();
+            throw new IllegalStateException();
         }
 
-        FunTypeOptimizer funcType = env.lookupFun(fName);
         assert funcType != null;
 
         FunTypeOptimizer currentFunction = env.getCurrentFunction();
@@ -105,7 +115,18 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<ENew> visit(ENew p, EnvOptimizer env) {
-        throw new NotImplementedException();
+        ListIndex indices = new ListIndex();
+        for (Index idx : p.listindex_) {
+            indices.add(idx.accept(new IndexVisitor(), env));
+        }
+        TypeCode t = TypeCode.forArray(p.basetype_.accept(
+            new TypeVisitor(),
+            null
+        ), p.listindex_.size());
+        return new AnnotatedExpr<>(
+            t,
+            new ENew(p.basetype_, indices)
+        );
     }
 
     public AnnotatedExpr<?> visit(Neg e, EnvOptimizer env) {
