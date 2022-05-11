@@ -46,6 +46,9 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassTypeOpti
         for (ClassType<?> classType : env.getAllClass()) {
             insertClass(new ClassTypeOptimizer(classType));
         }
+        for (ClassTypeOptimizer classType : getAllClass()) {
+            classType.updateSuperclass(lookupClass(classType.getSuperclassName()));
+        }
     }
 
     /**
