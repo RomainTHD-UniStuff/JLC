@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * @author RomainTHD
  */
 @NonNls
-public class InstructionBuilder {
+class InstructionBuilder {
     /**
      * Output a new line
      * @return Instruction

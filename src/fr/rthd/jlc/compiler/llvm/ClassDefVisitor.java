@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author RomainTHD
  */
 @NonNls
-public class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
+class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
     /**
      * Class definition
      * @param p Class definition

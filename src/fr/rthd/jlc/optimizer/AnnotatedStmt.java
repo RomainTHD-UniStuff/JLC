@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author RomainTHD
  */
 @NonNls
-public class AnnotatedStmt<T extends Stmt> extends Stmt {
+class AnnotatedStmt<T extends Stmt> extends Stmt {
     /**
      * Parent statement
      */

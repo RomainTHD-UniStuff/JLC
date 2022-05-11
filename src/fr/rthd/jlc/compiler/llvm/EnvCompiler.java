@@ -26,7 +26,7 @@ import java.util.Map;
  * @see Variable
  */
 @NonNls
-public class EnvCompiler extends Env<Variable, FunType, ClassType> {
+class EnvCompiler extends Env<Variable, FunType, ClassType> {
     /**
      * Indent character
      */
