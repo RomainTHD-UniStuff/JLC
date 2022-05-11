@@ -1,6 +1,5 @@
 package fr.rthd.jlc;
 
-import fr.rthd.jlc.Visitor;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.Env;
 import fr.rthd.jlc.env.FunType;
@@ -76,7 +75,7 @@ public class Unannotater implements Visitor {
     @Override
     public Prog accept(
         @NotNull Prog p,
-        @NotNull Env<?, FunType, ClassType> ignored
+        @NotNull Env<?, FunType, ClassType<?>> ignored
     ) {
         return p.accept(new ProgVisitor(), null);
     }

@@ -18,7 +18,7 @@ public class TypeChecker implements Visitor {
     @Override
     public Prog accept(
         @NotNull Prog p,
-        @NotNull Env<?, FunType, ClassType> parentEnv
+        @NotNull Env<?, FunType, ClassType<?>> parentEnv
     ) {
         EnvTypecheck env = new EnvTypecheck(parentEnv);
         p = p.accept(new ProgSignatureVisitor(), env);

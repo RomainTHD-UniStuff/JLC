@@ -143,7 +143,7 @@ public class Main {
             Prog tree = p.pProg();
 
             // Type check
-            Env<?, FunType, ClassType> env = new Env<>();
+            Env<?, FunType, ClassType<?>> env = new Env<>();
             tree = new TypeChecker().accept(tree, env);
 
             if (opt.typecheckOnly) {

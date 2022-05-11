@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @see Env
  */
 @NonNls
-class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
+class EnvTypecheck extends Env<TypeCode, FunType, ClassType<?>> {
     /**
      * Current function type
      */
@@ -31,7 +31,7 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType> {
      * Constructor
      * @param parent Parent environment
      */
-    public EnvTypecheck(@NotNull Env<?, FunType, ClassType> parent) {
+    public EnvTypecheck(@NotNull Env<?, FunType, ClassType<?>> parent) {
         super(parent);
     }
 

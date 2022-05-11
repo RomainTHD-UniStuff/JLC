@@ -23,7 +23,7 @@ import java.util.Objects;
  * @author RomainTHD
  */
 @NonNls
-public class Env<Value, Func extends FunType, Class extends ClassType> {
+public class Env<Value, Func extends FunType, Class extends ClassType<?>> {
     /**
      * Global functions map
      */

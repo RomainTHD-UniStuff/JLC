@@ -99,7 +99,7 @@ public class Optimizer implements Visitor {
     @Override
     public Prog accept(
         @NotNull Prog p,
-        @NotNull Env<?, FunType, ClassType> parentEnv
+        @NotNull Env<?, FunType, ClassType<?>> parentEnv
     ) {
         EnvOptimizer env = new EnvOptimizer(parentEnv);
         // First pass will mark functions as pure or impure

@@ -17,7 +17,7 @@ import java.util.Map;
  * @author RomainTHD
  */
 @NonNls
-public class ClassType {
+public class ClassType<Method extends FunType> {
     /**
      * Constructor name
      */
@@ -41,7 +41,7 @@ public class ClassType {
      * List of defined methods
      */
     @NotNull
-    private final Map<String, FunType> _methods;
+    private final Map<String, Method> _methods;
 
     /**
      * List of defined fields
@@ -54,7 +54,7 @@ public class ClassType {
      * discovered
      */
     @Nullable
-    private ClassType _superclass = null;
+    private ClassType<Method> _superclass = null;
 
     /**
      * Constructor for inheritance
@@ -77,7 +77,7 @@ public class ClassType {
      * @param override Whether the method is an override or not. Ony used
      *     for constructors for now
      */
-    public void addMethod(@NotNull FunType f, boolean override) {
+    public void addMethod(@NotNull Method f, boolean override) {
         if (override || !_methods.containsKey(f.getName())) {
             _methods.put(f.getName(), f);
         }
@@ -88,7 +88,7 @@ public class ClassType {
      * @return List of methods
      */
     @NotNull
-    public Collection<FunType> getOwnMethods() {
+    public Collection<Method> getOwnMethods() {
         return _methods.values();
     }
 
@@ -97,8 +97,8 @@ public class ClassType {
      * @return List of methods
      */
     @NotNull
-    public Collection<FunType> getAllMethods() {
-        Collection<FunType> methods = new ArrayList<>(getOwnMethods());
+    public Collection<Method> getAllMethods() {
+        Collection<Method> methods = new ArrayList<>(getOwnMethods());
         if (_superclass != null) {
             methods.addAll(_superclass.getAllMethods());
         }
@@ -112,7 +112,7 @@ public class ClassType {
      * @return Method or null
      */
     @Nullable
-    public FunType getMethod(@NotNull String name, boolean recurse) {
+    public Method getMethod(@NotNull String name, boolean recurse) {
         if (_methods.containsKey(name)) {
             return _methods.get(name);
         } else if (recurse && _superclass != null) {
@@ -185,7 +185,7 @@ public class ClassType {
      * Update the class with the given superclass
      * @param c Superclass
      */
-    public void updateSuperclass(@Nullable ClassType c) {
+    public void updateSuperclass(@Nullable ClassType<Method> c) {
         _superclass = c;
     }
 
@@ -193,7 +193,7 @@ public class ClassType {
      * @return The superclass of the class
      */
     @Nullable
-    public ClassType getSuperclass() {
+    public ClassType<Method> getSuperclass() {
         return _superclass;
     }
 
@@ -201,7 +201,7 @@ public class ClassType {
      * @param c Class to check
      * @return If the class is a subclass of the given class
      */
-    public boolean isSubclassOf(@NotNull ClassType c) {
+    public boolean isSubclassOf(@NotNull ClassType<Method> c) {
         if (equals(c)) {
             return true;
         }
@@ -220,7 +220,7 @@ public class ClassType {
         } else if (!(obj instanceof ClassType)) {
             return false;
         } else {
-            ClassType c = (ClassType) obj;
+            ClassType<?> c = (ClassType<?>) obj;
             return _name.equals(c._name);
         }
     }
