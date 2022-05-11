@@ -17,10 +17,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Optimizer
  *
- * - Unused functions removal, even with cycles or recursive calls - Constants
- * propagation - Pure functions calls removal - Simplification of if and while
- * according to their condition - Literals evaluation - Dead code elimination -
- * Return checker
+ * - Unused functions removal, even with cycles or recursive calls
+ * - Constants propagation
+ * - Pure functions calls removal
+ * - Simplification of if and while according to their condition
+ * - Literals evaluation
+ * - Dead code elimination
+ * - Return checker
  * @author RomainTHD
  */
 public class Optimizer implements Visitor {
