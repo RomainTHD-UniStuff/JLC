@@ -321,7 +321,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
 
         for (int i = 0; i < e.listindex_.size() + nonInitAddon; ++i) {
             // Populate all intermediate types, used for compiler
-            TypeCode.forArray(t, i);
+            TypeCode.forArray(t.getBaseType(), i);
         }
 
         ListIndex listIndex = new ListIndex();
