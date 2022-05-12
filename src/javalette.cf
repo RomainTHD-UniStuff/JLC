@@ -86,10 +86,10 @@ ELitTrue.       Expr8   ::= "true" ;
 ELitFalse.      Expr8   ::= "false" ;
 EString.        Expr8   ::= String ;
 
-ENew.           Expr6   ::= "new" BaseType MaybeNonInitArray [Index] ;
-EApp.           Expr6   ::= Expr6 "(" [Expr] ")" ;
-EDot.           Expr6   ::= Expr6 "." Ident ;
+EApp.           Expr7   ::= Expr7 "(" [Expr] ")" ;
+EDot.           Expr7   ::= Expr6 "." Ident ;
 
+ENew.           Expr6   ::= "new" BaseType MaybeNonInitArray [Index] ;
 EIndex.         Expr6   ::= Expr7 Index [Index] ;
 
 Neg.            Expr5   ::= "-" Expr6 ;
