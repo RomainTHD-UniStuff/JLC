@@ -264,24 +264,6 @@ if (cond) {
 }
 ```
 
-### Array types
-
-```c
-Array.     Type ::= Type [Dim] ;
-```
-
-Conflict between
-
-```c
-((int)[])[] t;
-```
-
-and
-
-```c
-int([][]) t;
-```
-
 ### Null and brackets
 
 ```c

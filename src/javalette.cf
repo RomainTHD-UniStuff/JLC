@@ -76,21 +76,21 @@ TType.          Type    ::= BaseType [Dim] ;
 -- Expressions ---------------------------------------------
 
 -- Shift-reduce
-ENull.          Expr7   ::= "(" Ident ")" "null" ;
+ENull.          Expr9   ::= "(" Ident ")" "null" ;
 
-EVar.           Expr6   ::= Ident ;
+EVar.           Expr8   ::= Ident ;
 
-ELitInt.        Expr6   ::= Integer ;
-ELitDoub.       Expr6   ::= Double;
-ELitTrue.       Expr6   ::= "true" ;
-ELitFalse.      Expr6   ::= "false" ;
-EString.        Expr6   ::= String ;
+ELitInt.        Expr8   ::= Integer ;
+ELitDoub.       Expr8   ::= Double;
+ELitTrue.       Expr8   ::= "true" ;
+ELitFalse.      Expr8   ::= "false" ;
+EString.        Expr8   ::= String ;
 
-ENew.           Expr6   ::= "new" BaseType [Index] ;
+ENew.           Expr6   ::= "new" BaseType MaybeNonInitArray [Index] ;
 EApp.           Expr6   ::= Expr6 "(" [Expr] ")" ;
 EDot.           Expr6   ::= Expr6 "." Ident ;
 
-EIndex.         Expr5   ::= Expr6 Index [Index] ;
+EIndex.         Expr6   ::= Expr7 Index [Index] ;
 
 Neg.            Expr5   ::= "-" Expr6 ;
 Not.            Expr5   ::= "!" Expr6 ;
@@ -102,10 +102,13 @@ ERel.           Expr2   ::= Expr2 RelOp Expr3 ;
 EAnd.           Expr1   ::= Expr2 "&&" Expr1 ;
 EOr.            Expr    ::= Expr1 "||" Expr ;
 
-coercions Expr 7 ;
+coercions Expr 9 ;
 separator Expr "," ;
 
 -- Dimensions ----------------------------------------------
+
+NonInitArray.   MaybeNonInitArray ::= "[]" ;
+InitArray.      MaybeNonInitArray ::= ;
 
 SIndex.         Index   ::= "[" Expr "]" ;
 separator Index "" ;
