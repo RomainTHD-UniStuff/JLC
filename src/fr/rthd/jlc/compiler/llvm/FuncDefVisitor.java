@@ -31,7 +31,7 @@ class FuncDefVisitor implements FuncDef.Visitor<Void, EnvCompiler> {
     public Void visit(FnDef p, EnvCompiler env) {
         FunType func;
 
-        ClassType c = env.getCurrentClass();
+        ClassType<?> c = env.getCurrentClass();
         if (c == null) {
             // Look for global function
             func = env.lookupFun(p.ident_);

@@ -201,7 +201,7 @@ public class ClassType<Method extends FunType> {
      * @param c Class to check
      * @return If the class is a subclass of the given class
      */
-    public boolean isSubclassOf(@NotNull ClassType<Method> c) {
+    public boolean isSubclassOf(@NotNull ClassType<?> c) {
         if (equals(c)) {
             return true;
         }

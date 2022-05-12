@@ -23,7 +23,7 @@ class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(ClsDef p, EnvCompiler env) {
-        ClassType c = env.lookupClass(p.ident_);
+        ClassType<?> c = env.lookupClass(p.ident_);
         assert c != null;
 
         List<Attribute> attrs = c.getAllAttributes();

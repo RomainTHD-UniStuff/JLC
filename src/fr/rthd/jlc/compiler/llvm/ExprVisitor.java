@@ -178,7 +178,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             Variable ref = env.lookupVar(left.ident_);
             assert ref != null;
 
-            ClassType c = env.lookupClass(ref.getType());
+            ClassType<?> c = env.lookupClass(ref.getType());
             assert c != null;
 
             while ((func = c.getMethod(dot.ident_, false)) == null) {
@@ -372,7 +372,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         int size = type.getSize();
         if (type.isObject()) {
             // For objects, the size needs to be looked up in the class
-            ClassType c = env.lookupClass(type);
+            ClassType<?> c = env.lookupClass(type);
             assert c != null;
             size = c.getSize();
         }

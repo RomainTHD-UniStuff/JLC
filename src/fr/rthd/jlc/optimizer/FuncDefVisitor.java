@@ -14,7 +14,7 @@ public class FuncDefVisitor implements FuncDef.Visitor<FuncDef, EnvOptimizer> {
     public FuncDef visit(FnDef f, EnvOptimizer env) {
         FunTypeOptimizer func = env.lookupFun(f.ident_);
         if (func == null) {
-            ClassType c = env.getCurrentClass();
+            ClassType<?> c = env.getCurrentClass();
             assert c != null;
             FunType fun = c.getMethod(f.ident_, false);
             assert fun != null;

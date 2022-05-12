@@ -1,6 +1,5 @@
 package fr.rthd.jlc.optimizer;
 
-import fr.rthd.jlc.env.ClassType;
 import javalette.Absyn.ClassDef;
 import javalette.Absyn.ClsDef;
 import javalette.Absyn.ListMember;

@@ -61,11 +61,14 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * @param env Environment
      */
     private void updateSuperclasses(@NotNull EnvTypecheck env) {
-        for (ClassType c : env.getAllClass()) {
+        for (ClassType<?> cRaw : env.getAllClass()) {
+            ClassType<FunType> c = (ClassType<FunType>) cRaw;
             if (c.getSuperclassName() == null) {
                 c.updateSuperclass(null);
             } else {
-                ClassType superclass = env.lookupClass(c.getSuperclassName());
+                ClassType<FunType> superclass = (ClassType<FunType>) env.lookupClass(
+                    c.getSuperclassName()
+                );
                 if (superclass == null) {
                     throw new NoSuchClassException(c.getSuperclassName());
                 }
@@ -79,8 +82,8 @@ class ProgSignatureVisitor implements Prog.Visitor<Prog, EnvTypecheck> {
      * @param env Environment
      */
     private void checkCycles(@NotNull EnvTypecheck env) {
-        for (ClassType c : env.getAllClass()) {
-            ClassType superclass = c;
+        for (ClassType<? extends FunType> c : env.getAllClass()) {
+            ClassType<? extends FunType> superclass = c;
             do {
                 if (c.equals(superclass.getSuperclass())) {
                     throw new CyclicInheritanceException(

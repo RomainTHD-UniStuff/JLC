@@ -159,7 +159,7 @@ class InstructionBuilder {
      */
     @NotNull
     public Instruction functionDeclarationStart(
-        @Nullable ClassType parentClass,
+        @Nullable ClassType<?> parentClass,
         @NotNull TypeCode retType,
         @NotNull String funcName,
         @NotNull List<Variable> args

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @see Env
  */
 @NonNls
-class EnvTypecheck extends Env<TypeCode, FunType, ClassType<?>> {
+class EnvTypecheck extends Env<TypeCode, FunType, ClassType<? extends FunType>> {
     /**
      * Current function type
      */
