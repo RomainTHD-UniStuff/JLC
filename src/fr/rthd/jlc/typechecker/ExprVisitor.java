@@ -40,6 +40,7 @@ import javalette.Absyn.ListExpr;
 import javalette.Absyn.ListIndex;
 import javalette.Absyn.Mod;
 import javalette.Absyn.Neg;
+import javalette.Absyn.NonInitArray;
 import javalette.Absyn.Not;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     @Override
     public AnnotatedExpr<EVar> visit(EVar e, EnvTypecheck env) {
         if (e.ident_.equals("self")) {
-            ClassType c = env.getCurrentClass();
+            ClassType<?> c = env.getCurrentClass();
             if (c == null) {
                 throw new SelfOutOfClassException();
             }
@@ -163,7 +164,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
         } else if (e.expr_ instanceof EDot) {
             // `self.f()`
             AnnotatedExpr<?> left = e.expr_.accept(new ExprVisitor(), env);
-            ClassType c = env.lookupClass(left.getType());
+            ClassType<?> c = env.lookupClass(left.getType());
             assert c != null;
             methodName = ((EDot) e.expr_).ident_;
             funcType = c.getMethod(methodName, true);
@@ -297,7 +298,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
      */
     @Override
     public AnnotatedExpr<ENull> visit(ENull e, EnvTypecheck env) {
-        ClassType c = env.lookupClass(e.ident_);
+        ClassType<?> c = env.lookupClass(e.ident_);
         if (c == null) {
             throw new NoSuchClassException(e.ident_);
         }
@@ -314,11 +315,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
     public AnnotatedExpr<ENew> visit(ENew e, EnvTypecheck env) {
         TypeCode t = e.basetype_.accept(new TypeVisitor(), null);
 
-        if (!e.listindex_.isEmpty()) {
-            t = TypeCode.forArray(t, e.listindex_.size());
-        }
+        int nonInitAddon = e.maybenoninitarray_ instanceof NonInitArray ? 1 : 0;
 
-        for (int i = 0; i < e.listindex_.size(); ++i) {
+        t = TypeCode.forArray(t, e.listindex_.size() + nonInitAddon);
+
+        for (int i = 0; i < e.listindex_.size() + nonInitAddon; ++i) {
             // Populate all intermediate types, used for compiler
             TypeCode.forArray(t, i);
         }
@@ -339,7 +340,14 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<?>, EnvTypecheck> {
             }
         }
 
-        return new AnnotatedExpr<>(t, new ENew(e.basetype_, listIndex));
+        return new AnnotatedExpr<>(
+            t,
+            new ENew(
+                e.basetype_,
+                e.maybenoninitarray_,
+                listIndex
+            )
+        );
     }
 
     /**

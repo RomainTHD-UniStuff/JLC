@@ -205,6 +205,7 @@ public class Unannotater implements Visitor {
             }
             return new ENew(
                 p.basetype_,
+                p.maybenoninitarray_,
                 index
             );
         }

@@ -125,7 +125,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
         ), p.listindex_.size());
         return new AnnotatedExpr<>(
             t,
-            new ENew(p.basetype_, indices)
+            new ENew(p.basetype_, p.maybenoninitarray_, indices)
         );
     }
 
