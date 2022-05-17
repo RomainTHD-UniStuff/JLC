@@ -3,7 +3,6 @@ package fr.rthd.jlc.optimizer;
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
-import fr.rthd.jlc.env.FunType;
 import javalette.Absyn.Blk;
 import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
@@ -14,11 +13,10 @@ public class FuncDefVisitor implements FuncDef.Visitor<FuncDef, EnvOptimizer> {
     public FuncDef visit(FnDef f, EnvOptimizer env) {
         FunTypeOptimizer func = env.lookupFun(f.ident_);
         if (func == null) {
-            ClassType<?> c = env.getCurrentClass();
+            ClassType<FunTypeOptimizer> c = env.getCurrentClass();
             assert c != null;
-            FunType fun = c.getMethod(f.ident_, false);
-            assert fun != null;
-            func = new FunTypeOptimizer(fun);
+            func = c.getMethod(f.ident_, false);
+            assert func != null;
         }
 
         env.setCurrentFunction(func);
