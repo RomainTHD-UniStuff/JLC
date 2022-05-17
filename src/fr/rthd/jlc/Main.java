@@ -147,9 +147,7 @@ public class Main {
                 exit(0);
             }
 
-            if (opt.optimizationLevel != 0) {
-                tree = new Optimizer(opt.optimizationLevel).accept(tree, env);
-            }
+            tree = new Optimizer(opt.optimizationLevel).accept(tree, env);
 
             if (opt.printAST) {
                 // TODO: Respect the -o flag
