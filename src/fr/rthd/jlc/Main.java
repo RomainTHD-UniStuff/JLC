@@ -132,9 +132,6 @@ public class Main {
             lexerInput = input.toString();
         }
 
-        // HACK: The grammar doesn't support `int [ ] t;`, so we replace it with
-        //  `int [] t;`
-        lexerInput = lexerInput.replaceAll("\\[[\\t\\s \\n\\r]+]", "[]");
         Yylex lex = new Yylex(new StringReader(lexerInput));
 
         try {
@@ -143,16 +140,14 @@ public class Main {
             Prog tree = p.pProg();
 
             // Type check
-            Env<?, FunType, ClassType> env = new Env<>();
+            Env<?, FunType, ClassType<?>> env = new Env<>();
             tree = new TypeChecker().accept(tree, env);
 
             if (opt.typecheckOnly) {
                 exit(0);
             }
 
-            if (opt.optimizationLevel != 0) {
-                tree = new Optimizer(opt.optimizationLevel).accept(tree, env);
-            }
+            tree = new Optimizer(opt.optimizationLevel).accept(tree, env);
 
             if (opt.printAST) {
                 // TODO: Respect the -o flag

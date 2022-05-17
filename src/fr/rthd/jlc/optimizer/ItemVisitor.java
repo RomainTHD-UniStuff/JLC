@@ -26,7 +26,9 @@ class ItemVisitor implements Item.Visitor<Item, EnvOptimizer> {
 
         env.insertVar(
             s.ident_,
-            AnnotatedExpr.getDefaultValue(_varType),
+            _varType.isPrimitive()
+            ? AnnotatedExpr.getDefaultValue(_varType)
+            : new AnnotatedExpr<>(_varType, new EVar(s.ident_)),
             true
         );
         return new NoInit(s.ident_);

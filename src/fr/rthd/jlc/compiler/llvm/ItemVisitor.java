@@ -10,6 +10,7 @@ import javalette.Absyn.ELitInt;
 import javalette.Absyn.ENew;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Init;
+import javalette.Absyn.InitArray;
 import javalette.Absyn.Item;
 import javalette.Absyn.ListIndex;
 import javalette.Absyn.NoInit;
@@ -85,6 +86,7 @@ class ItemVisitor implements Item.Visitor<Void, EnvCompiler> {
                 new EVar(p.ident_),
                 new ENew(
                     TypeVisitor.getTypeFromTypecode(_type).basetype_,
+                    new InitArray(),
                     indices
                 )
             ).accept(new StmtVisitor(), env);

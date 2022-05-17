@@ -26,7 +26,7 @@ import java.util.Map;
  * @see Variable
  */
 @NonNls
-public class EnvCompiler extends Env<Variable, FunType, ClassType> {
+class EnvCompiler extends Env<Variable, FunType, ClassType<?>> {
     /**
      * Indent character
      */
@@ -98,7 +98,7 @@ public class EnvCompiler extends Env<Variable, FunType, ClassType> {
      * @param builder Instruction builder
      */
     public EnvCompiler(
-        @NotNull Env<?, FunType, ClassType> env,
+        @NotNull Env<?, FunType, ClassType<?>> env,
         @NotNull InstructionBuilder builder
     ) {
         super(env);

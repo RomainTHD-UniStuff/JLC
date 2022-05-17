@@ -72,7 +72,7 @@ public class LLVMCompiler implements Visitor {
     @Override
     public Prog accept(
         @NotNull Prog p,
-        @NotNull Env<?, FunType, ClassType> parent
+        @NotNull Env<?, FunType, ClassType<?>> parent
     ) {
         EnvCompiler env = new EnvCompiler(parent, new InstructionBuilder());
         p.accept(new ProgVisitor(), env);

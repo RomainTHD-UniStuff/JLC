@@ -121,9 +121,9 @@ class StmtVisitor implements Stmt.Visitor<Stmt, EnvTypecheck> {
                 );
             }
 
-            ClassType expectedClass = env.lookupClass(expectedType);
+            ClassType<?> expectedClass = env.lookupClass(expectedType);
             assert expectedClass != null;
-            ClassType actualClass = env.lookupClass(right.getType());
+            ClassType<?> actualClass = env.lookupClass(right.getType());
             assert actualClass != null;
             if (!actualClass.isSubclassOf(expectedClass)) {
                 // `B x = new A;`
