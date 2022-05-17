@@ -3,6 +3,7 @@ package fr.rthd.jlc.optimizer;
 import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
+import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.Blk;
 import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
@@ -17,6 +18,13 @@ public class FuncDefVisitor implements FuncDef.Visitor<FuncDef, EnvOptimizer> {
             assert c != null;
             func = c.getMethod(f.ident_, false);
             assert func != null;
+        }
+
+        for (FunArg arg : func.getArgs()) {
+            if (!arg.getType().isPrimitive()) {
+                // Some seemingly pure functions can mutate their arguments
+                func.setPure(Choice.FALSE);
+            }
         }
 
         env.setCurrentFunction(func);
