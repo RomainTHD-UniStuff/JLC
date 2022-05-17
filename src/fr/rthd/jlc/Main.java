@@ -132,9 +132,6 @@ public class Main {
             lexerInput = input.toString();
         }
 
-        // HACK: The grammar doesn't support `int [ ] t;`, so we replace it with
-        //  `int [] t;`
-        lexerInput = lexerInput.replaceAll("\\[[\\t\\s \\n\\r]+]", "[]");
         Yylex lex = new Yylex(new StringReader(lexerInput));
 
         try {
