@@ -18,5 +18,8 @@ public interface Visitor {
      * @return Visited program
      */
     @NotNull
-    Prog accept(@NotNull Prog p, @NotNull Env<?, FunType, ClassType> parentEnv);
+    Prog accept(
+        @NotNull Prog p,
+        @NotNull Env<?, FunType, ClassType<?>> parentEnv
+    );
 }

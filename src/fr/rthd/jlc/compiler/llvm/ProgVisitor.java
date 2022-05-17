@@ -42,7 +42,7 @@ class ProgVisitor implements Prog.Visitor<Void, EnvCompiler> {
         }
 
         Map<String, FunType> classFunctions = new HashMap<>();
-        for (ClassType c : env.getAllClass()) {
+        for (ClassType<?> c : env.getAllClass()) {
             // Fill the environment with the class methods, since they now
             //  have a unique assembly name
             for (FunType f : c.getAllMethods()) {

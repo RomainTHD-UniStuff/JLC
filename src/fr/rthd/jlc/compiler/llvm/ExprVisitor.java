@@ -10,6 +10,9 @@ import fr.rthd.jlc.env.FunArg;
 import fr.rthd.jlc.env.FunType;
 import fr.rthd.jlc.internal.NotImplementedException;
 import fr.rthd.jlc.utils.Value;
+import javalette.Absyn.Ass;
+import javalette.Absyn.BStmt;
+import javalette.Absyn.Block;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -27,9 +30,16 @@ import javalette.Absyn.ERel;
 import javalette.Absyn.EString;
 import javalette.Absyn.EVar;
 import javalette.Absyn.Expr;
+import javalette.Absyn.Incr;
+import javalette.Absyn.InitArray;
+import javalette.Absyn.LTH;
 import javalette.Absyn.ListExpr;
+import javalette.Absyn.ListIndex;
+import javalette.Absyn.ListStmt;
 import javalette.Absyn.Neg;
 import javalette.Absyn.Not;
+import javalette.Absyn.SIndex;
+import javalette.Absyn.While;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,7 +188,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
             Variable ref = env.lookupVar(left.ident_);
             assert ref != null;
 
-            ClassType c = env.lookupClass(ref.getType());
+            ClassType<?> c = env.lookupClass(ref.getType());
             assert c != null;
 
             while ((func = c.getMethod(dot.ident_, false)) == null) {
@@ -293,6 +303,10 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         Variable contentPtr = env.createTempVar(elemType, "array_content", 2);
         env.emit(env.instructionBuilder.loadAttribute(contentPtr, left, 1));
 
+        if (_value == Value.LValue && elemType.getDimension() > 0) {
+            return contentPtr;
+        }
+
         Variable content = env.createTempVar(
             contentPtr.getType(),
             "array_content",
@@ -303,7 +317,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         Variable ptr = env.createTempVar(elemType, "array_access", 1);
         env.emit(env.instructionBuilder.loadIndex(ptr, content, index));
 
-        if (_value == Value.RValue) {
+        if (_value == Value.RValue && elemType.getDimension() == 0) {
             Variable value = env.createTempVar(ptr.getType(), "array_access");
             env.emit(env.instructionBuilder.load(value, ptr));
 
@@ -372,7 +386,7 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
         int size = type.getSize();
         if (type.isObject()) {
             // For objects, the size needs to be looked up in the class
-            ClassType c = env.lookupClass(type);
+            ClassType<?> c = env.lookupClass(type);
             assert c != null;
             size = c.getSize();
         }
@@ -389,7 +403,6 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
                 new ListExpr()
             ).accept(new ExprVisitor(), env);
         } else if (type.isArray()) {
-            // TODO: Multi-dimensional arrays
             Variable lenField = env.createTempVar(
                 TypeCode.CInt,
                 "array_length",
@@ -435,6 +448,51 @@ class ExprVisitor implements Expr.Visitor<OperationItem, EnvCompiler> {
                 contentType
             ));
             env.emit(env.instructionBuilder.store(contentField, contentPtr));
+
+            if (p.listindex_.size() > 1) {
+                ListIndex newListIndex = (ListIndex) p.listindex_.clone();
+                newListIndex.remove(0);
+
+                env.emit(env.instructionBuilder.newLine());
+
+                Variable idx = env.createTempVar(
+                    TypeCode.CInt,
+                    "array_for_index",
+                    1
+                );
+                env.insertVar(idx.getName(), idx);
+                // Will automatically be set to 0
+                env.emit(env.instructionBuilder.declare(idx));
+
+                ListStmt stmts = new ListStmt();
+
+                // `t[idx] = new T[]...`
+                stmts.add(new Ass(
+                    new EIndex(
+                        new EVar(ref.getName()),
+                        new SIndex(new EVar(idx.getName())),
+                        new ListIndex()
+                    ),
+                    new ENew(
+                        p.basetype_,
+                        new InitArray(),
+                        newListIndex
+                    )
+                ));
+
+                // `idx++`
+                stmts.add(new Incr(idx.getName()));
+
+                // `while (idx < array.length) { t[idx] = new T[]...; idx++ }`
+                new While(
+                    new ERel(
+                        new EVar(idx.getName()),
+                        new LTH(),
+                        new EDot(new EVar(ref.getName()), "length")
+                    ),
+                    new BStmt(new Block(stmts))
+                ).accept(new StmtVisitor(), env);
+            }
         }
 
         return ref;

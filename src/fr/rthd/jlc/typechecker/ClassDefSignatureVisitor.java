@@ -59,7 +59,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         @NotNull ClsDef p,
         @NotNull EnvTypecheck env
     ) {
-        ClassType c = env.lookupClass(p.ident_);
+        ClassType<?> c = env.lookupClass(p.ident_);
         assert c != null;
 
         ListStmt body = new ListStmt();
@@ -80,7 +80,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
         );
 
         p.listmember_.add(new FnMember(fdef));
-        addMethod(c, fdef, true);
+        addMethod((ClassType<FunType>) c, fdef, true);
     }
 
     /**
@@ -90,7 +90,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
      * @param override Override or not
      */
     private void addMethod(
-        @NotNull ClassType c,
+        @NotNull ClassType<FunType> c,
         @NotNull FnDef f,
         boolean override
     ) {
@@ -117,7 +117,7 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
      * @param c Class
      * @param a Attribute
      */
-    private void addAttribute(@NotNull ClassType c, @NotNull AttrMember a) {
+    private void addAttribute(@NotNull ClassType<?> c, @NotNull AttrMember a) {
         if (c.hasAttribute(a.ident_)) {
             throw new DuplicateFieldException(
                 a.ident_,
@@ -137,12 +137,16 @@ class ClassDefSignatureVisitor implements ClassDef.Visitor<Void, EnvTypecheck> {
      * @param env Environment
      */
     private void handleFields(@NotNull ClsDef p, @NotNull EnvTypecheck env) {
-        ClassType c = env.lookupClass(p.ident_);
+        ClassType<?> c = env.lookupClass(p.ident_);
         assert c != null;
 
         for (Member m : p.listmember_) {
             if (m instanceof FnMember) {
-                addMethod(c, (FnDef) ((FnMember) m).funcdef_, false);
+                addMethod(
+                    (ClassType<FunType>) c,
+                    (FnDef) ((FnMember) m).funcdef_,
+                    false
+                );
             } else if (m instanceof AttrMember) {
                 addAttribute(c, (AttrMember) m);
             } else {

@@ -25,7 +25,6 @@ hs_err_pid*
 generated/javalette/*
 !generated/javalette/.gitkeep
 build
-*.class
 out
 *.iml
 .idea

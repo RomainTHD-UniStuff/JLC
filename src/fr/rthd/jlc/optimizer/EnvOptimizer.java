@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @see AnnotatedExpr
  * @see FunTypeOptimizer
  */
-class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassType> {
+class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassTypeOptimizer> {
     /**
      * Current function
      */
@@ -36,12 +36,18 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassType> {
      * Constructor
      * @param env Parent environment
      */
-    public EnvOptimizer(@NotNull Env<?, FunType, ClassType> env) {
+    public EnvOptimizer(@NotNull Env<?, FunType, ClassType<?>> env) {
         super();
         for (FunType funType : env.getAllFun()) {
             // We receive `FunType` objects but need to store `FunTypeOptimizer`
             //  objects
             insertFun(new FunTypeOptimizer(funType));
+        }
+        for (ClassType<?> classType : env.getAllClass()) {
+            insertClass(new ClassTypeOptimizer(classType));
+        }
+        for (ClassTypeOptimizer classType : getAllClass()) {
+            classType.updateSuperclass(lookupClass(classType.getSuperclassName()));
         }
     }
 
@@ -89,7 +95,7 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassType> {
     /**
      * @return Constant propagation status
      */
-    public boolean constantPropagationEnabled() {
+    public boolean getConstantPropagationStatus() {
         return _constantPropagationEnabled;
     }
 }

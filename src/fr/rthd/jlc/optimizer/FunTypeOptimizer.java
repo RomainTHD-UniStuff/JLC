@@ -14,7 +14,7 @@ import java.util.Set;
  * @author RomainTHD
  * @see FunType
  */
-public class FunTypeOptimizer extends FunType {
+class FunTypeOptimizer extends FunType {
     /**
      * Set of all functions using this
      */

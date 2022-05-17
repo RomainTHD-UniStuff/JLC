@@ -129,7 +129,7 @@ public class ArgParse {
     public static ArgParse parse(List<String> args) {
         boolean showHelp = false;
         VerboseLevel verbosity = VerboseLevel.WARNING;
-        int optimizationLevel = 0;
+        int optimizationLevel = 1;
         boolean typecheckOnly = false;
         String inputFile = null;
         String outputFile = null;

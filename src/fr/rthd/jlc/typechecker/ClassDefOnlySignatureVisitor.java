@@ -36,7 +36,7 @@ class ClassDefOnlySignatureVisitor implements ClassDef.Visitor<Void, EnvTypechec
             ));
         }
 
-        env.insertClass(new ClassType(
+        env.insertClass(new ClassType<>(
             p.ident_,
             superclass
         ));

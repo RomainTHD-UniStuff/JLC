@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author RomainTHD
  */
 @NonNls
-public class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
+class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
     /**
      * Class definition
      * @param p Class definition
@@ -23,7 +23,7 @@ public class ClassDefVisitor implements ClassDef.Visitor<Void, EnvCompiler> {
      */
     @Override
     public Void visit(ClsDef p, EnvCompiler env) {
-        ClassType c = env.lookupClass(p.ident_);
+        ClassType<?> c = env.lookupClass(p.ident_);
         assert c != null;
 
         List<Attribute> attrs = c.getAllAttributes();

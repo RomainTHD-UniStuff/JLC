@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * @author RomainTHD
  */
 @NonNls
-public class InstructionBuilder {
+class InstructionBuilder {
     /**
      * Output a new line
      * @return Instruction
@@ -159,7 +159,7 @@ public class InstructionBuilder {
      */
     @NotNull
     public Instruction functionDeclarationStart(
-        @Nullable ClassType parentClass,
+        @Nullable ClassType<?> parentClass,
         @NotNull TypeCode retType,
         @NotNull String funcName,
         @NotNull List<Variable> args
