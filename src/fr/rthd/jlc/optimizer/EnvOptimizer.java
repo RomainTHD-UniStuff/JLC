@@ -95,7 +95,7 @@ class EnvOptimizer extends Env<AnnotatedExpr<?>, FunTypeOptimizer, ClassTypeOpti
     /**
      * @return Constant propagation status
      */
-    public boolean constantPropagationEnabled() {
+    public boolean getConstantPropagationStatus() {
         return _constantPropagationEnabled;
     }
 }
