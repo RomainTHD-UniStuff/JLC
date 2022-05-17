@@ -4,7 +4,6 @@ import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
-import fr.rthd.jlc.internal.NotImplementedException;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -38,7 +37,7 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     public AnnotatedExpr<?> visit(EVar e, EnvOptimizer env) {
         AnnotatedExpr<?> expr = env.lookupVar(e.ident_);
         assert expr != null;
-        if (env.constantPropagationEnabled()) {
+        if (env.getConstantPropagationStatus()) {
             return expr;
         } else {
             return new AnnotatedExpr<>(
@@ -69,6 +68,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
 
         if (e.expr_ instanceof EVar) {
             funcType = env.lookupFun(((EVar) e.expr_).ident_);
+            if (funcType == null) {
+                System.err.println(
+                    "funcType null for " + ((EVar) e.expr_).ident_
+                );
+            }
         } else if (e.expr_ instanceof EDot) {
             AnnotatedExpr<?> left = ((EDot) e.expr_).expr_.accept(
                 new ExprVisitor(),
@@ -103,11 +107,26 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
     }
 
     public AnnotatedExpr<EDot> visit(EDot e, EnvOptimizer env) {
-        throw new NotImplementedException();
+        AnnotatedExpr<?> left = e.expr_.accept(new ExprVisitor(), env);
+        assert left.getType().isArray() && e.ident_.equals("length");
+        return new AnnotatedExpr<>(TypeCode.CInt, new EDot(left, e.ident_));
     }
 
     public AnnotatedExpr<EIndex> visit(EIndex e, EnvOptimizer env) {
-        throw new NotImplementedException();
+        ListIndex listIndex = new ListIndex();
+        for (Index idx : e.listindex_) {
+            listIndex.add(idx.accept(new IndexVisitor(), env));
+        }
+        AnnotatedExpr<?> expr = e.expr_.accept(new ExprVisitor(), env);
+        TypeCode t = TypeCode.forArray(
+            expr.getType().getBaseType(),
+            expr.getType().getDimension() - 1 - listIndex.size()
+        );
+        return new AnnotatedExpr<>(t, new EIndex(
+            expr,
+            e.index_.accept(new IndexVisitor(), env),
+            listIndex
+        ));
     }
 
     public AnnotatedExpr<EString> visit(EString e, EnvOptimizer env) {

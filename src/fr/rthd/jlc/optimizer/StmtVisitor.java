@@ -15,6 +15,7 @@ import javalette.Absyn.Decr;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EApp;
 import javalette.Absyn.EDot;
+import javalette.Absyn.EIndex;
 import javalette.Absyn.ELitFalse;
 import javalette.Absyn.ELitInt;
 import javalette.Absyn.ELitTrue;
@@ -23,7 +24,10 @@ import javalette.Absyn.Empty;
 import javalette.Absyn.Expr;
 import javalette.Absyn.For;
 import javalette.Absyn.Incr;
+import javalette.Absyn.Index;
+import javalette.Absyn.Init;
 import javalette.Absyn.Item;
+import javalette.Absyn.ListIndex;
 import javalette.Absyn.ListItem;
 import javalette.Absyn.Minus;
 import javalette.Absyn.Plus;
@@ -111,30 +115,43 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
 
     public AnnotatedStmt<Ass> visit(Ass s, EnvOptimizer env) {
         AnnotatedExpr<?> exp = s.expr_2.accept(new ExprVisitor(), env);
-        String varName = ((EVar) s.expr_1).ident_;
-        if (Optimizer.isLiteral(exp)) {
-            // We can reduce this to something like `x = n`
-            if (env.isTopLevel(env.lookupVar(varName))) {
-                // We're in the same block, we can just update the value
-                env.updateVar(varName, exp);
+        if (s.expr_1 instanceof EVar) {
+            String varName = ((EVar) s.expr_1).ident_;
+            if (Optimizer.isLiteral(exp)) {
+                // We can reduce this to something like `x = n`
+                if (env.isTopLevel(env.lookupVar(varName))) {
+                    // We're in the same block, we can just update the value
+                    env.updateVar(varName, exp);
+                } else {
+                    // Different block, we need to repudiate the old value, but
+                    //  still insert the new value for future use in this block
+                    env.updateVar(varName, new AnnotatedExpr<>(
+                        exp.getType(),
+                        new EVar(varName)
+                    ));
+                    env.insertVar(varName, exp);
+                }
             } else {
-                // Different block, we need to repudiate the old value, but
-                //  still insert the new value for future use in this block
+                // Not a literal, we lose the ability to optimize this variable
                 env.updateVar(varName, new AnnotatedExpr<>(
                     exp.getType(),
                     new EVar(varName)
                 ));
-                env.insertVar(varName, exp);
             }
-        } else {
-            // Not a literal, we lose the ability to optimize this variable
-            env.updateVar(varName, new AnnotatedExpr<>(
-                exp.getType(),
-                new EVar(varName)
-            ));
-        }
 
-        return new AnnotatedStmt<>(new Ass(s.expr_1, exp));
+            return new AnnotatedStmt<>(new Ass(s.expr_1, exp));
+        } else {
+            // TODO: Array assignment
+            ListIndex listIndex = new ListIndex();
+            for (Index idx : ((EIndex) s.expr_1).listindex_) {
+                listIndex.add(idx.accept(new IndexVisitor(), env));
+            }
+            return new AnnotatedStmt<>(new Ass(new EIndex(
+                ((EIndex) s.expr_1).expr_.accept(new ExprVisitor(), env),
+                ((EIndex) s.expr_1).index_.accept(new IndexVisitor(), env),
+                listIndex
+            ), exp));
+        }
     }
 
     public AnnotatedStmt<Incr> visit(Incr s, EnvOptimizer env) {
@@ -219,12 +236,13 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
         //  condition.
         //  TODO: We might be able to optimize the condition more
 
+        boolean constantPropagation = env.getConstantPropagationStatus();
         env.setConstantPropagation(false);
         AnnotatedExpr<?> exp = s.expr_.accept(
             new ExprVisitor(),
             env
         );
-        env.setConstantPropagation(true);
+        env.setConstantPropagation(constantPropagation);
 
         // TODO: Optimize infinite loop
 
@@ -255,13 +273,28 @@ class StmtVisitor implements Stmt.Visitor<AnnotatedStmt<? extends Stmt>, EnvOpti
     }
 
     public AnnotatedStmt<?> visit(For p, EnvOptimizer env) {
+        AnnotatedExpr<?> expr = p.expr_.accept(new ExprVisitor(), env);
         env.enterScope();
+        new Init(
+            p.ident_,
+            p.expr_
+        ).accept(
+            new ItemVisitor(p.type_.accept(new TypeVisitor(), null)),
+            env
+        );
+
+        // TODO: See While visitor for why we need to disable constant
+        //  propagation
+        boolean constantPropagation = env.getConstantPropagationStatus();
+        env.setConstantPropagation(false);
         AnnotatedStmt<?> s = p.stmt_.accept(new StmtVisitor(), env);
+        env.setConstantPropagation(constantPropagation);
+
         env.leaveScope();
         return new AnnotatedStmt<>(new For(
             p.type_,
             p.ident_,
-            p.expr_.accept(new ExprVisitor(), env),
+            expr,
             s
         ), s.doesReturn());
     }
