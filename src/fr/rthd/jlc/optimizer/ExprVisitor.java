@@ -4,6 +4,7 @@ import fr.rthd.jlc.AnnotatedExpr;
 import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.TypeVisitor;
 import fr.rthd.jlc.env.ClassType;
+import fr.rthd.jlc.utils.Choice;
 import javalette.Absyn.EAdd;
 import javalette.Absyn.EAnd;
 import javalette.Absyn.EApp;
@@ -90,6 +91,11 @@ class ExprVisitor implements Expr.Visitor<AnnotatedExpr<? extends Expr>, EnvOpti
         FunTypeOptimizer currentFunction = env.getCurrentFunction();
         assert currentFunction != null;
         funcType.addUsageIn(currentFunction);
+
+        if (funcType == currentFunction) {
+            // Recursive function
+            currentFunction.setPure(Choice.FALSE);
+        }
 
         ListExpr exps = new ListExpr();
         for (int i = 0; i < funcType.getArgs().size(); ++i) {
