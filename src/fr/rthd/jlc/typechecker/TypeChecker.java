@@ -14,13 +14,30 @@ import org.jetbrains.annotations.NotNull;
  */
 @NonNls
 public class TypeChecker implements Visitor {
+    /**
+     * @see EnvTypecheck#checkReturn()
+     */
+    private final int _optimizationLevel;
+
+    /**
+     * Constructor
+     * @param optimizationLevel Optimization level
+     * @see EnvTypecheck#checkReturn()
+     */
+    public TypeChecker(int optimizationLevel) {
+        _optimizationLevel = optimizationLevel;
+    }
+
     @NotNull
     @Override
     public Prog accept(
         @NotNull Prog p,
         @NotNull Env<?, FunType, ClassType<?>> parentEnv
     ) {
-        EnvTypecheck env = new EnvTypecheck(parentEnv);
+        EnvTypecheck env = new EnvTypecheck(
+            _optimizationLevel == 0,
+            parentEnv
+        );
         p = p.accept(new ProgSignatureVisitor(), env);
         return p.accept(new ProgVisitor(), env);
     }

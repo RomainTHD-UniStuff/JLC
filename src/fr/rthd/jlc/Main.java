@@ -141,7 +141,7 @@ public class Main {
 
             // Type check
             Env<?, FunType, ClassType<?>> env = new Env<>();
-            tree = new TypeChecker().accept(tree, env);
+            tree = new TypeChecker(opt.optimizationLevel).accept(tree, env);
 
             if (opt.typecheckOnly) {
                 exit(0);

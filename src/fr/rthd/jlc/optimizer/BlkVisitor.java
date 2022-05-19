@@ -6,7 +6,7 @@ import javalette.Absyn.Empty;
 import javalette.Absyn.ListStmt;
 import javalette.Absyn.Stmt;
 
-class BlkVisitor implements Blk.Visitor<Blk, EnvOptimizer> {
+class BlkVisitor implements Blk.Visitor<Block, EnvOptimizer> {
     public Block visit(Block p, EnvOptimizer env) {
         ListStmt statements = new ListStmt();
 

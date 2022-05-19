@@ -38,7 +38,10 @@ class FuncDefVisitor implements FuncDef.Visitor<FnDef, EnvTypecheck> {
         Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
 
         env.leaveScope();
-        if (func.getRetType() != TypeCode.CVoid && !env.doesReturn()) {
+
+        if (env.checkReturn() &&
+            func.getRetType() != TypeCode.CVoid &&
+            !env.doesReturn()) {
             throw new NoReturnException(f.ident_);
         }
 

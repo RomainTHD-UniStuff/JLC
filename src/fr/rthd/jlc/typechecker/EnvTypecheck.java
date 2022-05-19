@@ -17,6 +17,11 @@ import org.jetbrains.annotations.Nullable;
 @NonNls
 class EnvTypecheck extends Env<TypeCode, FunType, ClassType<? extends FunType>> {
     /**
+     * @see #checkReturn()
+     */
+    private final boolean _checkReturn;
+
+    /**
      * Current function type
      */
     @Nullable
@@ -31,8 +36,12 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType<? extends FunType>> 
      * Constructor
      * @param parent Parent environment
      */
-    public EnvTypecheck(@NotNull Env<?, FunType, ClassType<?>> parent) {
+    public EnvTypecheck(
+        boolean checkReturn,
+        @NotNull Env<?, FunType, ClassType<?>> parent
+    ) {
         super(parent);
+        _checkReturn = checkReturn;
     }
 
     /**
@@ -66,5 +75,24 @@ class EnvTypecheck extends Env<TypeCode, FunType, ClassType<? extends FunType>> 
      */
     public void setCurrentFunction(@Nullable FunType currentFunction) {
         _currentFunction = currentFunction;
+    }
+
+    /**
+     * Whether we should check the return statements or not. If false, it is
+     * assumed that the optimizer will check it instead. Indeed, a program like
+     * ```c
+     * int main() {
+     * while (1 == 1) {
+     * printString("Infinite loop");
+     * }
+     *
+     * printString("Unreachable");
+     * }
+     * ```
+     * doesn't need a return statement
+     * @return Check return
+     */
+    public boolean checkReturn() {
+        return _checkReturn;
     }
 }

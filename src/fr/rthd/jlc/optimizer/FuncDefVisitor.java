@@ -1,10 +1,12 @@
 package fr.rthd.jlc.optimizer;
 
 import fr.rthd.jlc.AnnotatedExpr;
+import fr.rthd.jlc.TypeCode;
 import fr.rthd.jlc.env.ClassType;
 import fr.rthd.jlc.env.FunArg;
+import fr.rthd.jlc.typechecker.exception.NoReturnException;
 import fr.rthd.jlc.utils.Choice;
-import javalette.Absyn.Blk;
+import javalette.Absyn.Block;
 import javalette.Absyn.EVar;
 import javalette.Absyn.FnDef;
 import javalette.Absyn.FuncDef;
@@ -40,9 +42,16 @@ public class FuncDefVisitor implements FuncDef.Visitor<FuncDef, EnvOptimizer> {
             );
         }
 
-        Blk nBlock = f.blk_.accept(new BlkVisitor(), env);
+        Block nBlock = f.blk_.accept(new BlkVisitor(), env);
 
         env.leaveScope();
+
+        if (func.getRetType() != TypeCode.CVoid) {
+            if (nBlock.liststmt_.size() == 0 ||
+                !((AnnotatedStmt<?>) nBlock.liststmt_.getLast()).doesReturn()) {
+                throw new NoReturnException(f.ident_);
+            }
+        }
 
         return new FnDef(
             f.type_,
