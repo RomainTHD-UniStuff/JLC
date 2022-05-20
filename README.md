@@ -348,7 +348,7 @@ The grammar is based on a Java / C-like language with some minor changes.
 
 There are 2 shift-reduce conflicts:
 
-### The infamous dangling else
+<details><summary>The infamous dangling else</summary>
 
 Conflict between
 
@@ -376,7 +376,9 @@ if (cond) {
 }
 ```
 
-### Null and brackets
+</details>
+
+<details><summary>Null and brackets</summary>
 
 Conflict between
 
@@ -389,3 +391,5 @@ and
 ```c
 EVar. Expr8 ::= Ident ;
 ```
+
+</details>
