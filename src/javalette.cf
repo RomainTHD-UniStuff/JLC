@@ -70,7 +70,6 @@ Bool.           BaseType    ::= "boolean" ;
 Void.           BaseType    ::= "void" ;
 Class.          BaseType    ::= Ident ;
 
--- Shift-reduce
 TType.          Type    ::= BaseType [Dim] ;
 
 -- Expressions ---------------------------------------------

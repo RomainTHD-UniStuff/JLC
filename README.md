@@ -14,15 +14,75 @@
 - The utility scripts `jlc`, `jlc_riscv`, `jlc_x86` and `jlc_x64` are provided
   to run the compiler. Note that they are only really simple shell scripts that
   run the "real" JLC compiler behind the scenes.
-- The input code is fed through the standard input.
-- The output consist in an empty standard output and a standard error output
-  with either `OK` or `ERROR` with an error message.
+- The input code is fed through the standard input, or a file if JLC is executed
+  like `jlc file.jl`.
+- The output consist in a standard output containing the assembly and a standard
+  error output with either `OK` or `ERROR` with an error message. Otherwise, the
+  flag `-o out.ll` can be used.
+
+## Language features
+
+<details><summary>OOP and inheritance, without overload</summary>
+
+Example:
+
+```c
+class Counter {
+    int val;
+
+    void incr() {
+        val++;
+    }
+
+    int get() {
+        return val;
+    }
+}
+
+int main () {
+  Counter c = new Counter;
+  c.incr();
+  printInt(c.get());
+  return 0;
+}
+```
+
+</details>
+
+<details><summary>One-dimensional arrays</summary>
+
+Example:
+
+```c
+int main() {
+    int[] t = new int[10];
+    int i = 0;
+    while (i < t.length) {
+        t[i] = i;
+        i++;
+    }
+
+    for (int elt : t) {
+        printInt(elt);
+    }
+
+    return 0;
+}
+```
+
+</details>
+
+<details><summary>(WIP) Multi-dimensional arrays</summary>
+
+Typechecking done, code generation still in progress.
+
+</details>
 
 ## Optimizations implemented
 
-There are several optimizations implemented:
+There are several optimizations implemented (click to expand):
 
-### Unused functions removal
+<details><summary>Unused functions removal</summary>
 
 ```c
 void foo() {
@@ -50,16 +110,16 @@ int main() {
 }
 ```
 
-### Constant propagation
+</details>
+
+<details><summary>Constant propagation</summary>
 
 ```c
 int main() {
     int n = 24;
-    if (n % 2 == 0) {
-        n++;
-    }
+    int m;
 
-    if (n % 5 == 0) {
+    if (n % 2 == 0) {
         return 0;
     }
 
@@ -72,10 +132,7 @@ becomes
 ```c
 int main() {
     int n = 24;
-
-    {
-        n++;
-    }
+    int m;
 
     {
         return 0;
@@ -83,11 +140,17 @@ int main() {
 }
 ```
 
-### Pure functions calls removal
+We still need to keep a block around in case some variables are declared inside.
+Also, note that here the Condition Simplification optimization is also applied,
+see below.
 
-Note that, in this optimizer, the notion of purity is slightly different from
-the mathematical one. A function is pure here if it does not have side effects
-and if it does return eventually.
+</details>
+
+<details><summary>Pure functions calls removal</summary>
+
+In this optimizer, the notion of purity is slightly different from the
+mathematical one. A function is pure here if it does not have side effects and
+if it does return eventually.
 
 ```c
 void foo() {
@@ -98,9 +161,14 @@ void bar() {
     printString("Hello");
 }
 
+void baz() {
+    baz();
+}
+
 int main() {
     foo();
     bar();
+    baz();
     return 0;
 }
 ```
@@ -112,15 +180,22 @@ void bar() {
     printString("Hello");
 }
 
+void baz() {
+    baz();
+}
+
 int main() {
     bar();
+    baz();
     return 0;
 }
 ```
 
-### Conditions simplification
+</details>
 
-Used with literals evaluation below.
+<details><summary>Conditions simplification</summary>
+
+Useful with literals evaluation below.
 
 ```c
 int main() {
@@ -142,19 +217,19 @@ int main() {
 }
 ```
 
-We still need to keep a block around the condition body in case some variables
-are declared inside.
+Again, the block needs to be kept.
 
-### Literals evaluation
+</details>
+
+<details><summary>Literals evaluation</summary>
 
 ```c
-int sideEffect() {
-    printString("Side effect");
-    return 0;
+boolean unknown() {
+    return !unknown();
 }
 
 int main() {
-    if (11 % 2 != 0 && 11 % 3 != 0 && sideEffect() == 0) {
+    if (11 % 2 != 0 && 11 % 3 != 0 && unknown()) {
         printString("11 is not divisible by 2 or 3");
     }
     return 16 / 2 + 3 * 8;
@@ -164,24 +239,39 @@ int main() {
 becomes
 
 ```c
-int sideEffect() {
-    printString ("Side effect");
-    return 0;
+boolean unknown() {
+    return !unknown();
 }
 
 int main() {
-    if (sideEffect() == 0) {
+    if (unknown()) {
         printString ("11 is not divisible by 2 or 3");
     }
     return 32;
 }
 ```
 
-### Dead code elimination
+The mathematical and logical operators are evaluated.
+
+Here, `unknown` is kept because its value cannot safely be resolved at compile
+time. It is used in this specific example to avoid condition simplification seen
+above, which would make this example "too optimized".
+
+</details>
+
+<details><summary>Dead code elimination</summary>
 
 ```c
+boolean unknown() {
+    return !unknown();
+}
+
 int main() {
-    return 0;
+    if (unknown()) {
+        return 0;
+    } else {
+        return 1;
+    }
     printString("Dead code");
 }
 ```
@@ -189,64 +279,82 @@ int main() {
 becomes
 
 ```c
+boolean unknown() {
+    return !unknown();
+}
+
 int main() {
-    return 0;
+    if (unknown()) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 ```
 
-### Return checker
+</details>
+
+<details><summary>Return checker</summary>
 
 ```c
-int sideEffect() {
-    printString("Side effect");
-    return 0;
-}
-
 int main() {
-    if (sideEffect() == 0) {
-        return 0;
-    } else {
-        while (true) {
-            printString("Infinite loop");
-        }
+    while (true) {
+        printString("Infinite loop");
     }
 
     printString("Unreachable");
+    return 0;
 }
 ```
 
 becomes
 
 ```c
-int sideEffect() {
-    printString("Side effect");
-    return 0;
-}
-
 int main() {
-    if (sideEffect() == 0) {
-        return 0;
-    } else {
-        while (true) {
-            printString("Infinite loop");
-        }
+    while (true) {
+        printString("Infinite loop");
     }
 }
 ```
+
+More intense optimizations have been implemented but not enabled due to several
+tests marked as bad, like `bad032.jl`, `bad034.jl` and others.
+
+```c
+int main() { 
+    boolean b = false;
+    if (b) {
+        // No-op
+    } else {
+        return 0;
+    }
+}
+```
+
+```c
+int main() { 
+    boolean b = true;
+    while (b) {
+        return 0;
+    }
+}
+```
+
+</details>
 
 ## The grammar
 
 The grammar is based on a Java / C-like language with some minor changes.
 
-There are 3 shift-reduce conflicts:
+There are 2 shift-reduce conflicts:
 
 ### The infamous dangling else
 
-```c
-CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt ;
-```
-
 Conflict between
+
+```c
+Cond. Stmt ::= "if" "(" Expr ")" Stmt ;
+```
 
 ```c
 if (cond) {
@@ -255,6 +363,10 @@ if (cond) {
 ```
 
 and
+
+```c
+CondElse. Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt ;
+```
 
 ```c
 if (cond) {
@@ -266,6 +378,14 @@ if (cond) {
 
 ### Null and brackets
 
+Conflict between
+
 ```c
-ENull.     Expr8 ::= "(" Ident ")" "null" ;
+ENull. Expr9 ::= "(" Ident ")" "null" ;
+```
+
+and
+
+```c
+EVar. Expr8 ::= Ident ;
 ```
